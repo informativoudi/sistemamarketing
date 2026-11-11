@@ -1,0 +1,68 @@
+{
+  "_sobre": "Núcleo da Marca Unimed Uberlândia. Regras fixas: só mude quando o manual mudar. Valores vindos do Design System (Paleta V2).",
+  "versao": "2027.1",
+  "cores": {
+    "institucional": "#00995d",
+    "escuro": "#005941",
+    "petroleo": "#00433f",
+    "citrico": "#d3d92b",
+    "agua": "#199975",
+    "amarelo": "#f9b000",
+    "laranja": "#f47920",
+    "laranjaEscuro": "#b55816",
+    "areia": "#e5d4c9",
+    "pastelAmarelo": "#ffe37e",
+    "pastelVerde": "#aed5ab",
+    "pastelAzul": "#7dcbdb",
+    "branco": "#ffffff",
+    "fundoPagina": "#f5f5f5",
+    "texto": "#3c3c3b",
+    "textoForte": "#1d1d1b",
+    "textoSuave": "#6f6f6e",
+    "borda": "#ececec",
+    "link": "#006b45"
+  },
+  "tipografia": {
+    "_nota": "Clientes de e-mail não carregam a Unimed Sans de forma confiável; ela entra primeiro e Arial/Helvetica seguram o resto.",
+    "familia": "'Unimed Sans', Arial, Helvetica, sans-serif",
+    "familiaSlab": "'Unimed Slab', Georgia, 'Times New Roman', serif"
+  },
+  "forma": {
+    "_nota": "O box da marca: três cantos arredondados e o inferior direito reto.",
+    "raioCard": "12px 12px 0 12px",
+    "raioBotao": "24px 24px 24px 0"
+  },
+  "logos": {
+    "_regra": "Sempre a versão com box. Original (verde) em fundo claro e cítrico; branca em petróleo, institucional e laranja.",
+    "claro": "assets/logos/unimed-box-verde.png",
+    "escuro": "assets/logos/unimed-box-branca.png",
+    "proporcao": 2.608
+  },
+  "imagensAprovadas": [
+    { "id": "medica-e-paciente", "arquivo": "assets/fotos/medica-e-paciente.jpg", "descricao": "Médica e paciente idoso sorrindo" },
+    { "id": "meninas-abraco", "arquivo": "assets/fotos/meninas-abraco.jpg", "descricao": "Duas meninas abraçadas" },
+    { "id": "medica-consulta", "arquivo": "assets/fotos/medica-consulta.jpg", "descricao": "Médica em consulta" },
+    { "id": "medico-cooperado", "arquivo": "assets/fotos/medico-cooperado.jpg", "descricao": "Médico cooperado sorrindo" },
+    { "id": "abraco-familia", "arquivo": "assets/fotos/abraco-familia.jpg", "descricao": "Abraço em família" },
+    { "id": "colaboradores", "arquivo": "assets/fotos/colaboradores.jpg", "descricao": "Colaboradores no escritório" }
+  ],
+  "rodape": {
+    "assinatura": "Unimed Uberlândia · Cooperativa de Trabalho Médico",
+    "site": "unimeduberlandia.coop.br",
+    "coordenadas": "18°55′S 48°16′W"
+  },
+  "areas": [
+    "Comunicação e Marketing",
+    "Comercial",
+    "Relacionamento com o Cliente",
+    "Gestão de Pessoas",
+    "Cooperativismo",
+    "Medicina Preventiva",
+    "Rede Credenciada",
+    "Tecnologia da Informação",
+    "Financeiro",
+    "Jurídico",
+    "Diretoria",
+    "Outra"
+  ]
+}

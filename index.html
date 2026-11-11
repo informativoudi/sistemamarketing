@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gerador de Peças · Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Seções"><a href="index.html" aria-current="page">Criar peça</a><a href="painel.html" class="restrito">Área restrita</a></nav>
+</header>
+
+<main class="casca">
+  <section class="busca" id="busca">
+    <h1>O que você <span>precisa criar?</span></h1>
+    <p class="lede">Escolha o formato, cole o conteúdo e o sistema monta a peça no padrão da marca Unimed.</p>
+    <div class="combo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#00433f" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.6-4.6"></path></svg>
+      <input id="formato-busca" type="text" role="combobox" aria-expanded="false" aria-controls="formato-lista" aria-autocomplete="list" autocomplete="off" placeholder="Ex.: e-mail marketing, post LinkedIn, carrossel…" aria-label="Buscar formato">
+      <ul id="formato-lista" role="listbox" hidden></ul>
+    </div>
+    <div class="atalhos" id="atalhos"></div>
+  </section>
+
+  <section class="trabalho" id="trabalho" hidden>
+    <div>
+      <form id="formulario" novalidate>
+        <div class="cartao">
+          <h2 id="titulo-formato">Conteúdo</h2>
+          <p class="sub">Preencha só o que for usar. O sistema escolhe o modelo pelo tamanho do texto.</p>
+          <div class="campos" id="campos"></div>
+        </div>
+        <div class="cartao">
+          <h2>Quem está pedindo</h2>
+          <p class="sub">Fica registrado junto com o código da peça.</p>
+          <div class="campos">
+            <div class="campo" data-campo="solicitante">
+              <label for="f-solicitante">Seu nome</label>
+              <input id="f-solicitante" name="solicitante" type="text" autocomplete="name" maxlength="80">
+            </div>
+            <div class="campo" data-campo="area">
+              <label for="f-area">Sua área</label>
+              <select id="f-area" name="area"><option value="">Selecione…</option></select>
+            </div>
+          </div>
+          <div id="mensagens"></div>
+          <div class="acoes">
+            <button class="btn primario" type="submit" id="gerar">Gerar peça <span aria-hidden="true">→</span></button>
+            <button class="btn secundario" type="button" id="trocar">Trocar formato</button>
+          </div>
+        </div>
+      </form>
+
+      <div class="cartao feito" id="feito" hidden>
+        <h2>Peça registrada</h2>
+        <div class="codigo" id="codigo"></div>
+        <p>Guarde esse código. Ele identifica esta versão oficial da peça no painel.</p>
+        <div class="acoes">
+          <button class="btn primario" type="button" id="baixar">Baixar HTML <span aria-hidden="true">↓</span></button>
+          <button class="btn secundario" type="button" id="copiar">Copiar código do e-mail</button>
+          <button class="btn secundario" type="button" id="nova">Nova peça</button>
+        </div>
+        <p class="ajuda" id="copiado" role="status"></p>
+      </div>
+    </div>
+
+    <aside class="previa" aria-label="Prévia">
+      <div class="cabeca"><h2 class="cartao-titulo" style="margin:0;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#00995d">Prévia</h2><span id="largura" style="font-size:13px;color:#6f6f6e"></span></div>
+      <div class="decisao" id="decisao"></div>
+      <div class="moldura"><div class="vazio" id="vazio">Preencha título e texto para ver a prévia.</div><iframe id="quadro" title="Prévia da peça" hidden></iframe></div>
+      <ul class="porque" id="porque"></ul>
+    </aside>
+  </section>
+</main>
+
+<script src="src/motor.js"></script>
+<script src="src/modelos/email-marketing.js"></script>
+<script src="src/registro.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>

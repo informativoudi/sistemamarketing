@@ -1,0 +1,16 @@
+{
+  "_sobre": "Catálogo de formatos. 'ativo': true aparece para uso; false aparece como 'em breve'. Para liberar um formato novo, crie o arquivo de regras e o modelo e mude para true.",
+  "formatos": [
+    { "id": "email-marketing", "nome": "E-mail marketing", "grupo": "Digital", "ativo": true, "palavras": "email e-mail newsletter comunicado disparo" },
+    { "id": "post-linkedin", "nome": "Post LinkedIn", "grupo": "Digital", "ativo": false, "palavras": "linkedin post rede social" },
+    { "id": "carrossel-instagram", "nome": "Carrossel Instagram", "grupo": "Digital", "ativo": false, "palavras": "instagram carrossel feed rede social" },
+    { "id": "story-instagram", "nome": "Story Instagram", "grupo": "Digital", "ativo": false, "palavras": "instagram story stories" },
+    { "id": "banner-site", "nome": "Banner do site", "grupo": "Digital", "ativo": false, "palavras": "site banner home" },
+    { "id": "popup-site", "nome": "Pop-up do site", "grupo": "Digital", "ativo": false, "palavras": "site popup pop-up" },
+    { "id": "push-app", "nome": "Push do app", "grupo": "Digital", "ativo": false, "palavras": "app push notificação" },
+    { "id": "viva-engage", "nome": "Post Viva Engage", "grupo": "Digital", "ativo": false, "palavras": "viva engage yammer interno" },
+    { "id": "cartaz", "nome": "Cartaz A3/A4", "grupo": "Gráfico", "ativo": false, "palavras": "cartaz poster mural impresso" },
+    { "id": "convite", "nome": "Convite", "grupo": "Gráfico", "ativo": false, "palavras": "convite evento" },
+    { "id": "flyer", "nome": "Flyer", "grupo": "Gráfico", "ativo": false, "palavras": "flyer panfleto folheto impresso" }
+  ]
+}

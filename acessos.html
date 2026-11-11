@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Acessos · Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Área restrita" id="menu-restrito"></nav>
+</header>
+
+<main class="casca">
+  <section id="portao" class="portao" hidden></section>
+  <div id="conteudo-restrito" hidden>
+    <section class="busca compacta" style="padding-top:8px">
+      <h1>Acessos <span>à área restrita</span></h1>
+    </section>
+    <p id="origem" class="alerta aviso" hidden></p>
+    <p class="intro">Quem pode abrir o painel, o Núcleo da Marca e o Radar. Para incluir alguém, coloque o e-mail aqui; a pessoa entra em "Área restrita → Primeiro acesso" e cria a própria senha.</p>
+    <div class="cartao" style="margin-bottom:16px">
+      <h2>Incluir pessoa</h2>
+      <form id="novo-acesso" class="campos" novalidate>
+        <div class="campo"><label for="a-email">E-mail</label><input id="a-email" type="email" autocomplete="off" placeholder="nome@unimeduberlandia.coop.br"></div>
+        <div class="campo"><label for="a-nome">Nome</label><input id="a-nome" type="text" autocomplete="off"></div>
+        <div class="campo"><label for="a-papel">Papel</label><select id="a-papel"><option value="equipe">Equipe: vê painel, núcleo e radar</option><option value="dono">Dono: também gerencia acessos</option></select></div>
+        <div class="campo" style="justify-content:flex-end"><button class="btn primario" type="submit">Liberar acesso</button></div>
+      </form>
+      <div id="a-msg" role="status"></div>
+    </div>
+    <div class="cartao">
+      <h2>Com acesso</h2>
+      <div class="tabela-caixa"><table class="lista"><thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Desde</th><th></th></tr></thead><tbody id="a-linhas"></tbody></table></div>
+    </div>
+  </div>
+</main>
+
+<script src="src/acesso.js"></script>
+<script src="src/acessos.js"></script>
+</body>
+</html>

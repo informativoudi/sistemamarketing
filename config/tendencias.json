@@ -1,0 +1,43 @@
+{
+  "_sobre": "Radar de Tendências. Para ligar ou desligar uma tendência, troque o status: \"ativa\", \"teste\" ou \"arquivada\". Só as ativas chegam às peças.",
+  "ciclo": "2027",
+  "conceito": "Humano por natureza",
+  "tendencias": [
+    {
+      "id": "prova-de-processo",
+      "nome": "Prova de processo",
+      "status": "ativa",
+      "comoAplica": "Rodapé técnico com o código da peça e as coordenadas de Uberlândia."
+    },
+    {
+      "id": "quadrado-laranja",
+      "nome": "Ponto laranja",
+      "status": "ativa",
+      "comoAplica": "O ponto final do título vira um quadrado laranja."
+    },
+    {
+      "id": "moldura-box",
+      "nome": "Moldura box",
+      "status": "ativa",
+      "comoAplica": "Foto e cards com três cantos arredondados e o inferior direito reto."
+    },
+    {
+      "id": "titulo-contraste",
+      "nome": "Título em contraste",
+      "status": "ativa",
+      "comoAplica": "Título em peso Black, caixa alta, entrelinha apertada."
+    },
+    {
+      "id": "textura-papel",
+      "nome": "Textura real",
+      "status": "ativa",
+      "comoAplica": "Somente em peças gráficas e campanhas. Não se aplica a e-mail."
+    },
+    {
+      "id": "bento-dark-neon",
+      "nome": "Bento assimétrico dark & neon",
+      "status": "teste",
+      "comoAplica": "Ainda em teste: não aparece nas peças geradas."
+    }
+  ]
+}

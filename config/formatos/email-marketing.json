@@ -1,0 +1,67 @@
+{
+  "_sobre": "Regras do formato E-mail marketing. A árvore de decisão lê estes valores; mude aqui e todas as peças novas seguem.",
+  "id": "email-marketing",
+  "nome": "E-mail marketing",
+  "sigla": "EM",
+  "largura": 600,
+
+  "campos": [
+    { "id": "tema",      "rotulo": "Tema", "tipo": "escolha", "obrigatorio": true, "opcoes": ["Institucional", "Saúde", "Evento", "Aviso"] },
+    { "id": "titulo",    "rotulo": "Título", "tipo": "texto", "obrigatorio": true, "max": 90, "ajuda": "Curto e direto. Até 60 caracteres fica no tamanho cheio." },
+    { "id": "subtitulo", "rotulo": "Subtítulo", "tipo": "texto", "obrigatorio": false, "max": 140 },
+    { "id": "texto",     "rotulo": "Texto", "tipo": "texto-longo", "obrigatorio": true, "max": 2400, "ajuda": "Separe os parágrafos com uma linha em branco. Uma linha curta sozinha vira intertítulo." },
+    { "id": "imagem",    "rotulo": "Imagem", "tipo": "imagem-aprovada", "obrigatorio": false },
+    { "id": "data",      "rotulo": "Data do evento", "tipo": "data", "obrigatorio": false },
+    { "id": "hora",      "rotulo": "Horário", "tipo": "hora", "obrigatorio": false },
+    { "id": "local",     "rotulo": "Local", "tipo": "texto", "obrigatorio": false, "max": 80 },
+    { "id": "ctaTexto",  "rotulo": "Texto do botão", "tipo": "texto", "obrigatorio": false, "max": 28 },
+    { "id": "ctaLink",   "rotulo": "Link do botão", "tipo": "link", "obrigatorio": false }
+  ],
+
+  "temas": {
+    "Institucional": { "faixa": "petroleo",     "destaque": "petroleo",     "rotulo": "Institucional" },
+    "Saúde":         { "faixa": "institucional", "destaque": "institucional", "rotulo": "Saúde" },
+    "Evento":        { "faixa": "citrico",       "destaque": "institucional", "rotulo": "Evento" },
+    "Aviso":         { "faixa": "laranja",       "destaque": "laranjaEscuro", "rotulo": "Aviso" }
+  },
+
+  "arvore": {
+    "variante": {
+      "_regra": "Conta os caracteres do texto (sem espaços extras).",
+      "curto": { "ate": 300 },
+      "medio": { "ate": 900 },
+      "longo": { "acima": 900 }
+    },
+    "titulo": {
+      "_regra": "Tamanho da fonte do título em px, por quantidade de caracteres.",
+      "degraus": [
+        { "ate": 40, "curto": 40, "medio": 34, "longo": 30 },
+        { "ate": 60, "curto": 34, "medio": 30, "longo": 28 },
+        { "ate": 90, "curto": 28, "medio": 26, "longo": 24 }
+      ]
+    },
+    "intertitulo": {
+      "_regra": "Linha sozinha, com até 60 caracteres e sem ponto final, seguida de outro parágrafo, vira intertítulo (só no modelo longo).",
+      "maxCaracteres": 60
+    },
+    "imagem": {
+      "_regra": "No curto a imagem não entra (o título é o destaque). No médio e longo entra abaixo do cabeçalho.",
+      "curto": false,
+      "medio": true,
+      "longo": true
+    },
+    "data": {
+      "_regra": "Se houver data, entra o bloco padrão de data. No curto ele fica grande, logo abaixo do título."
+    },
+    "botao": {
+      "_regra": "Botão exige texto e link juntos. No longo, o botão aparece também depois do primeiro parágrafo.",
+      "repetirNoLongo": true
+    }
+  },
+
+  "validacoes": {
+    "tituloAvisoAcima": 60,
+    "maxParagrafos": 12,
+    "linkPrecisaHttps": true
+  }
+}

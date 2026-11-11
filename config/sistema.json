@@ -1,0 +1,11 @@
+{
+  "_sobre": "Configuração técnica. 'registro.modo': \"local\" guarda os pedidos só neste navegador (bom para testar); \"supabase\" grava no banco compartilhado e o painel enxerga todo mundo.",
+  "nome": "Gerador de Peças · Unimed Uberlândia",
+  "baseUrlPublica": "",
+  "registro": {
+    "modo": "local",
+    "supabaseUrl": "",
+    "supabaseChaveAnonima": "",
+    "tabela": "pedidos"
+  }
+}
