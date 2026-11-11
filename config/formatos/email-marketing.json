@@ -1,47 +1,210 @@
 {
-  "_sobre": "Regras do formato E-mail marketing. A árvore de decisão lê estes valores; mude aqui e todas as peças novas seguem.",
+  "_sobre": "Regras do formato E-mail marketing. A árvore de decisão lê estes valores; mude aqui e todas as peças novas seguem. Baseado no Manual de Linguagem (MS.138 p.168-171) e no Manual de Marca do Grupo.",
   "id": "email-marketing",
   "nome": "E-mail marketing",
   "sigla": "EM",
   "largura": 600,
-
   "campos": [
-    { "id": "tema",      "rotulo": "Tema", "tipo": "escolha", "obrigatorio": true, "opcoes": ["Institucional", "Saúde", "Evento", "Aviso"] },
-    { "id": "titulo",    "rotulo": "Título", "tipo": "texto", "obrigatorio": true, "max": 90, "ajuda": "Curto e direto. Até 60 caracteres fica no tamanho cheio." },
-    { "id": "subtitulo", "rotulo": "Subtítulo", "tipo": "texto", "obrigatorio": false, "max": 140 },
-    { "id": "texto",     "rotulo": "Texto", "tipo": "texto-longo", "obrigatorio": true, "max": 2400, "ajuda": "Separe os parágrafos com uma linha em branco. Uma linha curta sozinha vira intertítulo." },
-    { "id": "imagem",    "rotulo": "Imagem", "tipo": "imagem-aprovada", "obrigatorio": false },
-    { "id": "data",      "rotulo": "Data do evento", "tipo": "data", "obrigatorio": false },
-    { "id": "hora",      "rotulo": "Horário", "tipo": "hora", "obrigatorio": false },
-    { "id": "local",     "rotulo": "Local", "tipo": "texto", "obrigatorio": false, "max": 80 },
-    { "id": "ctaTexto",  "rotulo": "Texto do botão", "tipo": "texto", "obrigatorio": false, "max": 28 },
-    { "id": "ctaLink",   "rotulo": "Link do botão", "tipo": "link", "obrigatorio": false }
+    {
+      "id": "publico",
+      "rotulo": "Para quem vai",
+      "tipo": "escolha",
+      "obrigatorio": true,
+      "opcoes": [
+        "Interno",
+        "Externo"
+      ],
+      "descricoes": {
+        "Interno": "Colaboradores · marca do Grupo",
+        "Externo": "Clientes e cooperados · marca Unimed + ANS (evento: marca do Grupo)"
+      }
+    },
+    {
+      "id": "tema",
+      "rotulo": "Tema",
+      "tipo": "escolha",
+      "obrigatorio": true,
+      "opcoes": [
+        "Institucional",
+        "Saúde",
+        "Evento",
+        "Aviso"
+      ]
+    },
+    {
+      "id": "cabecalho",
+      "rotulo": "Nome no cabeçalho",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 40,
+      "ajuda": "Em branco, entra o nome da sua área (ex.: Gestão de Pessoas). Use para um programa ou comitê."
+    },
+    {
+      "id": "titulo",
+      "rotulo": "Título",
+      "tipo": "texto",
+      "obrigatorio": true,
+      "max": 90,
+      "ajuda": "Curto, direto, em letras maiúsculas e minúsculas. Até 60 caracteres fica no tamanho cheio."
+    },
+    {
+      "id": "subtitulo",
+      "rotulo": "Subtítulo",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 140
+    },
+    {
+      "id": "texto",
+      "rotulo": "Texto",
+      "tipo": "texto-longo",
+      "obrigatorio": true,
+      "max": 2400,
+      "ajuda": "Separe os parágrafos com uma linha em branco. Uma linha curta sozinha vira intertítulo. Comece linhas com \"- \" para fazer uma lista (até 5 itens)."
+    },
+    {
+      "id": "imagem",
+      "rotulo": "Imagem",
+      "tipo": "imagem-aprovada",
+      "obrigatorio": false
+    },
+    {
+      "id": "data",
+      "rotulo": "Data",
+      "tipo": "data",
+      "obrigatorio": false
+    },
+    {
+      "id": "hora",
+      "rotulo": "Horário",
+      "tipo": "hora",
+      "obrigatorio": false
+    },
+    {
+      "id": "local",
+      "rotulo": "Local",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 80
+    },
+    {
+      "id": "ctaTexto",
+      "rotulo": "Texto do botão",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 28,
+      "ajuda": "Convide para a ação: \"Faça sua inscrição\", \"Confira os horários\"."
+    },
+    {
+      "id": "ctaLink",
+      "rotulo": "Link do botão",
+      "tipo": "link",
+      "obrigatorio": false
+    }
   ],
-
-  "temas": {
-    "Institucional": { "faixa": "petroleo",     "destaque": "petroleo",     "rotulo": "Institucional" },
-    "Saúde":         { "faixa": "institucional", "destaque": "institucional", "rotulo": "Saúde" },
-    "Evento":        { "faixa": "citrico",       "destaque": "institucional", "rotulo": "Evento" },
-    "Aviso":         { "faixa": "laranja",       "destaque": "laranjaEscuro", "rotulo": "Aviso" }
+  "publicos": {
+    "_regra": "Manual de Marca do Grupo (p.5-8): a marca do Grupo Unimed Uberlândia vale para conteúdos internos, eventos internos e externos e publicação de vagas. Comunicação externa (clientes, planos, campanhas) usa só a marca Unimed Uberlândia, com o registro ANS.",
+    "Interno": {
+      "logo": "interno",
+      "assinatura": "Grupo Unimed Uberlândia",
+      "ans": false,
+      "layout": "interno-2027",
+      "selo": "Comunicado interno"
+    },
+    "Externo": {
+      "logo": "externo",
+      "assinatura": "Unimed Uberlândia",
+      "ans": true,
+      "porTema": {
+        "Evento": {
+          "logo": "interno",
+          "assinatura": "Grupo Unimed Uberlândia",
+          "ans": false,
+          "motivo": "evento externo usa a marca do Grupo (Manual do Grupo, p.5)",
+          "layout": "interno-2027",
+          "selo": "Evento"
+        }
+      },
+      "layout": "externo"
+    }
   },
-
+  "temas": {
+    "_regra": "Papéis fixos de cor: botão sempre laranja, data sempre cítrico. No externo, a faixa do cabeçalho leva a cor do tema (logo nunca sobre o laranja). No interno 2027, o tema muda só o fundo suave do bloco da área (cores de apoio).",
+    "Institucional": {
+      "faixa": "verdeEscuro",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioAreia",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Institucional"
+    },
+    "Saúde": {
+      "faixa": "institucional",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioVerde",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Saúde"
+    },
+    "Evento": {
+      "faixa": "citrico",
+      "textoFaixa": "verdeEscuro",
+      "fundoInterno": "apoioAzul",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Evento"
+    },
+    "Aviso": {
+      "faixa": "laranja",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioAmarelo",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Aviso"
+    }
+  },
+  "botao": {
+    "cor": "laranja",
+    "texto": "branco"
+  },
   "arvore": {
     "variante": {
       "_regra": "Conta os caracteres do texto (sem espaços extras).",
-      "curto": { "ate": 300 },
-      "medio": { "ate": 900 },
-      "longo": { "acima": 900 }
+      "curto": {
+        "ate": 300
+      },
+      "medio": {
+        "ate": 900
+      },
+      "longo": {
+        "acima": 900
+      }
     },
     "titulo": {
       "_regra": "Tamanho da fonte do título em px, por quantidade de caracteres.",
       "degraus": [
-        { "ate": 40, "curto": 40, "medio": 34, "longo": 30 },
-        { "ate": 60, "curto": 34, "medio": 30, "longo": 28 },
-        { "ate": 90, "curto": 28, "medio": 26, "longo": 24 }
+        {
+          "ate": 40,
+          "curto": 40,
+          "medio": 34,
+          "longo": 30
+        },
+        {
+          "ate": 60,
+          "curto": 34,
+          "medio": 30,
+          "longo": 28
+        },
+        {
+          "ate": 90,
+          "curto": 28,
+          "medio": 26,
+          "longo": 24
+        }
       ]
     },
     "intertitulo": {
-      "_regra": "Linha sozinha, com até 60 caracteres e sem ponto final, seguida de outro parágrafo, vira intertítulo (só no modelo longo).",
+      "_regra": "Linha sozinha, com até 60 caracteres e sem ponto final, seguida de outro parágrafo, vira intertítulo (nos modelos médio e longo). Fica com 60% do tamanho do título (MS.138 p.111).",
       "maxCaracteres": 60
     },
     "imagem": {
@@ -51,14 +214,16 @@
       "longo": true
     },
     "data": {
-      "_regra": "Se houver data, entra o bloco padrão de data. No curto ele fica grande, logo abaixo do título."
+      "_regra": "Se houver data, entra o bloco padrão com a data em destaque (cítrico ou laranja, MS.138 p.168-171)."
     },
     "botao": {
-      "_regra": "Botão exige texto e link juntos. No longo, o botão aparece também depois do primeiro parágrafo.",
+      "_regra": "Botão exige texto e link juntos. No longo, o botão aparece depois do primeiro parágrafo e se repete no fim junto com a data, reforçando o período (MS.138 p.171).",
       "repetirNoLongo": true
+    },
+    "lista": {
+      "_regra": "Linhas começando com \"- \" viram lista. Até 5 itens para o texto não ficar cansativo (MS.138 p.171)."
     }
   },
-
   "validacoes": {
     "tituloAvisoAcima": 60,
     "maxParagrafos": 12,

@@ -24,12 +24,12 @@
     return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
   }
 
+  /* A chave pública vai só no "apikey"; o "Authorization" leva o login da pessoa, quando houver.
+     (Chaves novas "sb_publishable_" não são aceitas no Authorization.) */
   function cabecalhos(cfg, token) {
-    return {
-      'apikey': cfg.supabaseChaveAnonima,
-      'Authorization': 'Bearer ' + (token || cfg.supabaseChaveAnonima),
-      'Content-Type': 'application/json'
-    };
+    var h = { 'apikey': cfg.supabaseChaveAnonima, 'Content-Type': 'application/json' };
+    if (token) h.Authorization = 'Bearer ' + token;
+    return h;
   }
 
   async function salvar(cfg, pedido) {

@@ -1,19 +1,20 @@
 /* ============================================================
-   Área restrita · login e permissões
-   Usa o login do Supabase (e-mail e senha). Só entra quem está na
-   tabela "acessos". Papéis: "dono" (gerencia acessos) e "equipe".
+   Área restrita · login com GitHub e permissões
+   O login passa pelo Supabase (provedor GitHub). Só entra quem
+   tem o usuário do GitHub na tabela "acessos".
+   Papéis: "dono" (gerencia acessos) e "equipe".
    Sem banco configurado, a área restrita só abre no computador
    local (localhost), para testes.
    ============================================================ */
 (function (raiz) {
   'use strict';
 
-  var CHAVE = 'unimed-sessao-v1';
+  var CHAVE = 'unimed-sessao-v2';
   var sistema = null;
 
   function ler() { try { return JSON.parse(localStorage.getItem(CHAVE) || 'null'); } catch (e) { return null; } }
-  function gravar(s) { try { if (s) localStorage.setItem(CHAVE, JSON.stringify(s)); else localStorage.removeItem(CHAVE); } catch (e) { /* sem armazenamento: sessão só desta aba */ } memoria = s; }
   var memoria = ler();
+  function gravar(s) { memoria = s; try { if (s) localStorage.setItem(CHAVE, JSON.stringify(s)); else localStorage.removeItem(CHAVE); } catch (e) { /* sem armazenamento: vale só nesta aba */ } }
 
   function cfg() { return (sistema && sistema.registro) || {}; }
   function base() { return String(cfg().supabaseUrl || '').replace(/\/$/, ''); }
@@ -28,65 +29,48 @@
   }
 
   function cabecalhos(token) {
-    return { 'apikey': cfg().supabaseChaveAnonima, 'Authorization': 'Bearer ' + (token || cfg().supabaseChaveAnonima), 'Content-Type': 'application/json' };
+    var h = { 'apikey': cfg().supabaseChaveAnonima, 'Content-Type': 'application/json' };
+    if (token) h.Authorization = 'Bearer ' + token; // chave "sb_publishable_" vai só no apikey
+    return h;
   }
 
-  function traduzir(corpo, status) {
-    var m = String((corpo && (corpo.msg || corpo.error_description || corpo.message || corpo.error)) || '');
-    if (/invalid login credentials/i.test(m)) return 'E-mail ou senha incorretos.';
-    if (/email not confirmed/i.test(m)) return 'Confirme seu e-mail pelo link que enviamos antes de entrar.';
-    if (/database error saving new user|não tem acesso liberado/i.test(m)) return 'Este e-mail não tem acesso liberado. Peça para a Comunicação incluir você.';
-    if (/already registered|already been registered/i.test(m)) return 'Este e-mail já tem senha. Use "Entrar" ou "Esqueci a senha".';
-    if (/password should be at least/i.test(m)) return 'A senha precisa ter pelo menos 8 caracteres.';
-    if (/rate limit|too many/i.test(m)) return 'Muitas tentativas. Espere alguns minutos e tente de novo.';
-    return m || ('Não foi possível concluir (' + status + ').');
+  /* Lê o usuário do GitHub de dentro do token (só para exibir; quem decide o acesso é o banco). */
+  function lerToken(t) {
+    try {
+      var p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
+      var j = JSON.parse(decodeURIComponent(escape(atob(p + '==='.slice((p.length + 3) % 4)))));
+      var meta = j.user_metadata || {};
+      return { github: meta.user_name || meta.preferred_username || '', nome: meta.full_name || meta.name || '', foto: meta.avatar_url || '' };
+    } catch (e) { return { github: '', nome: '', foto: '' }; }
   }
 
-  async function auth(caminho, corpo, token, metodo) {
-    var r = await fetch(base() + '/auth/v1/' + caminho, { method: metodo || 'POST', headers: cabecalhos(token), body: corpo ? JSON.stringify(corpo) : undefined });
-    var j = null; try { j = await r.json(); } catch (e) { j = null; }
-    if (!r.ok) throw new Error(traduzir(j, r.status));
-    return j;
-  }
-
-  function guardarSessao(j) {
-    var s = { token: j.access_token, renovar: j.refresh_token, expira: Date.now() + (Number(j.expires_in) || 3600) * 1000, email: (j.user && j.user.email) || (memoria && memoria.email) || '' };
-    gravar(s);
-    return s;
+  function guardarSessao(acesso, renovar, expiraEm) {
+    var info = lerToken(acesso);
+    gravar({ token: acesso, renovar: renovar, expira: Date.now() + (Number(expiraEm) || 3600) * 1000, github: info.github, nome: info.nome, foto: info.foto });
   }
 
   async function token() {
     var s = memoria;
     if (!s) return null;
     if (Date.now() < s.expira - 60000) return s.token;
-    try { return guardarSessao(await auth('token?grant_type=refresh_token', { refresh_token: s.renovar })).token; }
-    catch (e) { gravar(null); return null; }
+    try {
+      var r = await fetch(base() + '/auth/v1/token?grant_type=refresh_token', { method: 'POST', headers: cabecalhos(), body: JSON.stringify({ refresh_token: s.renovar }) });
+      if (!r.ok) throw new Error();
+      var j = await r.json();
+      guardarSessao(j.access_token, j.refresh_token, j.expires_in);
+      return memoria.token;
+    } catch (e) { gravar(null); return null; }
   }
 
-  async function entrar(email, senha) {
-    return guardarSessao(await auth('token?grant_type=password', { email: email.trim().toLowerCase(), password: senha }));
-  }
-
-  async function criarConta(email, senha) {
-    var destino = location.href.split('#')[0];
-    var j = await auth('signup?redirect_to=' + encodeURIComponent(destino), { email: email.trim().toLowerCase(), password: senha });
-    if (j && j.access_token) { guardarSessao(j); return 'entrou'; }
-    return 'confirmar';
-  }
-
-  async function lembrarSenha(email) {
-    var destino = location.href.split('#')[0];
-    await auth('recover?redirect_to=' + encodeURIComponent(destino), { email: email.trim().toLowerCase() });
-  }
-
-  async function novaSenha(senha) {
-    await auth('user', { password: senha }, await token(), 'PUT');
+  function entrarComGitHub() {
+    var volta = location.href.split('#')[0].split('?')[0];
+    location.href = base() + '/auth/v1/authorize?provider=github&redirect_to=' + encodeURIComponent(volta);
   }
 
   async function sair() {
     var t = memoria && memoria.token;
     gravar(null);
-    if (t && bancoLigado()) { try { await auth('logout', null, t); } catch (e) { /* já saiu localmente */ } }
+    if (t && bancoLigado()) { try { await fetch(base() + '/auth/v1/logout', { method: 'POST', headers: cabecalhos(t) }); } catch (e) { /* já saiu aqui */ } }
     location.href = 'index.html';
   }
 
@@ -99,17 +83,23 @@
     return r.json();
   }
 
-  /* Volta de um link enviado por e-mail (confirmação ou troca de senha). */
-  function lerRetornoDoEmail() {
-    if (!/access_token=/.test(location.hash)) return null;
-    var p = new URLSearchParams(location.hash.slice(1));
-    history.replaceState(null, '', location.pathname + location.search);
-    if (p.get('error_description')) return { erro: p.get('error_description').replace(/\+/g, ' ') };
-    guardarSessao({ access_token: p.get('access_token'), refresh_token: p.get('refresh_token'), expires_in: p.get('expires_in') });
-    return { tipo: p.get('type') };
+  /* Volta do GitHub: o Supabase devolve o login no endereço (#access_token=…) ou um erro. */
+  function lerRetorno() {
+    var texto = location.hash.slice(1) + '&' + location.search.slice(1);
+    if (!/access_token=|error=/.test(texto)) return null;
+    var p = new URLSearchParams(texto);
+    history.replaceState(null, '', location.pathname);
+    if (p.get('error')) {
+      var d = String(p.get('error_description') || '').replace(/\+/g, ' ');
+      if (/database error|não tem acesso|saving new user/i.test(d)) return { erro: 'Seu usuário do GitHub não tem acesso liberado. Peça para a Comunicação incluir você.' };
+      if (/access_denied/i.test(p.get('error'))) return { erro: 'O login foi cancelado no GitHub.' };
+      return { erro: d || 'Não foi possível entrar com o GitHub.' };
+    }
+    guardarSessao(p.get('access_token'), p.get('refresh_token'), p.get('expires_in'));
+    return { ok: true };
   }
 
-  /* ---------- Tela de login ---------- */
+  /* ---------- Tela de entrada ---------- */
   function el(tag, attrs, filhos) {
     var n = document.createElement(tag);
     Object.keys(attrs || {}).forEach(function (k) {
@@ -121,77 +111,24 @@
     return n;
   }
 
-  function campo(id, rotulo, tipo, auto) {
-    return el('div', { 'class': 'campo largo' }, [
-      el('label', { 'for': id, texto: rotulo }),
-      el('input', { id: id, type: tipo, autocomplete: auto, required: 'required' })
-    ]);
-  }
+  var ICONE_GITHUB = '<svg width="20" height="20" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>';
 
-  function telaPortao(modo, mensagem, aoEntrar) {
+  function telaPortao(mensagem, comBotao) {
     var caixa = document.getElementById('portao');
     caixa.textContent = '';
     caixa.hidden = false;
-    var titulos = {
-      entrar: ['Área restrita', 'Painel, Núcleo da Marca e Radar de Tendências. Só para quem tem acesso liberado.'],
-      primeiro: ['Primeiro acesso', 'Seu e-mail precisa estar liberado pela Comunicação. Crie uma senha com pelo menos 8 caracteres.'],
-      esqueci: ['Esqueci a senha', 'Enviamos um link para você criar uma senha nova.'],
-      nova: ['Nova senha', 'Escolha uma senha com pelo menos 8 caracteres.'],
-      bloqueado: ['Área restrita', '']
-    };
-    var t = titulos[modo];
     var cartao = el('div', { 'class': 'cartao portao-cartao' }, [
-      el('h1', { 'class': 'portao-titulo' }, [t[0].split(' ')[0].toUpperCase() + ' ', el('span', { texto: t[0].split(' ').slice(1).join(' ') })]),
-      t[1] ? el('p', { 'class': 'sub', texto: t[1] }) : null
+      el('h1', { 'class': 'portao-titulo' }, ['ÁREA ', el('span', { texto: 'restrita' })]),
+      el('p', { 'class': 'sub', texto: 'Painel, Núcleo da Marca e Radar de Tendências. Só para quem tem acesso liberado.' })
     ]);
-    var aviso = el('div', { role: 'status' });
-    if (mensagem) aviso.appendChild(el('p', { 'class': 'alerta ' + (mensagem.ok ? 'ok' : mensagem.aviso ? 'aviso' : 'erro'), texto: mensagem.texto }));
-
-    if (modo === 'bloqueado') { cartao.appendChild(aviso); caixa.appendChild(cartao); return; }
-
-    var form = el('form', { 'class': 'campos', novalidate: 'novalidate' });
-    if (modo !== 'nova') form.appendChild(campo('p-email', 'E-mail', 'email', 'username'));
-    if (modo === 'entrar') form.appendChild(campo('p-senha', 'Senha', 'password', 'current-password'));
-    if (modo === 'primeiro' || modo === 'nova') {
-      form.appendChild(campo('p-senha', 'Senha', 'password', 'new-password'));
-      form.appendChild(campo('p-senha2', 'Repita a senha', 'password', 'new-password'));
+    if (comBotao) {
+      var botao = el('button', { 'class': 'btn primario btn-github', type: 'button', onclick: entrarComGitHub });
+      botao.innerHTML = ICONE_GITHUB;
+      botao.appendChild(document.createTextNode('Entrar com GitHub'));
+      cartao.appendChild(botao);
     }
-    var botao = el('button', { 'class': 'btn primario', type: 'submit', texto: { entrar: 'Entrar', primeiro: 'Criar senha', esqueci: 'Enviar link', nova: 'Salvar senha' }[modo] });
-    form.appendChild(el('div', { 'class': 'campo largo' }, [botao]));
-    cartao.appendChild(form);
-    cartao.appendChild(aviso);
-
-    var links = el('p', { 'class': 'portao-links' });
-    function link(texto, alvo) { return el('button', { type: 'button', 'class': 'link', texto: texto, onclick: function () { telaPortao(alvo, null, aoEntrar); } }); }
-    if (modo === 'entrar') { links.appendChild(link('Primeiro acesso', 'primeiro')); links.appendChild(link('Esqueci a senha', 'esqueci')); }
-    else if (modo !== 'nova') links.appendChild(link('Voltar para entrar', 'entrar'));
-    cartao.appendChild(links);
+    if (mensagem) cartao.appendChild(el('p', { 'class': 'alerta ' + (mensagem.aviso ? 'aviso' : 'erro'), role: 'status', texto: mensagem.texto }));
     caixa.appendChild(cartao);
-
-    form.addEventListener('submit', async function (ev) {
-      ev.preventDefault();
-      var v = function (id) { var i = document.getElementById(id); return i ? i.value : ''; };
-      aviso.textContent = '';
-      var erro = function (m) { aviso.textContent = ''; aviso.appendChild(el('p', { 'class': 'alerta erro', texto: m })); };
-      if (modo !== 'nova' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v('p-email').trim())) return erro('Digite um e-mail válido.');
-      if ((modo === 'primeiro' || modo === 'nova') && v('p-senha').length < 8) return erro('A senha precisa ter pelo menos 8 caracteres.');
-      if ((modo === 'primeiro' || modo === 'nova') && v('p-senha') !== v('p-senha2')) return erro('As duas senhas não são iguais.');
-      if (modo === 'entrar' && !v('p-senha')) return erro('Digite sua senha.');
-      botao.disabled = true;
-      try {
-        if (modo === 'entrar') { await entrar(v('p-email'), v('p-senha')); await aoEntrar(); }
-        else if (modo === 'primeiro') {
-          var r = await criarConta(v('p-email'), v('p-senha'));
-          if (r === 'entrou') await aoEntrar();
-          else telaPortao('entrar', { ok: true, texto: 'Pronto. Enviamos um link de confirmação para o seu e-mail. Depois de confirmar, é só entrar.' }, aoEntrar);
-        } else if (modo === 'esqueci') {
-          await lembrarSenha(v('p-email'));
-          telaPortao('entrar', { ok: true, texto: 'Se o e-mail tiver acesso, o link chega em alguns minutos. Confira também o spam.' }, aoEntrar);
-        } else if (modo === 'nova') { await novaSenha(v('p-senha')); await aoEntrar(); }
-      } catch (e) { erro(e.message); }
-      botao.disabled = false;
-    });
-    var primeiro = form.querySelector('input'); if (primeiro) primeiro.focus();
   }
 
   /* ---------- Menu da área restrita ---------- */
@@ -207,7 +144,11 @@
       if (i[0] === atual) a.setAttribute('aria-current', 'page');
       nav.appendChild(a);
     });
-    nav.appendChild(el('button', { type: 'button', 'class': 'link sair', title: ctx.email || 'Modo local', texto: 'Sair', onclick: sair }));
+    var quem = ctx.github ? '@' + ctx.github : 'modo local';
+    var sairBtn = el('button', { type: 'button', 'class': 'link sair', title: 'Sair (' + quem + ')', onclick: sair });
+    if (ctx.foto) sairBtn.appendChild(el('img', { src: ctx.foto, alt: '', width: '22', height: '22' }));
+    sairBtn.appendChild(document.createTextNode('Sair'));
+    nav.appendChild(sairBtn);
   }
 
   /* Protege a página: só chama aoLiberar(ctx) quando a pessoa tem acesso. */
@@ -218,39 +159,34 @@
 
     if (!bancoLigado()) {
       if (ehLocal()) {
-        var ctxLocal = { papel: 'dono', email: '', token: null, local: true, sistema: sistema };
+        var ctxLocal = { papel: 'dono', github: '', token: null, local: true, sistema: sistema };
         montarMenu(ctxLocal, opcoes.pagina);
         conteudo.hidden = false;
         return opcoes.aoLiberar(ctxLocal);
       }
-      return telaPortao('bloqueado', { aviso: true, texto: 'A área restrita ainda não foi ligada. Ela abre depois que o banco com login estiver configurado (veja docs/acesso-restrito.md).' });
+      return telaPortao({ aviso: true, texto: 'A área restrita ainda não foi ligada. Ela abre depois que o login estiver configurado (veja docs/acesso-restrito.md).' }, false);
     }
 
-    var retorno = lerRetornoDoEmail();
+    var retorno = lerRetorno();
+    if (retorno && retorno.erro) return telaPortao({ texto: retorno.erro }, true);
+    if (!(await token())) return telaPortao(null, true);
 
-    async function liberar() {
-      var p;
-      try { p = await papel(); }
-      catch (e) { return telaPortao('entrar', { texto: e.message }, liberar); }
-      if (!p) {
-        var tinhaSessao = !!memoria;
-        gravar(null);
-        return telaPortao('entrar', tinhaSessao ? { texto: 'Seu e-mail não tem acesso à área restrita. Peça para a Comunicação incluir você.' } : null, liberar);
-      }
-      if (opcoes.papelMinimo === 'dono' && p !== 'dono') {
-        return telaPortao('bloqueado', { aviso: true, texto: 'Só quem administra os acessos pode abrir esta página.' });
-      }
-      document.getElementById('portao').hidden = true;
-      var ctx = { papel: p, email: memoria && memoria.email, token: await token(), local: false, sistema: sistema };
-      montarMenu(ctx, opcoes.pagina);
-      conteudo.hidden = false;
-      return opcoes.aoLiberar(ctx);
+    var p;
+    try { p = await papel(); }
+    catch (e) { return telaPortao({ texto: e.message }, true); }
+    if (!p) {
+      var quem = memoria && memoria.github ? ' (@' + memoria.github + ')' : '';
+      gravar(null);
+      return telaPortao({ texto: 'Seu usuário do GitHub' + quem + ' não tem acesso liberado. Peça para a Comunicação incluir você.' }, true);
     }
-
-    if (retorno && retorno.erro) return telaPortao('entrar', { texto: 'O link expirou ou já foi usado. Peça um novo.' }, liberar);
-    if (retorno && retorno.tipo === 'recovery') return telaPortao('nova', null, liberar);
-    if (!(await token())) return telaPortao('entrar', null, liberar);
-    return liberar();
+    if (opcoes.papelMinimo === 'dono' && p !== 'dono') {
+      return telaPortao({ aviso: true, texto: 'Só quem administra os acessos pode abrir esta página.' }, false);
+    }
+    document.getElementById('portao').hidden = true;
+    var ctx = { papel: p, github: memoria.github, foto: memoria.foto, token: await token(), local: false, sistema: sistema };
+    montarMenu(ctx, opcoes.pagina);
+    conteudo.hidden = false;
+    return opcoes.aoLiberar(ctx);
   }
 
   /* Chamadas ao banco já com o login da pessoa. */
@@ -259,7 +195,7 @@
     var r = await fetch(base() + '/rest/v1/' + caminho, { method: opcoes.metodo || 'GET', headers: Object.assign(cabecalhos(await token()), opcoes.cabecalhos || {}), body: opcoes.corpo ? JSON.stringify(opcoes.corpo) : undefined });
     if (!r.ok) {
       var j = null; try { j = await r.json(); } catch (e) { j = null; }
-      if (j && /duplicate key/i.test(j.message || '')) throw new Error('Esse e-mail já está na lista.');
+      if (j && /duplicate key/i.test(j.message || '')) throw new Error('Esse usuário já está na lista.');
       throw new Error((j && j.message) || ('O banco recusou a operação (' + r.status + ').'));
     }
     return r.status === 204 ? null : r.json().catch(function () { return null; });

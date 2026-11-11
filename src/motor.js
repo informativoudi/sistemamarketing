@@ -29,15 +29,63 @@
     return ativas;
   }
 
-  /* Quebra o texto em parágrafos; linhas curtas sem ponto final viram intertítulo. */
+  var MARCA_LISTA = /^\s*(?:[-•*–]|\d+[.)])\s+/;
+
+  /* Quebra o texto em blocos: parágrafo, intertítulo (linha curta sem ponto final) e lista (linhas com "- "). */
   function dividirTexto(texto, maxIntertitulo, permitirIntertitulo) {
-    var partes = limpar(texto).split(/\n\s*\n/).map(function (p) { return p.replace(/\s*\n\s*/g, ' ').trim(); }).filter(Boolean);
-    return partes.map(function (p, i) {
-      var curta = p.length <= maxIntertitulo && !/[.!?:;,…]$/.test(p);
-      var temSeguinte = i < partes.length - 1;
-      if (permitirIntertitulo && curta && temSeguinte) return { tipo: 'intertitulo', texto: p };
-      return { tipo: 'paragrafo', texto: p };
+    var blocos = [];
+    var partes = limpar(texto).split(/\n\s*\n/).filter(function (p) { return p.trim(); });
+    partes.forEach(function (parte) {
+      var linhas = parte.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+      var prosa = [];
+      var itens = [];
+      function fecharProsa() { if (prosa.length) { blocos.push({ tipo: 'paragrafo', texto: prosa.join(' ') }); prosa = []; } }
+      function fecharLista() { if (itens.length) { blocos.push({ tipo: 'lista', itens: itens }); itens = []; } }
+      linhas.forEach(function (l) {
+        if (MARCA_LISTA.test(l)) { fecharProsa(); itens.push(l.replace(MARCA_LISTA, '')); }
+        else { fecharLista(); prosa.push(l); }
+      });
+      fecharProsa(); fecharLista();
     });
+    return blocos.map(function (b, i) {
+      if (b.tipo !== 'paragrafo') return b;
+      var curta = b.texto.length <= maxIntertitulo && !/[.!?:;,…]$/.test(b.texto);
+      var temSeguinte = i < blocos.length - 1;
+      if (permitirIntertitulo && curta && temSeguinte) return { tipo: 'intertitulo', texto: b.texto };
+      return b;
+    });
+  }
+
+  /* Regras de linguagem do Manual (MS.138): só avisam, não bloqueiam. */
+  function revisarLinguagem(dados, ling) {
+    var avisos = [];
+    if (!ling) return avisos;
+    var titulo = limpar(dados.titulo);
+    var letras = titulo.replace(/[^A-Za-zÀ-ÿ]/g, '');
+    if (letras.length >= 4 && letras === letras.toUpperCase()) {
+      avisos.push({ campo: 'titulo', msg: 'Título todo em maiúsculas. O manual pede maiúsculas e minúsculas, que leem melhor.' });
+    }
+    var tudo = [titulo, limpar(dados.subtitulo), limpar(dados.texto), limpar(dados.ctaTexto)].join('\n');
+    var exclam = (tudo.match(/!/g) || []).length;
+    if (ling.maxExclamacoes != null && exclam > ling.maxExclamacoes) {
+      avisos.push({ campo: 'texto', msg: 'São ' + exclam + ' pontos de exclamação. Use no máximo ' + ling.maxExclamacoes + '; o tom é próximo, sem exagero.' });
+    }
+    var frases = limpar(dados.texto).replace(/\n+/g, ' ').split(/(?<=[.!?…])\s+/);
+    var longas = frases.filter(function (f) { return f.split(/\s+/).filter(Boolean).length > ling.frasesLongasPalavras; }).length;
+    if (longas) avisos.push({ campo: 'texto', msg: longas + (longas > 1 ? ' frases têm' : ' frase tem') + ' mais de ' + ling.frasesLongasPalavras + ' palavras. Frases curtas, em ordem direta, ficam mais claras.' });
+
+    var achados = [];
+    Object.keys(ling.estrangeirismos || {}).forEach(function (termo) {
+      var re = new RegExp('(^|[^A-Za-zÀ-ÿ])' + termo.replace(/[-]/g, '[- ]?') + '(?=$|[^A-Za-zÀ-ÿ])', 'i');
+      if (re.test(tudo)) achados.push('"' + termo + '"' + (ling.estrangeirismos[termo] ? ' → ' + ling.estrangeirismos[termo] : ''));
+    });
+    if (achados.length) avisos.push({ campo: 'texto', msg: 'Evite estrangeirismos: ' + achados.join(', ') + '.' });
+
+    var cta = limpar(dados.ctaTexto).toLowerCase();
+    if (/^(clique aqui|clique|saiba mais|acesse|aqui|link)$/.test(cta)) {
+      avisos.push({ campo: 'ctaTexto', msg: 'Botão genérico. Diga a ação: "Faça sua inscrição", "Confira a agenda", "Veja os horários".' });
+    }
+    return avisos;
   }
 
   function lerData(iso) {
@@ -91,6 +139,14 @@
       avisos.push({ campo: 'data', msg: 'Horário e local só aparecem quando há uma data.' });
     }
 
+    var ling = dados._linguagem;
+    if (ling && ling.maxItensLista) {
+      dividirTexto(dados.texto, 0, false).forEach(function (b) {
+        if (b.tipo === 'lista' && b.itens.length > ling.maxItensLista) avisos.push({ campo: 'texto', msg: 'Uma lista tem ' + b.itens.length + ' itens. Até ' + ling.maxItensLista + ' o texto não fica cansativo; separe ou resuma.' });
+      });
+    }
+    avisos = avisos.concat(revisarLinguagem(dados, ling));
+
     var paragrafos = limpar(dados.texto).split(/\n\s*\n/).filter(function (p) { return p.trim(); }).length;
     if (val.maxParagrafos && paragrafos > val.maxParagrafos) {
       erros.push({ campo: 'texto', msg: 'São ' + paragrafos + ' parágrafos; o máximo é ' + val.maxParagrafos + '. Para conteúdo assim, considere uma página ou cartilha.' });
@@ -117,8 +173,12 @@
 
     var tema = formato.temas[dados.tema] || formato.temas.Institucional;
     var cores = marca.cores;
-    var corFaixa = cores[tema.faixa];
-    var corDestaque = cores[tema.destaque];
+    var publicoNome = (formato.publicos && formato.publicos[dados.publico]) ? dados.publico : 'Interno';
+    var publico = (formato.publicos && formato.publicos[publicoNome]) || { logo: 'externo', assinatura: 'Unimed Uberlândia', ans: false };
+    var excecao = publico.porTema && publico.porTema[dados.tema];
+    if (excecao) publico = Object.assign({}, publico, excecao);
+    var logo = marca.logos[publico.logo];
+    var cabecalho = limpar(dados.cabecalho) || limpar(dados.area) || publico.assinatura;
 
     var ativas = tendenciasAtivas(tendencias);
     var data = lerData(dados.data);
@@ -128,7 +188,18 @@
       imagem = (marca.imagensAprovadas || []).filter(function (i) { return i.id === dados.imagem; })[0] || null;
     }
 
-    var blocos = dividirTexto(dados.texto, arv.intertitulo.maxCaracteres, variante === 'longo');
+    var blocos = dividirTexto(dados.texto, arv.intertitulo.maxCaracteres, variante !== 'curto');
+
+    // Nome da área em dois tons (linguagem 2027): última palavra em destaque.
+    var palavras = cabecalho.split(/\s+/);
+    var areaPartes = palavras.length > 1
+      ? { inicio: palavras.slice(0, -1).join(' '), fim: palavras[palavras.length - 1] }
+      : { inicio: '', fim: cabecalho };
+    var ic = marca.icones || {};
+    var nomeIcone = (ic.porArea && ic.porArea[limpar(dados.cabecalho) ? '' : limpar(dados.area)]) || ic.padrao || '';
+    var icone = nomeIcone ? (ic.pasta || 'assets/icones/') + nomeIcone + '.png' : null;
+    var corBotao = (formato.botao && cores[formato.botao.cor]) || cores.laranja;
+    var textoBotao = (formato.botao && cores[formato.botao.texto]) || '#ffffff';
 
     return {
       formato: formato.id,
@@ -136,24 +207,38 @@
       varianteNome: NOMES_VARIANTE[variante],
       caracteres: caracteres,
       tituloPx: degrau[variante],
-      tema: { nome: dados.tema, rotulo: tema.rotulo, faixa: corFaixa, destaque: corDestaque },
-      faixaClara: tema.faixa === 'citrico',
+      intertituloPx: Math.max(17, Math.round(degrau[variante] * 0.6)),
+      publico: { nome: publicoNome, assinatura: publico.assinatura, ans: !!publico.ans, logo: logo },
+      layout: publico.layout || 'externo',
+      selo: publico.selo || '',
+      cabecalho: cabecalho,
+      areaPartes: areaPartes,
+      icone: icone,
+      tema: {
+        nome: dados.tema, rotulo: tema.rotulo,
+        faixa: cores[tema.faixa], textoFaixa: cores[tema.textoFaixa] || '#ffffff',
+        fundoInterno: cores[tema.fundoInterno] || cores.apoioAreia,
+        destaque: cores[tema.destaque], textoDestaque: cores[tema.textoDestaque] || '#ffffff'
+      },
       imagem: imagem,
       data: data ? { info: data, hora: limpar(dados.hora), local: limpar(dados.local), grande: variante === 'curto' } : null,
-      botao: temBotao ? { texto: limpar(dados.ctaTexto), link: limpar(dados.ctaLink), repetir: variante === 'longo' && arv.botao.repetirNoLongo && blocos.length > 2 } : null,
+      botao: temBotao ? { texto: limpar(dados.ctaTexto), link: limpar(dados.ctaLink), cor: corBotao, corTexto: textoBotao, repetir: variante === 'longo' && arv.botao.repetirNoLongo && blocos.length > 2 } : null,
       blocos: blocos,
       flags: {
         quadradoLaranja: !!ativas['quadrado-laranja'],
         provaDeProcesso: !!ativas['prova-de-processo'],
         molduraBox: !!ativas['moldura-box'],
-        tituloContraste: !!ativas['titulo-contraste']
+        // O manual pede títulos em caixa alta e baixa: a tendência "título contraste" não muda o e-mail.
+        tituloContraste: false
       },
-      // Explica a decisão em linguagem simples (aparece no painel e na tela).
+      // Explica a decisão em linguagem simples (aparece na tela).
       porque: [
+        'Público ' + publicoNome.toLowerCase() + ' → marca ' + logo.nome + (publico.ans ? ' + registro ANS' : '') + (excecao && excecao.motivo ? ': ' + excecao.motivo : '') + '.',
+        'Cabeçalho: ' + cabecalho + (limpar(dados.cabecalho) ? '.' : ' (sua área).') + ((publico.layout === 'interno-2027') ? ' Visual interno 2027 com ícone da área.' : ''),
         'Texto com ' + caracteres + ' caracteres → modelo ' + NOMES_VARIANTE[variante] + '.',
         'Título com ' + tamTitulo + ' caracteres → fonte ' + degrau[variante] + ' px.',
-        data ? 'Tem data → bloco padrão de data.' : 'Sem data.',
-        temBotao ? 'Tem botão → CTA padrão.' : 'Sem botão.',
+        data ? 'Tem data → bloco de data em destaque.' : 'Sem data.',
+        temBotao ? ('Tem botão → CTA laranja' + (variante === 'longo' && arv.botao.repetirNoLongo && blocos.length > 2 ? ', repetido no fim com a data.' : '.')) : 'Sem botão.',
         imagem ? 'Imagem aprovada incluída.' : (limpar(dados.imagem) && !arv.imagem[variante] ? 'No modelo curto a imagem não entra.' : 'Sem imagem.')
       ]
     };
@@ -168,7 +253,7 @@
     return 'UNI-' + sigla + '-' + ano + '-' + base + sorte;
   }
 
-  var api = { limpar: limpar, contar: contar, dividirTexto: dividirTexto, lerData: lerData, validar: validar, decidir: decidir, gerarCodigo: gerarCodigo, tendenciasAtivas: tendenciasAtivas };
+  var api = { limpar: limpar, contar: contar, dividirTexto: dividirTexto, revisarLinguagem: revisarLinguagem, lerData: lerData, validar: validar, decidir: decidir, gerarCodigo: gerarCodigo, tendenciasAtivas: tendenciasAtivas };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.UnimedMotor = api;
 })(typeof window !== 'undefined' ? window : this);

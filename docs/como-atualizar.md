@@ -36,3 +36,13 @@ Ao mudar algo do manual, suba o número de `"versao"` (ex.: `2027.1` → `2027.2
 1. Crie `config/formatos/<formato>.json` com campos e árvore.
 2. Crie `src/modelos/<formato>.js` com o desenho.
 3. Inclua o script no `index.html` e mude `"ativo": true` em `config/formatos/indice.json`.
+
+## Logos, público e assinatura do e-mail
+
+- `config/formatos/email-marketing.json → publicos`: **Interno** usa a marca do Grupo Unimed Uberlândia; **Externo** usa a marca Unimed Uberlândia e o selo ANS.
+- Os arquivos ficam em `assets/logos/` (PNG para e-mail, SVG para as telas). Se a marca mudar, troque os arquivos mantendo o nome.
+- O cabeçalho e a assinatura do e-mail usam a área de quem pede. O campo "Nome no cabeçalho" permite trocar por um programa ou comitê.
+
+## Regras de linguagem
+
+`config/marca.json → linguagem`: limite de palavras por frase, itens por lista, exclamações e a lista de estrangeirismos com a sugestão em português. São avisos: não impedem gerar a peça.

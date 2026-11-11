@@ -14,22 +14,22 @@
     var corpo = $('a-linhas'); corpo.textContent = '';
     var lista = await A.banco('acessos?select=*&order=criado_em.asc');
     lista.forEach(function (p) {
-      var sou = p.email === eu;
-      var papel = el('select', { 'aria-label': 'Papel de ' + p.email });
+      var sou = p.github === eu;
+      var papel = el('select', { 'aria-label': 'Papel de @' + p.github });
       [['equipe', 'Equipe'], ['dono', 'Dono']].forEach(function (o) { var op = el('option', { value: o[0], texto: o[1] }); if (o[0] === p.papel) op.selected = true; papel.appendChild(op); });
       if (sou) papel.disabled = true;
       papel.addEventListener('change', async function () {
-        try { await A.banco('acessos?email=eq.' + encodeURIComponent(p.email), { metodo: 'PATCH', corpo: { papel: papel.value }, cabecalhos: { Prefer: 'return=minimal' } }); msg('Papel atualizado.', 'ok'); }
+        try { await A.banco('acessos?github=eq.' + encodeURIComponent(p.github), { metodo: 'PATCH', corpo: { papel: papel.value }, cabecalhos: { Prefer: 'return=minimal' } }); msg('Papel atualizado.', 'ok'); }
         catch (e) { msg(e.message); papel.value = p.papel; }
       });
       corpo.appendChild(el('tr', {}, [
         el('td', { texto: (p.nome || '—') + (sou ? ' (você)' : '') }),
-        el('td', { texto: p.email }),
+        el('td', {}, [el('a', { href: 'https://github.com/' + encodeURIComponent(p.github), target: '_blank', rel: 'noopener', texto: '@' + p.github })]),
         el('td', {}, [papel]),
         el('td', { texto: new Date(p.criado_em).toLocaleDateString('pt-BR') }),
         el('td', {}, [sou ? null : el('button', { type: 'button', texto: 'Remover', onclick: async function () {
-          if (!window.confirm('Remover o acesso de ' + p.email + '?')) return;
-          try { await A.banco('acessos?email=eq.' + encodeURIComponent(p.email), { metodo: 'DELETE', cabecalhos: { Prefer: 'return=minimal' } }); msg('Acesso removido.', 'ok'); carregar(); }
+          if (!window.confirm('Remover o acesso de @' + p.github + '?')) return;
+          try { await A.banco('acessos?github=eq.' + encodeURIComponent(p.github), { metodo: 'DELETE', cabecalhos: { Prefer: 'return=minimal' } }); msg('Acesso removido.', 'ok'); carregar(); }
           catch (e) { msg(e.message); }
         } })])
       ]));
@@ -43,15 +43,15 @@
       $('novo-acesso').querySelector('button').disabled = true;
       return;
     }
-    eu = String(ctx.email || '').toLowerCase();
+    eu = String(ctx.github || '').toLowerCase();
     $('novo-acesso').addEventListener('submit', async function (ev) {
       ev.preventDefault();
-      var email = $('a-email').value.trim().toLowerCase();
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return msg('Digite um e-mail válido.');
+      var github = $('a-github').value.trim().replace(/^@/, '').replace(/^https?:\/\/github\.com\//i, '').replace(/\/.*$/, '').toLowerCase();
+      if (!/^[a-z0-9](?:[a-z0-9]|-(?=[a-z0-9])){0,38}$/.test(github)) return msg('Digite um usuário do GitHub válido (só letras, números e hífen).');
       try {
-        await A.banco('acessos', { metodo: 'POST', corpo: { email: email, nome: $('a-nome').value.trim() || null, papel: $('a-papel').value }, cabecalhos: { Prefer: 'return=minimal' } });
-        msg('Acesso liberado para ' + email + '. Avise a pessoa para entrar em "Área restrita → Primeiro acesso".', 'ok');
-        $('a-email').value = ''; $('a-nome').value = '';
+        await A.banco('acessos', { metodo: 'POST', corpo: { github: github, nome: $('a-nome').value.trim() || null, papel: $('a-papel').value }, cabecalhos: { Prefer: 'return=minimal' } });
+        msg('Acesso liberado para @' + github + '. Avise a pessoa para entrar em "Área restrita → Entrar com GitHub".', 'ok');
+        $('a-github').value = ''; $('a-nome').value = '';
         carregar();
       } catch (e) { msg(e.message); }
     });

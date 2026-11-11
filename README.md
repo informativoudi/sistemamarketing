@@ -20,7 +20,7 @@ src/
     email-marketing.js  Desenha o e-mail (HTML em tabelas, compatível com Outlook e Gmail)
   registro.js           Grava cada pedido (navegador ou banco Supabase)
   app.js                Tela de uso
-  acesso.js             Login da área restrita (Supabase) e permissões
+  acesso.js             Login da área restrita (Entrar com GitHub) e permissões
   painel.js             Painel de administração
   nucleo.js / radar.js  Telas do Núcleo da Marca e do Radar de Tendências
   acessos.js            Incluir e remover quem entra na área restrita
@@ -39,12 +39,37 @@ docs/                   Guia de atualização, área restrita e script do banco
 | Situação | Decisão |
 |---|---|
 | Texto até 300 caracteres | Modelo **curto**: título grande, sem imagem, data em destaque |
-| Texto de 301 a 900 | Modelo **médio**: imagem, título, texto, data e botão |
-| Texto acima de 900 | Modelo **longo**: linhas curtas viram intertítulos, botão repetido após o 1º parágrafo |
+| Texto de 301 a 900 | Modelo **médio**: imagem, título, intertítulos, texto, data e botão |
+| Texto acima de 900 | Modelo **longo**: botão depois do 1º parágrafo e repetido no fim com a data |
+| Público interno / externo | Interno: marca do Grupo Unimed Uberlândia. Externo: marca Unimed Uberlândia + registro ANS. Evento (mesmo externo): marca do Grupo |
+| Área de quem pede | Vira o cabeçalho e a assinatura do e-mail (dá para trocar por um programa ou comitê) |
+| Interno | Visual 2027 sutil (inspirado na Atualização CERVELLO): ícone da área no quadro box, nome da área em dois tons, grade de 12 colunas quase invisível e faixa curta do mosaico |
+| Linhas com "- " | Viram lista; aviso acima de 5 itens |
+| Linguagem | Avisa: título só em maiúsculas, excesso de "!", frases longas, botão genérico, estrangeirismos |
 | Título com até 40 / 60 / 90 caracteres | Fonte cai um degrau a cada faixa; acima de 90 é bloqueado |
 | Tem data | Bloco padrão de data (dia, mês, dia da semana, horário, local) |
-| Tem botão | Exige texto e link `https://` juntos; CTA no formato box |
-| Tema | Institucional (petróleo), Saúde (institucional), Evento (cítrico), Aviso (laranja) |
+| Tem botão | Exige texto e link `https://` juntos; botão laranja no formato box |
+| Tema | Faixa: Institucional (verde escuro), Saúde (verde Unimed), Evento (cítrico), Aviso (laranja) |
+
+As regras seguem os manuais oficiais: Aplicação da Marca Unimed (MS.139), Linguagem da Marca (MS.138) e Manual de Marca do Grupo Unimed Uberlândia. O resumo de cada regra aparece na página **Núcleo da Marca**.
+
+## Papel de cada cor
+
+| Papel | Cor | Onde entra |
+|---|---|---|
+| Marca | Verde institucional | Logo, chapéu, marcadores de lista, última palavra do nome da área |
+| Estrutura | Verde petróleo | Títulos, nome da área, rodapé, quadro dos ícones |
+| Ação | Laranja | Só o botão e o quadradinho de assinatura 2027 |
+| Destaque | Verde cítrico | Data, números, barra curta acima do chapéu, detalhe dos ícones |
+| Fundo | Cores de apoio | Bloco da área (muda com o tema) e caixa da data |
+
+## Cartilhas e documentos
+
+Seguem o padrão **Cartilha Padrão Unimed**, não o visual 2027 das peças internas. As regras já estão em `config/formatos/cartilha-documento.json` (cabeçalho em todas as páginas, capa, seções, sem alterar o texto, entrega em Word). O formato aparece como "em breve" até ser liberado.
+
+## Baixar a peça
+
+Depois de gerar, a peça sai em **HTML** (para disparo), **Imagem (PNG)**, **PDF** (botão continua clicável) e **PowerPoint** com os textos editáveis, nas mesmas posições do e-mail. As ferramentas de exportação ficam em `src/vendor/` (html2canvas, jsPDF e PptxGenJS, todas com licença MIT).
 
 Os números ficam em `config/formatos/email-marketing.json`. Mude ali e todas as peças novas seguem.
 
@@ -54,7 +79,7 @@ Cada peça recebe um código (`UNI-EM-2027-XXXXXX`) que aparece no rodapé. O re
 
 ## Área restrita
 
-Painel, Núcleo da Marca, Radar de Tendências e Acessos pedem e-mail e senha. Só entra quem está na lista de acessos; o primeiro "dono" é cadastrado direto no banco e, depois, inclui outras pessoas pela tela **Acessos**. Passo a passo em `docs/acesso-restrito.md`.
+Painel, Núcleo da Marca, Radar de Tendências e Acessos pedem **Entrar com GitHub**. Só entra quem tem o usuário do GitHub na lista de acessos; o primeiro "dono" é cadastrado direto no banco e, depois, inclui outras pessoas pela tela **Acessos**. Passo a passo em `docs/acesso-restrito.md`.
 
 Sem banco ligado, a área restrita abre só no computador local (para testes) e fica fechada no site publicado.
 

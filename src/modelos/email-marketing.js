@@ -2,6 +2,14 @@
    Modelo: E-mail marketing
    Recebe o plano do motor e devolve o HTML do e-mail, em tabelas
    e estilos inline para funcionar no Outlook, Gmail e Apple Mail.
+
+   Estrutura (Manual de Linguagem MS.138 p.168-171 e Manual do Grupo):
+   logo na faixa branca → faixa com o nome da área → imagem →
+   chapéu + título + data em destaque + texto + botão laranja →
+   rodapé com a área que assina, a marca e (externo) o registro ANS.
+
+   Os atributos data-x marcam caixas, textos e imagens para a
+   exportação em PowerPoint editável (o e-mail ignora esses atributos).
    ============================================================ */
 (function (raiz) {
   'use strict';
@@ -20,77 +28,139 @@
   function render(plano, dados, marca, opcoes) {
     opcoes = opcoes || {};
     var c = marca.cores;
-    var fonte = marca.tipografia.familia;
+    var F = marca.tipografia.familia;
     var base = opcoes.baseUrl || '';
     var codigo = opcoes.codigo || 'UNI-EM-PREVIA';
-    var raioCard = plano.flags.molduraBox ? marca.forma.raioCard : '12px';
-    var raioBotao = plano.flags.molduraBox ? marca.forma.raioBotao : '24px';
-    var corBotao = plano.tema.nome === 'Aviso' ? c.laranjaEscuro : c.institucional;
+    var box = plano.flags.molduraBox;
+    var raioCard = box ? marca.forma.raioCard : '12px';
+    var raioBotao = box ? marca.forma.raioBotao : '24px';
+    var TX = 'data-x="texto"';
+    var CX = 'data-x="caixa"';
 
     var titulo = esc(dados.titulo).replace(/[.!]\s*$/, '');
-    var transform = plano.flags.tituloContraste ? 'text-transform:uppercase;letter-spacing:-0.5px;' : '';
     var quadrado = plano.flags.quadradoLaranja ? '<span style="color:' + c.laranja + ';">&#9632;</span>' : '';
 
-    function botao() {
+    /* ---------- Botão (CTA laranja, MS.138 p.168) ---------- */
+    function botao(margem) {
       if (!plano.botao) return '';
+      var b = plano.botao;
       return '' +
-        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:8px 0 24px;"><tr>' +
-        '<td bgcolor="' + corBotao + '" style="background:' + corBotao + ';border-radius:' + raioBotao + ';">' +
-        '<a href="' + esc(plano.botao.link) + '" target="_blank" style="display:inline-block;padding:15px 26px;font-family:' + fonte + ';font-size:16px;font-weight:bold;line-height:1;color:#ffffff;text-decoration:none;border-radius:' + raioBotao + ';">' +
-        esc(plano.botao.texto) + ' &rarr;</a></td></tr></table>';
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:' + (margem || '8px 0 28px') + ';"><tr>' +
+        '<td ' + CX + ' data-forma="botao" bgcolor="' + b.cor + '" style="background:' + b.cor + ';border-radius:' + raioBotao + ';">' +
+        '<a ' + TX + ' href="' + esc(b.link) + '" target="_blank" style="display:inline-block;padding:16px 28px;font-family:' + F + ';font-size:16px;font-weight:bold;line-height:20px;color:' + b.corTexto + ';text-decoration:none;border-radius:' + raioBotao + ';">' +
+        esc(b.texto) + ' &rarr;</a></td></tr></table>';
     }
 
+    /* ---------- Data em destaque ---------- */
+    function textoData(d) {
+      return esc(d.semana.charAt(0).toUpperCase() + d.semana.slice(1)) + ', ' + d.dia + ' de ' + esc(d.mesLongo) + ' de ' + d.ano;
+    }
     function blocoData() {
       if (!plano.data) return '';
       var d = plano.data.info;
-      var linhas = [esc(d.semana.charAt(0).toUpperCase() + d.semana.slice(1)) + ', ' + d.dia + ' de ' + esc(d.mesLongo) + ' de ' + d.ano];
-      if (plano.data.hora) linhas.push(esc(plano.data.hora));
-      if (plano.data.local) linhas.push(esc(plano.data.local));
       var grande = plano.data.grande;
+      var extra = [plano.data.hora ? esc(plano.data.hora) : '', plano.data.local ? esc(plano.data.local) : ''].filter(Boolean).join(' &middot; ');
       return '' +
-        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:' + (grande ? '4px 0 24px' : '8px 0 24px') + ';"><tr>' +
-        '<td bgcolor="' + c.fundoPagina + '" style="background:' + c.fundoPagina + ';border-radius:' + raioCard + ';padding:' + (grande ? '20px 22px' : '14px 18px') + ';">' +
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 28px;"><tr>' +
+        '<td ' + CX + ' bgcolor="' + c.fundoPagina + '" style="background:' + c.fundoPagina + ';border-radius:' + raioCard + ';padding:12px;">' +
         '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
-        '<td valign="middle" style="padding-right:18px;border-right:3px solid ' + plano.tema.destaque + ';font-family:' + fonte + ';text-align:center;">' +
-        '<div style="font-size:' + (grande ? 44 : 30) + 'px;font-weight:bold;line-height:1;color:' + plano.tema.destaque + ';">' + d.dia + '</div>' +
-        '<div style="font-size:12px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:' + c.textoForte + ';padding-top:4px;">' + esc(d.mes) + '</div></td>' +
-        '<td valign="middle" style="padding-left:18px;font-family:' + fonte + ';font-size:' + (grande ? 16 : 15) + 'px;line-height:1.5;color:' + c.texto + ';">' +
-        linhas.map(function (l, i) { return i === 0 ? '<strong style="color:' + c.textoForte + ';">' + l + '</strong>' : l; }).join('<br>') +
+        '<td ' + CX + ' width="' + (grande ? 96 : 84) + '" align="center" valign="middle" bgcolor="' + plano.tema.destaque + '" style="width:' + (grande ? 96 : 84) + 'px;background:' + plano.tema.destaque + ';border-radius:' + raioCard + ';padding:' + (grande ? '16px 0 14px' : '12px 0 10px') + ';font-family:' + F + ';">' +
+        '<div ' + TX + ' style="font-size:' + (grande ? 44 : 34) + 'px;font-weight:bold;line-height:1;color:' + plano.tema.textoDestaque + ';">' + d.dia + '</div>' +
+        '<div ' + TX + ' style="font-size:12px;font-weight:bold;letter-spacing:2px;line-height:16px;text-transform:uppercase;color:' + plano.tema.textoDestaque + ';padding-top:4px;">' + esc(d.mes) + '</div></td>' +
+        '<td valign="middle" style="padding-left:18px;font-family:' + F + ';">' +
+        '<div ' + TX + ' style="font-size:' + (grande ? 17 : 16) + 'px;font-weight:bold;line-height:1.4;color:' + c.verdeEscuro + ';">' + textoData(d) + '</div>' +
+        (extra ? '<div ' + TX + ' style="font-size:15px;line-height:1.5;color:' + c.texto + ';padding-top:2px;">' + extra + '</div>' : '') +
         '</td></tr></table></td></tr></table>';
+    }
+
+    /* ---------- Corpo ---------- */
+    function paragrafo(t) {
+      return '<p ' + TX + ' style="margin:0 0 16px;font-family:' + F + ';font-size:16px;line-height:1.6;color:' + c.texto + ';">' + esc(t) + '</p>';
+    }
+    function lista(itens) {
+      return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;">' +
+        itens.map(function (it) {
+          return '<tr><td ' + TX + ' valign="top" width="20" style="width:20px;font-family:' + F + ';font-size:12px;line-height:25px;color:' + c.institucional + ';">&#9632;</td>' +
+            '<td ' + TX + ' valign="top" style="font-family:' + F + ';font-size:16px;line-height:1.55;color:' + c.texto + ';padding-bottom:6px;">' + esc(it) + '</td></tr>';
+        }).join('') + '</table>';
     }
 
     var corpo = '';
     var botaoColocado = false;
     plano.blocos.forEach(function (b, i) {
       if (b.tipo === 'intertitulo') {
-        corpo += '<h2 style="margin:28px 0 8px;font-family:' + fonte + ';font-size:19px;line-height:1.25;font-weight:bold;color:' + c.textoForte + ';">' + esc(b.texto) + '</h2>';
+        corpo += '<h2 ' + TX + ' style="margin:28px 0 8px;font-family:' + F + ';font-size:' + plano.intertituloPx + 'px;line-height:1.25;font-weight:bold;color:' + c.verdeEscuro + ';">' + esc(b.texto) + '</h2>';
+      } else if (b.tipo === 'lista') {
+        corpo += lista(b.itens);
       } else {
-        corpo += '<p style="margin:0 0 16px;font-family:' + fonte + ';font-size:16px;line-height:1.6;color:' + c.texto + ';">' + esc(b.texto) + '</p>';
+        corpo += paragrafo(b.texto);
       }
       if (plano.botao && plano.botao.repetir && i === 0) { corpo += botao(); botaoColocado = true; }
     });
 
-    var imagem = '';
-    if (plano.imagem) {
-      imagem = '<tr><td style="padding:0 32px 8px;"><img src="' + esc(url(base, plano.imagem.arquivo)) + '" width="536" alt="' + esc(plano.imagem.descricao) + '" style="display:block;width:100%;max-width:536px;height:auto;border:0;border-radius:' + (plano.flags.molduraBox ? '16px 16px 0 16px' : '0') + ';"></td></tr>';
+    /* No longo, fecha repetindo a data e o botão (MS.138 p.171). */
+    var fecho = '';
+    if (plano.botao && plano.botao.repetir) {
+      fecho = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:12px 0 0;"><tr>' +
+        '<td style="border-top:1px solid ' + c.borda + ';padding-top:22px;font-family:' + F + ';">' +
+        (plano.data ? '<p ' + TX + ' style="margin:0 0 4px;font-size:16px;font-weight:bold;line-height:1.4;color:' + c.verdeEscuro + ';">' + textoData(plano.data.info) + (plano.data.hora ? ' &middot; ' + esc(plano.data.hora) : '') + '</p>' : '') +
+        botao('10px 0 28px') + '</td></tr></table>';
     }
 
-    var subtitulo = dados.subtitulo ? '<p style="margin:0 0 20px;font-family:' + fonte + ';font-size:18px;line-height:1.45;color:' + c.textoSuave + ';">' + esc(dados.subtitulo) + '</p>' : '';
-    var preheader = esc(dados.subtitulo || (plano.blocos[0] ? plano.blocos[0].texto.slice(0, 110) : ''));
-    var logo = url(base, marca.logos.claro);
-    var alturaLogo = 40;
+    var imagem = '';
+    if (plano.imagem) {
+      imagem = '<tr><td style="padding:28px 32px 0;"><img data-x="img" src="' + esc(url(base, plano.imagem.arquivo)) + '" width="536" alt="' + esc(plano.imagem.descricao) + '" style="display:block;width:100%;max-width:536px;height:auto;border:0;border-radius:' + (box ? '16px 16px 0 16px' : '0') + ';"></td></tr>';
+    }
 
+    var barra = '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;"><tr><td ' + CX + ' width="28" height="4" bgcolor="' + c.citrico + '" style="width:28px;height:4px;line-height:4px;font-size:0;background:' + c.citrico + ';">&nbsp;</td></tr></table>';
+    var chapeu = barra + '<p ' + TX + ' style="margin:0 0 10px;font-family:' + F + ';font-size:12px;font-weight:bold;letter-spacing:2px;line-height:16px;text-transform:uppercase;color:' + c.institucional + ';">' + esc(plano.tema.rotulo) + '</p>';
+    var h1 = '<h1 ' + TX + ' style="margin:0 0 ' + (dados.subtitulo ? '10px' : '20px') + ';font-family:' + F + ';font-size:' + plano.tituloPx + 'px;line-height:1.1;font-weight:bold;letter-spacing:-0.5px;color:' + c.verdeEscuro + ';">' + titulo + quadrado + '</h1>';
+    var subtitulo = dados.subtitulo ? '<p ' + TX + ' style="margin:0 0 22px;font-family:' + F + ';font-size:18px;font-style:italic;line-height:1.45;color:' + c.textoSuave + ';">' + esc(dados.subtitulo) + '</p>' : '';
+    var conteudo = chapeu + h1 + subtitulo + blocoData() + corpo + (botaoColocado ? '' : botao()) + fecho;
+
+    var preheader = esc(dados.subtitulo || (plano.blocos[0] && plano.blocos[0].texto ? plano.blocos[0].texto.slice(0, 110) : ''));
+
+    /* ---------- Logo (Grupo no interno, Unimed no externo) ---------- */
+    var logo = plano.publico.logo;
+    var larguraLogo = Math.max(logo.larguraEmail, marca.logos.minimoPx);
+    var alturaLogo = Math.round(larguraLogo / logo.proporcao);
+
+    var ans = '';
+    if (plano.publico.ans && marca.ans) {
+      var altAns = 22;
+      ans = '<tr><td style="padding:14px 32px 0;"><img data-x="img" src="' + esc(url(base, marca.ans.selo)) + '" height="' + altAns + '" width="' + Math.round(altAns * marca.ans.proporcao) + '" alt="ANS - nº ' + esc(marca.ans.numero) + '" style="display:block;border:0;"></td></tr>';
+    }
     var prova = plano.flags.provaDeProcesso
-      ? '<tr><td style="padding:14px 32px 0;font-family:' + fonte + ';font-size:10px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:' + c.citrico + ';">' + esc(codigo) + ' &middot; ' + esc(marca.rodape.coordenadas) + '</td></tr>'
-      : '';
+      ? '<tr><td ' + TX + ' style="padding:16px 32px 0;font-family:' + F + ';font-size:10px;font-weight:bold;letter-spacing:2px;line-height:14px;text-transform:uppercase;color:' + c.citrico + ';">' + esc(codigo) + ' &middot; ' + esc(marca.rodape.coordenadas) + '</td></tr>'
+      : '<tr><td ' + TX + ' style="padding:16px 32px 0;font-family:' + F + ';font-size:10px;line-height:14px;color:rgba(255,255,255,0.6);">' + esc(codigo) + '</td></tr>';
 
-    var conteudo;
-    if (plano.variante === 'curto') {
-      conteudo = '<h1 style="margin:0 0 20px;font-family:' + fonte + ';font-size:' + plano.tituloPx + 'px;line-height:1.05;font-weight:900;' + transform + 'color:' + c.textoForte + ';">' + titulo + quadrado + '</h1>' +
-        subtitulo + blocoData() + corpo + (botaoColocado ? '' : botao());
+    var corFaixaTexto = plano.tema.textoFaixa;
+    // O quadrado laranja (assinatura 2027) aparece uma vez por peça: no fim do título.
+    var r27 = marca.recursos2027 || {};
+    var topo;
+    if (plano.layout === 'interno-2027') {
+      /* Interno 2027 (inspirado na Atualização CERVELLO, de forma sutil):
+         logo + faixa curta do mosaico; bloco da área com grade de 12 colunas quase invisível,
+         ícone da área no quadro box e nome em dois tons. */
+      var p2 = plano.areaPartes;
+      topo = '' +
+        '<tr><td style="padding:26px 32px 20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+        '<td valign="middle"><img data-x="img" src="' + esc(url(base, logo.claro)) + '" width="' + larguraLogo + '" height="' + alturaLogo + '" alt="' + esc(logo.nome) + '" style="display:block;border:0;"></td>' +
+        (r27.mosaico ? '<td valign="middle" align="right" width="' + r27.mosaicoLargura + '"><img data-x="img" src="' + esc(url(base, r27.mosaico)) + '" width="' + r27.mosaicoLargura + '" height="' + r27.mosaicoAltura + '" alt="" style="display:block;border:0;"></td>' : '') +
+        '</tr></table></td></tr>\n' +
+        '<tr><td ' + CX + ' bgcolor="' + plano.tema.fundoInterno + '"' + (r27.grade ? ' background="' + esc(url(base, r27.grade)) + '"' : '') + ' style="background-color:' + plano.tema.fundoInterno + ';' + (r27.grade ? 'background-image:url(' + esc(url(base, r27.grade)) + ');background-repeat:repeat-y;' : '') + 'padding:22px 32px;">' +
+        '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
+        (plano.icone ? '<td ' + CX + ' width="56" height="56" align="center" valign="middle" bgcolor="' + c.verdeEscuro + '" style="width:56px;height:56px;background:' + c.verdeEscuro + ';border-radius:' + (box ? '16px 16px 0 16px' : '12px') + ';"><img data-x="img" src="' + esc(url(base, plano.icone)) + '" width="32" height="32" alt="" style="display:block;border:0;margin:0 auto;"></td>' : '') +
+        '<td valign="middle" style="padding-left:' + (plano.icone ? 16 : 0) + 'px;font-family:' + F + ';">' +
+        (plano.selo ? '<p ' + TX + ' style="margin:0 0 4px;font-size:11px;font-weight:bold;letter-spacing:2px;line-height:14px;text-transform:uppercase;color:' + c.verdeEscuro + ';">' + esc(plano.selo) + '</p>' : '') +
+        '<p ' + TX + ' style="margin:0;font-size:24px;font-weight:bold;line-height:1.15;letter-spacing:-0.3px;color:' + c.verdeEscuro + ';">' + (p2.inicio ? esc(p2.inicio) + ' ' : '') + '<span style="color:' + c.institucional + ';">' + esc(p2.fim) + '</span></p>' +
+        '</td></tr></table></td></tr>\n';
     } else {
-      conteudo = '<h1 style="margin:0 0 16px;font-family:' + fonte + ';font-size:' + plano.tituloPx + 'px;line-height:1.08;font-weight:900;' + transform + 'color:' + c.textoForte + ';">' + titulo + quadrado + '</h1>' +
-        subtitulo + blocoData() + corpo + (botaoColocado ? '' : botao());
+      /* Externo: logo na faixa branca, nunca sobre o laranja (MS.139 p.10); faixa do tema com o nome da área. */
+      topo = '' +
+        '<tr><td style="padding:26px 32px 22px;"><img data-x="img" src="' + esc(url(base, logo.claro)) + '" width="' + larguraLogo + '" height="' + alturaLogo + '" alt="' + esc(logo.nome) + '" style="display:block;border:0;"></td></tr>\n' +
+        '<tr><td ' + CX + ' bgcolor="' + plano.tema.faixa + '" style="background:' + plano.tema.faixa + ';padding:20px 32px;">' +
+        '<p ' + TX + ' style="margin:0;font-family:' + F + ';font-size:24px;font-weight:bold;line-height:1.15;letter-spacing:-0.3px;color:' + corFaixaTexto + ';">' + esc(plano.cabecalho) + '</p></td></tr>\n';
     }
 
     return '' +
@@ -98,17 +168,16 @@
 '<body style="margin:0;padding:0;background:' + c.fundoPagina + ';">\n' +
 '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">' + preheader + '</div>\n' +
 '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + c.fundoPagina + '" style="background:' + c.fundoPagina + ';"><tr><td align="center" style="padding:24px 12px;">\n' +
-'<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;background:#ffffff;">\n' +
-'<tr><td height="6" bgcolor="' + plano.tema.faixa + '" style="height:6px;line-height:6px;font-size:0;background:' + plano.tema.faixa + ';">&nbsp;</td></tr>\n' +
-'<tr><td style="padding:24px 32px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
-'<td valign="middle"><img src="' + esc(logo) + '" height="' + alturaLogo + '" width="' + Math.round(alturaLogo * marca.logos.proporcao) + '" alt="Unimed Uberlândia" style="display:block;border:0;"></td>' +
-'<td valign="middle" align="right" style="font-family:' + fonte + ';font-size:11px;font-weight:bold;letter-spacing:2px;text-transform:uppercase;color:' + c.textoSuave + ';">' + esc(plano.tema.rotulo) + '</td>' +
-'</tr></table></td></tr>\n' +
+'<table data-x="email" ' + CX + ' role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;background:#ffffff;">\n' +
+topo +
 imagem + '\n' +
-'<tr><td style="padding:24px 32px 16px;">' + conteudo + '</td></tr>\n' +
-'<tr><td bgcolor="' + c.petroleo + '" style="background:' + c.petroleo + ';padding:0 0 22px;">' +
-'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' + prova +
-'<tr><td style="padding:12px 32px 0;font-family:' + fonte + ';font-size:13px;line-height:1.6;color:#ffffff;"><strong>' + esc(marca.rodape.assinatura) + '</strong><br><span style="color:rgba(255,255,255,0.78);">' + esc(marca.rodape.site) + '</span></td></tr>' +
+'<tr><td style="padding:30px 32px 6px;">' + conteudo + '</td></tr>\n' +
+/* Rodapé: área que assina + marca. */
+'<tr><td ' + CX + ' bgcolor="' + c.verdeEscuro + '" style="background:' + c.verdeEscuro + ';padding:24px 0 24px;">' +
+'<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
+'<tr><td ' + TX + ' style="padding:0 32px;font-family:' + F + ';font-size:16px;font-weight:bold;line-height:1.35;color:#ffffff;">' + esc(plano.cabecalho) + '</td></tr>' +
+'<tr><td ' + TX + ' style="padding:2px 32px 0;font-family:' + F + ';font-size:13px;line-height:1.5;color:rgba(255,255,255,0.82);">' + esc(plano.publico.assinatura) + ' &middot; ' + esc(marca.rodape.site) + '</td></tr>' +
+ans + prova +
 '</table></td></tr>\n' +
 '</table>\n</td></tr></table>\n</body>\n</html>\n';
   }

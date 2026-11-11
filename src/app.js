@@ -10,7 +10,7 @@
   var $ = function (id) { return document.getElementById(id); };
 
   var estado = { marca: null, tendencias: null, sistema: null, indice: null, formato: null, ultimoHtml: '', ultimoCodigo: '', ultimoTitulo: '' };
-  var LARGOS = { tema: 1, titulo: 1, subtitulo: 1, texto: 1, imagem: 1, local: 1 };
+  var LARGOS = { publico: 1, cabecalho: 1, tema: 1, titulo: 1, subtitulo: 1, texto: 1, imagem: 1, local: 1 };
 
   async function json(caminho) {
     var r = await fetch(caminho, { cache: 'no-store' });
@@ -90,12 +90,15 @@
     if (c.tipo === 'escolha') {
       var grupo = el('div', { 'class': 'temas', role: 'radiogroup', 'aria-labelledby': id + '-r' });
       rotulo = el('span', { id: id + '-r', 'class': 'rot', style: 'font-weight:700;font-size:14px;color:#1d1d1b' }, [c.rotulo]);
+      if (c.descricoes) grupo.classList.add('com-descricao');
       c.opcoes.forEach(function (op, i) {
-        var tema = estado.formato.temas[op];
-        var cor = tema ? estado.marca.cores[tema.faixa] : '#ccc';
+        var tema = c.id === 'tema' ? estado.formato.temas[op] : null;
+        var miolo = tema
+          ? [el('i', { style: 'background:' + estado.marca.cores[tema.faixa] }), op]
+          : [el('b', { texto: op }), c.descricoes && c.descricoes[op] ? el('small', { texto: c.descricoes[op] }) : null];
         grupo.appendChild(el('label', {}, [
           el('input', { type: 'radio', name: c.id, value: op, checked: i === 0 }),
-          el('span', {}, [el('i', { style: 'background:' + cor }), op])
+          el('span', {}, miolo)
         ]));
       });
       caixa.appendChild(rotulo); caixa.appendChild(grupo);
@@ -140,7 +143,9 @@
         dados[c.id] = e ? e.value : '';
       }
     });
+    dados.area = $('f-area') ? $('f-area').value : '';
     dados._imagensAprovadas = estado.marca.imagensAprovadas;
+    dados._linguagem = estado.marca.linguagem;
     return dados;
   }
 
@@ -164,6 +169,7 @@
     var chips = $('decisao'); chips.textContent = '';
     chips.appendChild(el('span', { 'class': 'var', texto: 'Modelo ' + plano.varianteNome }));
     chips.appendChild(el('span', { texto: 'Título ' + plano.tituloPx + ' px' }));
+    chips.appendChild(el('span', { texto: plano.publico.nome }));
     chips.appendChild(el('span', { texto: 'Tema ' + plano.tema.rotulo }));
     if (plano.data) chips.appendChild(el('span', { texto: 'Data' }));
     if (plano.botao) chips.appendChild(el('span', { texto: 'Botão' }));
@@ -205,7 +211,7 @@
       var codigo = M.gerarCodigo(estado.formato.sigla);
       var r = atualizarPrevia(codigo);
       var impressao = await R.hash(r.html);
-      var conteudo = Object.assign({}, dados); delete conteudo._imagensAprovadas;
+      var conteudo = Object.assign({}, dados); delete conteudo._imagensAprovadas; delete conteudo._linguagem;
       await R.salvar(estado.sistema.registro, {
         codigo: codigo,
         criado_em: new Date().toISOString(),
@@ -245,8 +251,26 @@
     navigator.clipboard.writeText(estado.ultimoHtml).then(function () { $('copiado').textContent = 'Código copiado. Cole na sua ferramenta de disparo.'; })
       .catch(function () { $('copiado').textContent = 'Não consegui copiar automaticamente. Use "Baixar HTML".'; });
   }
+  async function exportar(ev) {
+    var tipo = ev.currentTarget.getAttribute('data-exportar');
+    var botoes = document.querySelectorAll('[data-exportar]');
+    var aviso = $('copiado');
+    var nomes = { png: 'a imagem', pdf: 'o PDF', pptx: 'o PowerPoint' };
+    var feito = { png: 'A imagem foi baixada.', pdf: 'O PDF foi baixado.' };
+    botoes.forEach(function (b) { b.disabled = true; });
+    aviso.textContent = 'Preparando ' + nomes[tipo] + '…';
+    try {
+      await window.UnimedExportar[tipo](estado.ultimoHtml, estado.ultimoCodigo, { codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao });
+      aviso.textContent = tipo === 'pptx' ? 'PowerPoint baixado. Os textos podem ser editados; o código da peça continua no rodapé.' : feito[tipo];
+    } catch (e) {
+      aviso.textContent = 'Não consegui gerar ' + nomes[tipo] + ': ' + e.message;
+    } finally { botoes.forEach(function (b) { b.disabled = false; }); }
+  }
+
   function nova() {
-    $('formulario').reset(); $('formulario').hidden = false; $('feito').hidden = true; $('mensagens').textContent = '';
+    var nome = $('f-solicitante').value, area = $('f-area').value;
+    $('formulario').reset();
+    $('f-solicitante').value = nome; $('f-area').value = area; $('formulario').hidden = false; $('feito').hidden = true; $('mensagens').textContent = '';
     montarFormulario(); atualizarPrevia();
   }
 
@@ -286,6 +310,7 @@
     $('baixar').addEventListener('click', baixar);
     $('copiar').addEventListener('click', copiar);
     $('nova').addEventListener('click', nova);
+    document.querySelectorAll('[data-exportar]').forEach(function (b) { b.addEventListener('click', exportar); });
   }
   iniciar();
 })();

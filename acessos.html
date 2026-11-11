@@ -20,11 +20,11 @@
       <h1>Acessos <span>à área restrita</span></h1>
     </section>
     <p id="origem" class="alerta aviso" hidden></p>
-    <p class="intro">Quem pode abrir o painel, o Núcleo da Marca e o Radar. Para incluir alguém, coloque o e-mail aqui; a pessoa entra em "Área restrita → Primeiro acesso" e cria a própria senha.</p>
+    <p class="intro">Quem pode abrir o painel, o Núcleo da Marca e o Radar. Para incluir alguém, coloque o usuário do GitHub da pessoa; ela entra em "Área restrita → Entrar com GitHub". Quem não tem conta cria uma grátis em github.com.</p>
     <div class="cartao" style="margin-bottom:16px">
       <h2>Incluir pessoa</h2>
       <form id="novo-acesso" class="campos" novalidate>
-        <div class="campo"><label for="a-email">E-mail</label><input id="a-email" type="email" autocomplete="off" placeholder="nome@unimeduberlandia.coop.br"></div>
+        <div class="campo"><label for="a-github">Usuário do GitHub</label><input id="a-github" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="ex.: maria-silva"></div>
         <div class="campo"><label for="a-nome">Nome</label><input id="a-nome" type="text" autocomplete="off"></div>
         <div class="campo"><label for="a-papel">Papel</label><select id="a-papel"><option value="equipe">Equipe: vê painel, núcleo e radar</option><option value="dono">Dono: também gerencia acessos</option></select></div>
         <div class="campo" style="justify-content:flex-end"><button class="btn primario" type="submit">Liberar acesso</button></div>
@@ -33,7 +33,7 @@
     </div>
     <div class="cartao">
       <h2>Com acesso</h2>
-      <div class="tabela-caixa"><table class="lista"><thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th>Desde</th><th></th></tr></thead><tbody id="a-linhas"></tbody></table></div>
+      <div class="tabela-caixa"><table class="lista"><thead><tr><th>Nome</th><th>GitHub</th><th>Papel</th><th>Desde</th><th></th></tr></thead><tbody id="a-linhas"></tbody></table></div>
     </div>
   </div>
 </main>

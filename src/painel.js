@@ -61,7 +61,7 @@
     svg += '<text x="0" y="12" font-size="11" fill="#6f6f6e">' + max + '</text><text x="0" y="' + A + '" font-size="11" fill="#6f6f6e">0</text>';
     dias.forEach(function (x, i) {
       var h = x.n / max * (A - 16);
-      svg += '<rect x="' + (pad + i * larg + 2) + '" y="' + (A - h) + '" width="' + (larg - 4) + '" height="' + h + '" fill="' + (i === 29 ? '#d3d92b' : '#00995d') + '"><title>' + x.d.toLocaleDateString('pt-BR') + ': ' + x.n + '</title></rect>';
+      svg += '<rect x="' + (pad + i * larg + 2) + '" y="' + (A - h) + '" width="' + (larg - 4) + '" height="' + h + '" fill="' + (i === 29 ? '#b1d34b' : '#00995d') + '"><title>' + x.d.toLocaleDateString('pt-BR') + ': ' + x.n + '</title></rect>';
       if (i % 7 === 1) svg += '<text x="' + (pad + i * larg + larg / 2) + '" y="' + (A + 15) + '" font-size="10" text-anchor="middle" fill="#6f6f6e">' + x.d.getDate() + '/' + (x.d.getMonth() + 1) + '</text>';
     });
     $('g-tempo').innerHTML = svg + '</svg>';
@@ -129,7 +129,7 @@
     indice.formatos.forEach(function (f) { nomesFormato[f.id] = f.nome; });
     if (ctx.local) {
       var aviso = $('origem'); aviso.hidden = false;
-      aviso.textContent = 'Modo de teste no seu computador: sem login e só com as peças geradas neste navegador. Depois de ligar o banco, a área restrita passa a pedir e-mail e senha.';
+      aviso.textContent = 'Modo de teste no seu computador: sem login e só com as peças geradas neste navegador. Depois de ligar o banco, a área restrita passa a pedir o login com GitHub.';
     }
     try { pedidos = await R.listar(sistema.registro, ctx.token); }
     catch (e) { pedidos = []; var a2 = $('origem'); a2.hidden = false; a2.textContent = e.message; }
