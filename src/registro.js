@@ -32,10 +32,13 @@
     return h;
   }
 
-  async function salvar(cfg, pedido) {
-    var lista = lerLocal();
-    lista.unshift(pedido);
-    gravarLocal(lista.slice(0, 500));
+  /* opcoes.soBanco: nova tentativa de uma peça que já está na cópia local. */
+  async function salvar(cfg, pedido, opcoes) {
+    if (!(opcoes && opcoes.soBanco)) {
+      var lista = lerLocal();
+      lista.unshift(pedido);
+      gravarLocal(lista.slice(0, 500));
+    }
     if (cfg && cfg.modo === 'supabase' && cfg.supabaseUrl) {
       var r = await fetch(cfg.supabaseUrl.replace(/\/$/, '') + '/rest/v1/' + cfg.tabela, {
         method: 'POST',

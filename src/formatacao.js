@@ -55,16 +55,20 @@
     return b;
   }
 
-  /* realces: [{ id, nome, fundo, texto }] já com as cores resolvidas. */
-  function barra(campo, realces) {
+  /* realces: [{ id, nome, fundo, texto }] já com as cores resolvidas.
+     modo 'realce': só o realce (ex.: título, que já é forte). */
+  function barra(campo, realces, modo) {
+    var completo = modo !== 'realce';
     var caixa = document.createElement('div');
     caixa.className = 'fmt-barra';
     caixa.setAttribute('role', 'toolbar');
     caixa.setAttribute('aria-label', 'Formatação do texto');
-    caixa.appendChild(botao('<b>B</b>', 'Negrito (Ctrl+B)', '', function () { envolver(campo, '**', '**', 'texto em negrito'); }));
-    caixa.appendChild(botao('<i>I</i>', 'Itálico (Ctrl+I)', '', function () { envolver(campo, '*', '*', 'texto em itálico'); }));
     var sep = document.createElement('span'); sep.className = 'fmt-sep'; sep.setAttribute('aria-hidden', 'true');
-    caixa.appendChild(sep);
+    if (completo) {
+      caixa.appendChild(botao('<b>B</b>', 'Negrito (Ctrl+B)', '', function () { envolver(campo, '**', '**', 'texto em negrito'); }));
+      caixa.appendChild(botao('<i>I</i>', 'Itálico (Ctrl+I)', '', function () { envolver(campo, '*', '*', 'texto em itálico'); }));
+      caixa.appendChild(sep);
+    }
     var rot = document.createElement('span'); rot.className = 'fmt-rot'; rot.textContent = 'Realce';
     caixa.appendChild(rot);
     realces.forEach(function (r) {
@@ -77,7 +81,7 @@
     caixa.appendChild(botao('Limpar', 'Tirar a formatação do trecho selecionado', 'fmt-limpar', function () { limpar(campo); }));
 
     campo.addEventListener('keydown', function (e) {
-      if (!(e.ctrlKey || e.metaKey) || e.altKey) return;
+      if (!completo || !(e.ctrlKey || e.metaKey) || e.altKey) return;
       var k = e.key.toLowerCase();
       if (k === 'b') { e.preventDefault(); envolver(campo, '**', '**', 'texto em negrito'); }
       if (k === 'i') { e.preventDefault(); envolver(campo, '*', '*', 'texto em itálico'); }

@@ -45,8 +45,9 @@
       "tipo": "texto",
       "obrigatorio": true,
       "max": 90,
-      "ajuda": "Curto, direto, em letras maiúsculas e minúsculas. Até 60 caracteres fica no tamanho cheio.",
-      "formatacao": true
+      "ajuda": "Curto, direto, em letras maiúsculas e minúsculas. Até 60 caracteres fica no tamanho cheio. O título já é forte: aqui só entra o realce.",
+      "formatacao": "realce",
+      "ideal": 60
     },
     {
       "id": "subtitulo",
@@ -105,6 +106,56 @@
       "rotulo": "Link do botão",
       "tipo": "link",
       "obrigatorio": false
+    }
+  ],
+  "secoes": [
+    {
+      "id": "essencial",
+      "nome": "Conteúdo",
+      "fixa": true,
+      "campos": [
+        "publico",
+        "tema",
+        "titulo",
+        "subtitulo",
+        "texto"
+      ]
+    },
+    {
+      "id": "imagens",
+      "nome": "Imagens",
+      "campos": [
+        "imagens"
+      ],
+      "vazio": "Sem imagem"
+    },
+    {
+      "id": "quando",
+      "nome": "Data e local",
+      "campos": [
+        "data",
+        "hora",
+        "local"
+      ],
+      "vazio": "Sem data"
+    },
+    {
+      "id": "botao",
+      "nome": "Botão",
+      "campos": [
+        "ctaTexto",
+        "ctaLink"
+      ],
+      "vazio": "Sem botão"
+    },
+    {
+      "id": "visual",
+      "nome": "Cabeçalho e ordem dos blocos",
+      "campos": [
+        "cabecalho",
+        "ordem"
+      ],
+      "vazio": "Nome da sua área e ordem padrão"
     }
   ],
   "publicos": {
@@ -330,6 +381,14 @@
       "data": "Data",
       "texto": "Texto",
       "botao": "Botão"
+    },
+    "preenchidoPor": {
+      "imagens": "imagens",
+      "titulo": "titulo",
+      "data": "data",
+      "texto": "texto",
+      "botao": "ctaTexto"
     }
-  }
+  },
+  "_secoes": "As seções organizam o formulário: a 'fixa' fica sempre aberta; as outras abrem e fecham e mostram um resumo do que foi preenchido. 'ordem' é o campo especial da ordem dos blocos."
 }

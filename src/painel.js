@@ -87,7 +87,7 @@
     var corpo = $('linhas'); corpo.textContent = '';
     lista.forEach(function (p) {
       corpo.appendChild(el('tr', {}, [
-        el('td', { 'class': 'cod', texto: p.codigo }),
+        el('td', { 'class': 'cod' }, [p.codigo, p.conteudo && p.conteudo.versao_de ? el('small', { 'class': 'versao-de', texto: 'nova versão de ' + p.conteudo.versao_de }) : null]),
         el('td', { texto: quando(p.criado_em) }),
         el('td', { texto: p.nome }),
         el('td', { texto: p.area }),

@@ -25,59 +25,79 @@
   </section>
 
   <section class="trabalho" id="trabalho" hidden>
-    <div>
+    <div class="abas" role="tablist" aria-label="Alternar entre editar e ver a prévia">
+      <button type="button" role="tab" id="aba-editar" aria-controls="painel-editar" aria-selected="true">Editar</button>
+      <button type="button" role="tab" id="aba-previa" aria-controls="painel-previa" aria-selected="false" tabindex="-1">Prévia</button>
+    </div>
+    <div id="painel-editar" class="painel-editar" role="tabpanel" aria-labelledby="aba-editar">
       <form id="formulario" novalidate>
-        <div class="cartao">
-          <h2>Quem está pedindo</h2>
-          <p class="sub">Sua área vira o cabeçalho e a assinatura do e-mail, e fica registrada com o código da peça.</p>
-          <div class="campos">
-            <div class="campo" data-campo="solicitante">
-              <label for="f-solicitante">Seu nome</label>
-              <input id="f-solicitante" name="solicitante" type="text" autocomplete="name" maxlength="80">
-            </div>
-            <div class="campo" data-campo="area">
-              <label for="f-area">Sua área</label>
-              <select id="f-area" name="area"><option value="">Selecione…</option></select>
+        <div class="cartao quem" id="quem">
+          <div class="quem-resumo" id="quem-resumo" hidden>
+            <p>Pedido por <b id="quem-nome"></b> · <span id="quem-area"></span></p>
+            <button class="link" type="button" id="quem-trocar">Trocar</button>
+          </div>
+          <div id="quem-campos">
+            <h2>Quem está pedindo</h2>
+            <p class="sub">Sua área vira o cabeçalho e a assinatura do e-mail. Fica guardado neste aparelho para as próximas peças.</p>
+            <div class="campos">
+              <div class="campo" data-campo="solicitante">
+                <label for="f-solicitante">Seu nome</label>
+                <input id="f-solicitante" name="solicitante" type="text" autocomplete="name" maxlength="80">
+              </div>
+              <div class="campo" data-campo="area">
+                <label for="f-area">Sua área</label>
+                <select id="f-area" name="area"><option value="">Selecione…</option></select>
+              </div>
             </div>
           </div>
         </div>
-        <div class="cartao">
-          <h2 id="titulo-formato">Conteúdo</h2>
-          <p class="sub">Preencha só o que for usar. O sistema escolhe o modelo pelo tamanho do texto e segue os manuais da marca.</p>
-          <div class="campos" id="campos"></div>
+        <div class="cartao conteudo">
+          <div class="conteudo-topo">
+            <h2 id="titulo-formato">Conteúdo</h2>
+            <button class="link" type="button" id="trocar">Trocar formato</button>
+          </div>
+          <div id="rascunho" class="alerta ok rascunho" role="status" hidden></div>
+          <div id="campos"></div>
           <div id="mensagens"></div>
-          <div class="acoes">
-            <button class="btn primario" type="submit" id="gerar">Gerar peça <span aria-hidden="true">→</span></button>
-            <button class="btn secundario" type="button" id="trocar">Trocar formato</button>
+          <div class="barra-acoes">
+            <p class="pendencias" id="pendencias" aria-live="polite"></p>
+            <button class="btn primario" type="submit" id="gerar"><span id="gerar-rotulo">Gerar peça</span> <span aria-hidden="true">→</span></button>
           </div>
         </div>
       </form>
 
       <div class="cartao feito" id="feito" hidden>
-        <h2>Peça registrada</h2>
+        <h2 id="feito-titulo">Peça registrada</h2>
         <div class="codigo" id="codigo"></div>
-        <p>Guarde esse código. Ele identifica esta versão oficial da peça no painel.</p>
+        <p id="feito-texto">Guarde esse código. Ele identifica esta versão oficial da peça no painel.</p>
+        <div class="alerta aviso" id="pendente" hidden>
+          <p id="pendente-texto"></p>
+          <button class="btn-mini" type="button" id="tentar">Tentar registrar de novo</button>
+        </div>
         <div class="acoes">
-          <button class="btn primario" type="button" id="baixar">Baixar HTML <span aria-hidden="true">↓</span></button>
-          <button class="btn secundario" type="button" id="copiar">Copiar código do e-mail</button>
+          <button class="btn primario" type="button" id="copiar">Copiar para o disparo</button>
+          <button class="btn secundario" type="button" id="baixar">Baixar HTML <span aria-hidden="true">↓</span></button>
         </div>
         <h3 class="feito-sub">Baixar para ajustes</h3>
         <p class="ajuda">O PowerPoint vem com os textos editáveis. A imagem e o PDF saem iguais ao e-mail.</p>
         <div class="acoes exportar" role="group" aria-label="Baixar para ajustes">
-          <button class="btn secundario" type="button" data-exportar="png">Imagem (PNG)</button>
-          <button class="btn secundario" type="button" data-exportar="pdf">PDF</button>
-          <button class="btn secundario" type="button" data-exportar="pptx">PowerPoint</button>
+          <button class="btn-mini" type="button" data-exportar="png">Imagem (PNG)</button>
+          <button class="btn-mini" type="button" data-exportar="pdf">PDF</button>
+          <button class="btn-mini" type="button" data-exportar="pptx">PowerPoint</button>
         </div>
         <p class="ajuda" id="copiado" role="status"></p>
-        <div class="acoes"><button class="btn secundario" type="button" id="nova">Nova peça</button></div>
+        <div class="acoes fim">
+          <button class="btn secundario" type="button" id="editar">Editar esta peça</button>
+          <button class="link" type="button" id="nova">Começar uma peça nova</button>
+        </div>
       </div>
     </div>
 
-    <aside class="previa" aria-label="Prévia">
-      <div class="cabeca"><h2 class="cartao-titulo" style="margin:0;font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:#00995d">Prévia</h2><span id="largura" style="font-size:13px;color:#6f6f6e"></span></div>
+    <aside class="previa" id="painel-previa" role="tabpanel" aria-labelledby="aba-previa" aria-label="Prévia">
+      <div class="cabeca"><h2 class="previa-titulo">Prévia</h2><span id="largura" class="previa-largura"></span></div>
       <div class="decisao" id="decisao"></div>
-      <div class="moldura"><div class="vazio" id="vazio">Preencha título e texto para ver a prévia.</div><iframe id="quadro" title="Prévia da peça" hidden></iframe></div>
-      <ul class="porque" id="porque"></ul>
+      <div class="moldura" id="moldura"><div class="vazio" id="vazio">Preencha título e texto para ver a prévia.</div><div class="palco" id="palco" hidden><iframe id="quadro" title="Prévia da peça"></iframe></div></div>
+      <details class="porque-caixa" id="porque-caixa" hidden><summary>Por que ficou assim?</summary><ul class="porque" id="porque"></ul></details>
     </aside>
   </section>
 </main>

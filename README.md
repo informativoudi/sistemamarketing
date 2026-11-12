@@ -76,6 +76,10 @@ Depois de gerar, a peça sai em **HTML** (para disparo), **Imagem (PNG)**, **PDF
 
 Os números ficam em `config/formatos/email-marketing.json`. Mude ali e todas as peças novas seguem.
 
+## Edição rápida
+
+O formulário é organizado em seções: o essencial fica aberto e o resto (imagens, data, botão, cabeçalho e ordem) abre só quando precisa, com um resumo do que já foi preenchido. Uma barra fixa mostra o que falta e o botão Gerar. Nome e área ficam guardados, o rascunho é salvo sozinho e, depois de gerar, **Editar esta peça** cria uma nova versão (`-V2`, `-V3`…) sem redigitar nada. No celular, as abas Editar | Prévia trocam de tela. Detalhes em `docs/como-atualizar.md`.
+
 ## Rastreabilidade
 
 Cada peça recebe um código (`UNI-EM-2027-XXXXXX`) que aparece no rodapé. O registro guarda quem pediu, a área, a data, o conteúdo, o HTML final e a "impressão digital" (hash SHA-256) desse HTML. No painel, **Conferir peça** compara um HTML disparado com a versão oficial e mostra se houve alteração.
