@@ -453,3 +453,20 @@ details.secao > .campos { padding: 4px 16px 18px; border-top: 1px solid var(--bo
 .doc-imagem figcaption { display: flex; flex-direction: column; font-size: 12.5px; }
 .doc-imagem figcaption span { color: var(--suave); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .doc-imagem-acoes { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* Radar · linhas de campanha (externa × interna) */
+.linhas-campanha{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:12px;}
+.linha-campanha{border:1px solid var(--borda,#e3ddd4);border-radius:14px 14px 0 14px;padding:12px;background:#fff;min-width:0;}
+.linha-campanha h3{margin:12px 0 4px;font-size:17px;}
+.linha-amostra{border-radius:10px 10px 0 10px;padding:16px;display:flex;flex-direction:column;gap:6px;min-height:118px;position:relative;}
+.linha-amostra span{font-size:11px;font-weight:700;letter-spacing:.14em;}
+.linha-amostra b{font-size:22px;line-height:1.05;}
+.linha-amostra i{position:absolute;right:14px;bottom:14px;width:34px;height:8px;border-radius:2px;}
+.linha-regras{margin:8px 0 0;padding-left:18px;font-size:13.5px;line-height:1.45;color:var(--texto-suave,#6f6f6e);}
+
+/* Kit de campanha · downloads por peça */
+.kit-lista{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:8px;width:100%;}
+.kit-lista li{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:10px 12px;border:1px solid var(--borda,#e3ddd4);border-radius:12px 12px 0 12px;background:#fff;}
+.kit-lista li b{display:block;font-size:14.5px;}
+.kit-lista li span{font-size:12.5px;color:var(--texto-suave,#6f6f6e);}
+.kit-botoes{display:flex;gap:6px;flex-wrap:wrap;}

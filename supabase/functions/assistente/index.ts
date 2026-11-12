@@ -32,7 +32,7 @@ Regras que você nunca quebra:
 - Mantenha a estrutura e as chaves existentes. Chaves que começam com "_" são explicações: atualize se a regra mudar.
 - Cores sempre em hexadecimal (#rrggbb) ou pelo nome de uma cor que exista em marca.json → cores.
 - Não invente arquivos de imagem, ícones ou fontes que não existem: só use caminhos que já aparecem nos arquivos.
-- Os desenhos (código) entendem estas tendências pelo id: titulo-contraste, quadrado-laranja, moldura-box, textura-papel, prova-de-processo; e o bloco "campanha" com fundo, destaque e mote. Uma tendência nova com outro id fica registrada, mas só muda as peças quando o desenho for programado: diga isso em "limites".
+- Os desenhos (código) entendem estas tendências pelo id: titulo-contraste, neo-brutalismo, quadrado-laranja, moldura-box, textura-papel, prova-de-processo, elementos-key-art; e o bloco "campanhas" com duas linhas separadas: "externa" (forte, fundo escuro, todas as tendências, Unimed + ANS) e "interna" (próxima, fundo claro, 2027 sutil, marca do Grupo). Cada linha tem marca, ans, selo, tom, tendencias (ids que a linha usa), estilos (estilos da Key Art permitidos), estiloPadrao e mote. O bloco "keyArt" tem a paleta e os estilos (foto, mosaico, pilulas, icones), cada um com fundo, texto, destaque e legenda. Nunca misture as duas linhas. Regra fixa: a marca Unimed é sempre a original (box verde, letras brancas); nunca a versão de box branco. Uma tendência nova com outro id fica registrada, mas só muda as peças quando o desenho for programado: diga isso em "limites".
 - Se o pedido for ambíguo, não altere nada: faça a pergunta em "resposta" e devolva "alteracoes": [].
 
 Responda SOMENTE com um objeto JSON válido, sem texto antes ou depois, neste formato:
@@ -42,7 +42,7 @@ Responda SOMENTE com um objeto JSON válido, sem texto antes ou depois, neste fo
 
 const POR_AREA: Record<string, string> = {
   nucleo: `Área: NÚCLEO DA MARCA. Você pode alterar config/marca.json (cores, papéis das cores, tipografia, linguagem, áreas, ícones por área, rodapé, imagens aprovadas que já existem) e os arquivos de formato config/formatos/*.json recebidos (campos, limites de caracteres, temas, públicos, downloads em "exportar", seções). Não altere config/tendencias.json aqui.`,
-  radar: `Área: RADAR DE TENDÊNCIAS. Você pode alterar só config/tendencias.json: ciclo, conceito, "principal", status das tendências (ativa, teste, arquivada), criar ou ajustar tendências e o bloco "campanha" (visual das campanhas internas e externas). Para "criar um novo branding", monte um novo conjunto: conceito, campanha (fundo, destaque, mote) e tendências; guarde o ciclo anterior em "ciclosAnteriores" (lista) sem apagar. O ciclo 2027 ("Humano por natureza") é o principal até a pessoa dizer o contrário. config/marca.json vem só como referência (cores existentes).`,
+  radar: `Área: RADAR DE TENDÊNCIAS. Você pode alterar só config/tendencias.json: ciclo, conceito, "principal", status das tendências (ativa, teste, arquivada), criar ou ajustar tendências e o bloco "campanhas" (linhas "externa" e "interna"). Para "criar um novo branding", monte um novo conjunto: conceito, campanhas (as duas linhas) e tendências; guarde o ciclo anterior em "ciclosAnteriores" (lista) sem apagar. O ciclo 2027 ("Humano por natureza") é o principal até a pessoa dizer o contrário. config/marca.json vem só como referência (cores existentes).`,
 };
 
 function extrairJson(texto: string) {

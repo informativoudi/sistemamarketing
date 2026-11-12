@@ -1,0 +1,333 @@
+{
+  "_sobre": "Kit de campanha: um KV (key visual) e os desdobramentos, todos com o mesmo título, foto e cores. A linha (externa ou interna) vem do Radar (config/tendencias.json → \"campanhas\"). A lista de peças de cada linha fica em \"kit\": dá para incluir, tirar ou mudar medidas aqui.",
+  "id": "campanha-kit",
+  "nome": "Kit de campanha",
+  "sigla": "KIT",
+  "modelo": "campanha-kit",
+  "exportar": [
+    "kit"
+  ],
+  "escalaImagem": 1,
+  "quadro": 1200,
+  "previaPede": [
+    "titulo"
+  ],
+  "revisarLinguagem": false,
+  "campos": [
+    {
+      "id": "publico",
+      "rotulo": "Linha da campanha",
+      "tipo": "escolha",
+      "obrigatorio": true,
+      "opcoes": [
+        "Campanha externa",
+        "Campanha interna"
+      ],
+      "descricoes": {
+        "Campanha externa": "Clientes, beneficiários e a cidade · Key Art 2027 completa, Unimed + ANS",
+        "Campanha interna": "Colaboradores e cooperados · Key Art 2027, marca do Grupo, sem ANS"
+      }
+    },
+    {
+      "id": "cabecalho",
+      "rotulo": "Nome da campanha",
+      "tipo": "texto",
+      "obrigatorio": true,
+      "max": 40,
+      "ajuda": "Aparece no chapéu de todas as peças (ex.: Outubro Rosa, Semana da Saúde)."
+    },
+    {
+      "id": "titulo",
+      "rotulo": "Título (mote da campanha)",
+      "tipo": "texto",
+      "obrigatorio": true,
+      "max": 60,
+      "ideal": 40,
+      "ajuda": "O mesmo título em todas as peças. Curto: no KV e no story ele precisa ser lido de longe. Nas campanhas, a última palavra forte vira destaque em Slab; para escolher outra, escreva-a entre *asteriscos*."
+    },
+    {
+      "id": "subtitulo",
+      "rotulo": "Apoio",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 110,
+      "formatacao": "simples",
+      "ajuda": "Uma frase que completa o título."
+    },
+    {
+      "id": "estilo",
+      "rotulo": "Estilo da key art",
+      "tipo": "escolha",
+      "obrigatorio": false,
+      "opcoes": [
+        "Automático",
+        "Foto (Master)",
+        "Mosaico",
+        "Pílulas e pontos",
+        "Ícones"
+      ],
+      "descricoes": {
+        "Automático": "O padrão da linha: externa usa Foto (Master); interna usa Ícones",
+        "Foto (Master)": "Fundo petróleo, foto no quadro box com marcas de corte",
+        "Mosaico": "Fundo petróleo com o mosaico de formas",
+        "Pílulas e pontos": "Papel claro, pílulas, retícula e o símbolo em 3D",
+        "Ícones": "Fundo amarelo e cards com ícones de linha"
+      }
+    },
+    {
+      "id": "itens",
+      "rotulo": "Destaques com ícone",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 90,
+      "ajuda": "Só no estilo Ícones: até 6 palavras separadas por vírgula (ex.: Mamografia, Autoexame, Consulta). Cada uma vira um card com ícone."
+    },
+    {
+      "id": "imagens",
+      "rotulo": "Foto da campanha",
+      "tipo": "imagens-aprovadas",
+      "obrigatorio": false,
+      "limite": 1,
+      "ajuda": "Uma foto para todo o kit. Arraste para ajustar o enquadramento: as outras peças seguem o mesmo ponto."
+    },
+    {
+      "id": "data",
+      "rotulo": "Data",
+      "tipo": "data",
+      "obrigatorio": false
+    },
+    {
+      "id": "hora",
+      "rotulo": "Horário",
+      "tipo": "hora",
+      "obrigatorio": false
+    },
+    {
+      "id": "chamada",
+      "rotulo": "Chamada",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 24,
+      "ajuda": "Vira o botão laranja nas peças (ex.: \"Saiba mais\")."
+    },
+    {
+      "id": "texto",
+      "rotulo": "Texto do e-mail",
+      "tipo": "texto-longo",
+      "obrigatorio": false,
+      "max": 900,
+      "formatacao": "simples",
+      "ajuda": "Só para o e-mail da campanha. Separe os parágrafos com uma linha em branco; comece linhas com \"- \" para uma lista."
+    },
+    {
+      "id": "linkEmail",
+      "rotulo": "Link do botão no e-mail",
+      "tipo": "link",
+      "obrigatorio": false,
+      "ajuda": "Com link, a chamada vira um botão clicável no e-mail."
+    }
+  ],
+  "secoes": [
+    {
+      "id": "essencial",
+      "nome": "Campanha",
+      "fixa": true,
+      "campos": [
+        "publico",
+        "cabecalho",
+        "titulo",
+        "subtitulo"
+      ]
+    },
+    {
+      "id": "keyart",
+      "nome": "Key art (campanhas)",
+      "campos": [
+        "estilo",
+        "itens"
+      ],
+      "vazio": "Automático, pela linha da campanha"
+    },
+    {
+      "id": "imagens",
+      "nome": "Foto",
+      "campos": [
+        "imagens"
+      ],
+      "vazio": "Sem foto"
+    },
+    {
+      "id": "quando",
+      "nome": "Data e chamada",
+      "campos": [
+        "data",
+        "hora",
+        "chamada"
+      ],
+      "vazio": "Sem data e sem chamada"
+    },
+    {
+      "id": "email",
+      "nome": "E-mail da campanha",
+      "campos": [
+        "texto",
+        "linkEmail"
+      ],
+      "vazio": "Só título e apoio"
+    }
+  ],
+  "publicos": {
+    "_regra": "As duas linhas usam o desenho de campanha. Externa: Unimed Uberlândia + ANS. Interna: Grupo Unimed Uberlândia, sem ANS.",
+    "Campanha externa": {
+      "logo": "externo",
+      "assinatura": "Unimed Uberlândia",
+      "ans": true,
+      "layout": "campanha",
+      "selo": ""
+    },
+    "Campanha interna": {
+      "logo": "interno",
+      "assinatura": "Grupo Unimed Uberlândia",
+      "ans": false,
+      "layout": "campanha",
+      "selo": "Campanha interna"
+    }
+  },
+  "temas": {
+    "Institucional": {
+      "faixa": "verdeEscuro",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioAreia",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Institucional"
+    }
+  },
+  "kit": {
+    "_regra": "Peças de cada linha, na ordem. A primeira com \"kv\": true é o KV principal. Tipo \"email\" gera o e-mail da campanha (HTML).",
+    "externa": [
+      {
+        "id": "kv",
+        "nome": "KV principal",
+        "kv": true,
+        "largura": 1920,
+        "altura": 1080,
+        "margem": 96,
+        "uso": "Peça-mãe: palco, telas, apresentações e referência para agências.",
+        "exportar": [
+          "png",
+          "jpg",
+          "pdf"
+        ]
+      },
+      {
+        "id": "feed",
+        "nome": "Post feed",
+        "largura": 1080,
+        "altura": 1350,
+        "margem": 90,
+        "uso": "Instagram, Facebook e LinkedIn (4:5).",
+        "exportar": [
+          "png",
+          "jpg"
+        ]
+      },
+      {
+        "id": "story",
+        "nome": "Story",
+        "largura": 1080,
+        "altura": 1920,
+        "margem": 90,
+        "margens": {
+          "topo": 250,
+          "base": 340
+        },
+        "uso": "Instagram e WhatsApp. Áreas do app livres em cima e embaixo.",
+        "exportar": [
+          "png",
+          "jpg"
+        ]
+      },
+      {
+        "id": "email",
+        "nome": "E-mail da campanha",
+        "tipo": "email",
+        "largura": 600,
+        "uso": "Disparo para a base de clientes.",
+        "exportar": [
+          "html",
+          "png"
+        ]
+      },
+      {
+        "id": "banner",
+        "nome": "Banner site",
+        "largura": 1500,
+        "altura": 500,
+        "margem": 50,
+        "uso": "Site e Portal Unimed (1500 × 500).",
+        "exportar": [
+          "png",
+          "jpg"
+        ]
+      }
+    ],
+    "interna": [
+      {
+        "id": "kv",
+        "nome": "KV principal",
+        "kv": true,
+        "largura": 1920,
+        "altura": 1080,
+        "margem": 96,
+        "uso": "Peça-mãe: TVs internas, Palco, apresentações.",
+        "exportar": [
+          "png",
+          "jpg",
+          "pdf"
+        ]
+      },
+      {
+        "id": "post",
+        "nome": "Post Viva Engage",
+        "largura": 1080,
+        "altura": 1080,
+        "margem": 100,
+        "uso": "Viva Engage e redes internas.",
+        "exportar": [
+          "png",
+          "jpg"
+        ]
+      },
+      {
+        "id": "email",
+        "nome": "E-mail da campanha",
+        "tipo": "email",
+        "largura": 600,
+        "uso": "Disparo para colaboradores.",
+        "exportar": [
+          "html",
+          "png"
+        ]
+      },
+      {
+        "id": "banner",
+        "nome": "Banner intranet",
+        "largura": 1500,
+        "altura": 500,
+        "margem": 50,
+        "uso": "Intranet e Portal (1500 × 500).",
+        "exportar": [
+          "png",
+          "jpg"
+        ]
+      }
+    ]
+  },
+  "validacoes": {},
+  "arvore": {
+    "imagem": {
+      "maximo": 1
+    }
+  }
+}

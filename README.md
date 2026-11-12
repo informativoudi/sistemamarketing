@@ -99,17 +99,25 @@ As regras seguem os manuais oficiais: Aplicação da Marca Unimed (MS.139), Ling
 
 As ferramentas de exportação ficam em `src/vendor/` (html2canvas, jsPDF e PptxGenJS, todas com licença MIT).
 
-## Campanhas (Tendências 2027)
+## Campanhas (Key Art 2027)
 
 Nas peças de imagem, o campo "Para quem vai" tem quatro opções: Interno, Externo, **Campanha interna** e **Campanha externa**. O e-mail marketing e a newsletter seguem só Interno e Externo.
 
-- As campanhas usam o visual do ciclo principal do Radar (2027, "Humano por natureza"):
-  - foto sangrando com o canto box;
-  - fundo verde petróleo, logo branco e faixa de formas;
-  - título em contraste (Black, caixa alta) com o ponto laranja;
-  - textura real e prova de processo.
-- Cada tendência só entra se estiver **ativa** em `config/tendencias.json`. Cores e mote ficam no bloco `campanha`.
-- A campanha interna usa a marca do Grupo; a campanha externa usa Unimed + ANS.
+As campanhas usam a Key Art 2027 completa:
+- tipografia mista (Black, Light e Slab), com o ponto laranja;
+- grade à mostra, marcas de corte, FIG. e coordenadas;
+- texturas;
+- os elementos da tendência, em quatro estilos: **Foto (Master)**, **Mosaico**, **Pílulas e pontos** e **Ícones**.
+
+As duas linhas ficam separadas pela marca:
+- **externa:** Unimed + ANS, padrão Foto (Master);
+- **interna:** Grupo, sem ANS, com o selo "Campanha interna", padrão Ícones.
+
+**Regra fixa:** a marca Unimed é sempre a original (box verde, letras brancas), nunca a de box branco.
+
+O **Kit de campanha** gera o KV (1920 × 1080) e os desdobramentos de uma vez (redes sociais, e-mail e banner), por peça ou num .zip.
+
+Regras em `config/tendencias.json` (`keyArt` e `campanhas`). Detalhes em `docs/campanhas.md`.
 
 ## Imagens do seu computador
 

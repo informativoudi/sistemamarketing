@@ -67,11 +67,12 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }
 
-  var PESOS = ['300', '400', 'italic 400', '600', '700', 'italic 700', '800', '900'];
+  var PESOS = ['200', '300', '400', 'italic 400', '600', '700', 'italic 700', '800', '900'];
   function carregarPesos(doc) {
     var f = doc && doc.fonts;
     if (!f || !f.load) return Promise.resolve();
-    return Promise.all(PESOS.map(function (w) { return f.load(w + ' 16px "Unimed Sans"').catch(function () {}); })).then(function () { return f.ready; });
+    var lista = PESOS.map(function (w) { return w + ' 16px "Unimed Sans"'; }).concat(['400 16px "Unimed Slab"', '700 16px "Unimed Slab"']);
+    return Promise.all(lista.map(function (x) { return f.load(x).catch(function () {}); })).then(function () { return f.ready; });
   }
   async function fotografar(m, escala, alvo) {
     await carregar('html2canvas');
@@ -92,7 +93,9 @@
     try {
       var tela = await fotografar(m, info.escala || 2);
       var mime = tipo === 'jpg' ? 'image/jpeg' : 'image/png';
-      await new Promise(function (ok) { tela.toBlob(function (b) { baixarBlob(b, nome + '.' + tipo); ok(); }, mime, 0.92); });
+      var blob = await new Promise(function (ok) { tela.toBlob(ok, mime, 0.92); });
+      if (info.blob) return blob;
+      baixarBlob(blob, nome + '.' + tipo);
     } finally { m.sair(); }
   }
   function png(html, nome, info) { return imagem(html, nome, info, 'png'); }

@@ -879,7 +879,7 @@
         tem_data: !!r.plano.data,
         tem_botao: !!r.plano.botao,
         conteudo: conteudo,
-        html: r.html,
+        html: r.plano.kit ? modelo().render(r.plano, dados, estado.marca, { codigo: codigo, baseUrl: estado.sistema.baseUrlPublica || baseLocal(), leve: true }) : r.html,
         hash: impressao,
         versao_marca: estado.marca.versao,
         ciclo_tendencias: estado.tendencias.ciclo
@@ -905,7 +905,33 @@
 
   var ROTULOS = { png: 'Imagem (PNG)', jpg: 'Imagem (JPG)', pdf: 'PDF', pptx: 'PowerPoint', docx: 'Word' };
   /* Downloads permitidos para o formato (config "exportar"). HTML só onde vale (e-mail). */
+  /* Kit de campanha: cada peça com os seus downloads, mais o kit inteiro num .zip. */
+  var ROTULOS_KIT = { png: 'PNG', jpg: 'JPG', pdf: 'PDF', html: 'HTML' };
+  function montarDownloadsKit() {
+    $('acoes-html').hidden = true;
+    var grupo = $('exportar-grupo'); grupo.textContent = '';
+    var tudo = el('button', { type: 'button', 'class': 'btn primario', 'data-exportar': 'kit' }, ['Baixar o kit completo (.zip)']);
+    tudo.addEventListener('click', exportarKit);
+    grupo.appendChild(tudo);
+    var lista = el('ul', { 'class': 'kit-lista' });
+    estado.ultimoPlano.pecas.forEach(function (p) {
+      var botoes = p.exportar.map(function (t) {
+        var b = el('button', { type: 'button', 'class': 'btn-mini', 'data-exportar': t, 'data-peca': p.id, 'aria-label': 'Baixar ' + p.nome + ' em ' + (ROTULOS_KIT[t] || t) }, [ROTULOS_KIT[t] || t.toUpperCase()]);
+        b.addEventListener('click', exportarKit);
+        return b;
+      });
+      lista.appendChild(el('li', {}, [
+        el('div', {}, [el('b', { texto: p.nome }), el('span', { texto: p.altura ? p.largura + ' × ' + p.altura + ' px' : 'HTML responsivo, ' + p.largura + ' px' })]),
+        el('div', { 'class': 'kit-botoes' }, botoes)
+      ]));
+    });
+    grupo.appendChild(lista);
+    $('exportar-titulo').textContent = 'Baixar as peças da campanha';
+    $('exportar-ajuda').textContent = 'O .zip traz todas as peças em PNG e o e-mail em HTML. As imagens saem no tamanho exato de cada canal. No HTML do e-mail baixado, a foto fica dentro do arquivo: para disparo, suba a foto na ferramenta de envio.';
+  }
+
   function montarDownloads() {
+    if (estado.ultimoPlano && estado.ultimoPlano.kit) return montarDownloadsKit();
     var html = exporta('html');
     $('acoes-html').hidden = !html;
     var tipos = (estado.formato.exportar || ['html', 'png', 'pdf', 'pptx']).filter(function (t) { return t !== 'html'; });
@@ -1012,6 +1038,43 @@
     } finally { botoes.forEach(function (b) { b.disabled = false; }); }
   }
 
+  async function exportarKit(ev) {
+    var tipo = ev.currentTarget.getAttribute('data-exportar');
+    var qual = ev.currentTarget.getAttribute('data-peca');
+    var botoes = document.querySelectorAll('[data-exportar]');
+    var aviso = $('copiado');
+    var E = window.UnimedExportar;
+    var pecas = modelo().pecasHtml(estado.ultimoPlano, estado.ultimoDados, estado.marca, { codigo: estado.ultimoCodigo, baseUrl: baseLocal() });
+    var nomeArq = function (p, ext) { return estado.ultimoCodigo + '-' + p.id + (p.altura ? '-' + p.largura + 'x' + p.altura : '') + '.' + ext; };
+    var info = function (p, extra) { return Object.assign({ codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao, largura: p.tipo === 'email' ? 680 : p.largura, escala: p.tipo === 'email' ? 2 : 1 }, extra || {}); };
+    botoes.forEach(function (b) { b.disabled = true; });
+    try {
+      if (tipo === 'kit') {
+        await E.carregar('pptx'); // traz o JSZip
+        var zip = new window.JSZip();
+        for (var i = 0; i < pecas.length; i++) {
+          var p = pecas[i];
+          aviso.textContent = 'Preparando o kit: ' + p.nome + ' (' + (i + 1) + ' de ' + pecas.length + ')…';
+          zip.file(nomeArq(p, 'png'), await E.png(p.html, nomeArq(p, 'png'), info(p, { blob: true })));
+          if (p.tipo === 'email') zip.file(nomeArq(p, 'html'), p.html);
+        }
+        aviso.textContent = 'Compactando…';
+        var blob = await zip.generateAsync({ type: 'blob' });
+        await E.arquivo(blob, estado.ultimoCodigo + '-kit.zip');
+        aviso.textContent = 'Kit baixado: ' + pecas.length + ' peças.';
+        return;
+      }
+      var p2 = pecas.filter(function (x) { return x.id === qual; })[0];
+      if (!p2) throw new Error('peça não encontrada');
+      aviso.textContent = 'Preparando ' + p2.nome + '…';
+      if (tipo === 'html') await E.arquivo(new Blob([p2.html], { type: 'text/html' }), nomeArq(p2, 'html'));
+      else await E[tipo](p2.html, nomeArq(p2, tipo).replace(/\.[a-z]+$/, ''), info(p2));
+      aviso.textContent = p2.nome + ' baixado.';
+    } catch (e) {
+      aviso.textContent = 'Não consegui gerar o download: ' + e.message;
+    } finally { botoes.forEach(function (b) { b.disabled = false; }); }
+  }
+
   function nova() {
     gravar(CHAVE_RASCUNHO + estado.formato.id, null);
     var nome = $('f-solicitante').value, area = $('f-area').value;
@@ -1042,7 +1105,7 @@
   async function iniciar() {
     try {
       var r = await Promise.all([json('config/marca.json'), json('config/tendencias.json'), json('config/sistema.json'), json('config/formatos/indice.json')]);
-      estado.marca = r[0]; estado.tendencias = r[1]; estado.sistema = r[2]; estado.indice = r[3];
+      estado.marca = r[0]; estado.tendencias = r[1]; window.UnimedTendencias = r[1]; estado.sistema = r[2]; estado.indice = r[3];
     } catch (e) {
       $('busca').appendChild(el('div', { 'class': 'alerta erro', role: 'alert', texto: 'Não consegui carregar as regras da marca (' + e.message + '). Abra pelo endereço do site, não direto do arquivo.' }));
       return;

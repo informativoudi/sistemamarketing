@@ -2,6 +2,13 @@
   "_sobre": "Catálogo de formatos. 'ativo': true aparece para uso; false aparece como 'em breve'. Para liberar um formato novo, crie o arquivo de regras e o modelo e mude para true.",
   "formatos": [
     {
+      "id": "campanha-kit",
+      "nome": "Kit de campanha",
+      "grupo": "Campanha · KV + desdobramentos",
+      "ativo": true,
+      "palavras": "campanha kit kv key visual desdobramento redes sociais post story email banner site interna externa"
+    },
+    {
       "id": "email-marketing",
       "nome": "E-mail marketing",
       "grupo": "E-mail",

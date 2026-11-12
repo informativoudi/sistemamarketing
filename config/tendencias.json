@@ -1,5 +1,5 @@
 {
-  "_sobre": "Radar de Tendências. Status: \"ativa\", \"teste\" ou \"arquivada\". Só as ativas chegam às peças. O bloco \"campanha\" define o visual das campanhas internas e externas; a tendência principal é a do ciclo atual.",
+  "_sobre": "Radar de Tendências. Status: \"ativa\", \"teste\" ou \"arquivada\". Só as ativas chegam às peças. O bloco \"campanhas\" separa as duas linhas de campanha (externa e interna); a tendência principal é a do ciclo atual.",
   "ciclo": "2027",
   "conceito": "Humano por natureza",
   "tendencias": [
@@ -34,6 +34,18 @@
       "comoAplica": "Grão de papel bem leve por cima das campanhas (internas e externas). Não se aplica a e-mail."
     },
     {
+      "id": "neo-brutalismo",
+      "nome": "Neo-brutalismo & tipo cru",
+      "status": "ativa",
+      "comoAplica": "Nas campanhas: título em tipografia mista (Black e Light em caixa alta + Slab em destaque), espaçamento apertado e filetes firmes. Use *asteriscos* no título para escolher a palavra em Slab."
+    },
+    {
+      "id": "elementos-key-art",
+      "nome": "Elementos da Key Art",
+      "status": "ativa",
+      "comoAplica": "Nas campanhas: mosaico de formas, pílulas e pontos com retícula, símbolo em 3D e cards com ícones de linha, conforme o estilo escolhido."
+    },
+    {
       "id": "bento-dark-neon",
       "nome": "Bento assimétrico dark & neon",
       "status": "teste",
@@ -41,10 +53,113 @@
     }
   ],
   "principal": "humano-por-natureza-2027",
-  "campanha": {
-    "_regra": "Visual das campanhas internas e externas (peças de imagem). Usa as tendências ativas abaixo: título em contraste, ponto laranja, moldura box, textura real e prova de processo.",
-    "fundo": "verdeEscuro",
-    "destaque": "citrico",
-    "mote": "Presença que transforma"
+  "campanhas": {
+    "_regra": "Duas linhas de campanha, da mesma família (Tendências 2027) mas nunca misturadas. EXTERNA: fala com clientes, beneficiários e a cidade; é a expressão mais forte da marca, com a Key Art completa e marca Unimed Uberlândia + ANS. INTERNA: fala com colaboradores e cooperados; é próxima e acolhedora e também usa a Key Art 2027, com a marca do Grupo Unimed Uberlândia, sem ANS e com o selo \"Campanha interna\". Toda campanha começa por um KV (key visual) e se desdobra em peças que repetem o mesmo título, foto e cores. O desenho vem de um dos estilos da Key Art (\"keyArt.estilos\"); cada linha diz quais estilos pode usar e qual é o padrão.",
+    "externa": {
+      "nome": "Campanha externa",
+      "fala": "Clientes, beneficiários, cooperados e a cidade",
+      "tom": "Forte e marcante: a Key Art 2027 completa",
+      "marca": "externo",
+      "ans": true,
+      "tendencias": [
+        "titulo-contraste",
+        "quadrado-laranja",
+        "moldura-box",
+        "textura-papel",
+        "prova-de-processo",
+        "neo-brutalismo",
+        "elementos-key-art"
+      ],
+      "mote": "Presença que transforma",
+      "estilos": [
+        "foto",
+        "mosaico",
+        "pilulas",
+        "icones"
+      ],
+      "estiloPadrao": "foto",
+      "selo": ""
+    },
+    "interna": {
+      "nome": "Campanha interna",
+      "fala": "Colaboradores e cooperados",
+      "tom": "Próximo e acolhedor, com a Key Art 2027",
+      "marca": "interno",
+      "ans": false,
+      "tendencias": [
+        "titulo-contraste",
+        "quadrado-laranja",
+        "moldura-box",
+        "textura-papel",
+        "prova-de-processo",
+        "neo-brutalismo",
+        "elementos-key-art"
+      ],
+      "mote": "Presença que transforma",
+      "estilos": [
+        "icones",
+        "pilulas",
+        "mosaico",
+        "foto"
+      ],
+      "estiloPadrao": "icones",
+      "selo": "Campanha interna"
+    }
+  },
+  "keyArt": {
+    "_regra": "Key Art 2027 (Humano por natureza) aplicada nas campanhas: tipografia mista (Black + Light em caixa alta + Slab em destaque), ponto laranja, grade de 12 colunas à mostra, marcas de corte, legendas técnicas (FIG., coordenadas, KV 2027), texturas reais e os elementos da tendência (mosaico de formas, pílulas e pontos, ícones de linha). Marca Unimed sempre a original (box verde, letras brancas).",
+    "paleta": {
+      "petroleo": "#00433f",
+      "verdeEscuro": "#005941",
+      "institucional": "#00995d",
+      "citrico": "#d3d92b",
+      "agua": "#199975",
+      "amarelo": "#f9b000",
+      "laranja": "#f47920",
+      "laranjaEscuro": "#b55816",
+      "azul": "#7dcbdb",
+      "rosa": "#f4aab8",
+      "verdeClaro": "#aed5ab",
+      "papel": "#e9dfd0",
+      "branco": "#ffffff"
+    },
+    "estilos": {
+      "foto": {
+        "nome": "Foto (Master)",
+        "descricao": "Fundo petróleo, foto no quadro box com marcas de corte e FIG.",
+        "fundo": "petroleo",
+        "texto": "branco",
+        "destaque": "citrico",
+        "legenda": "citrico",
+        "textura": "papel"
+      },
+      "mosaico": {
+        "nome": "Mosaico",
+        "descricao": "Fundo petróleo com o mosaico de formas da Key Art.",
+        "fundo": "petroleo",
+        "texto": "branco",
+        "destaque": "citrico",
+        "legenda": "citrico",
+        "textura": "papel"
+      },
+      "pilulas": {
+        "nome": "Pílulas e pontos",
+        "descricao": "Fundo de papel claro, pílulas, pontos, retícula e o símbolo em 3D.",
+        "fundo": "papel",
+        "texto": "petroleo",
+        "destaque": "institucional",
+        "legenda": "petroleo",
+        "textura": "papel-claro"
+      },
+      "icones": {
+        "nome": "Ícones",
+        "descricao": "Fundo amarelo, cards com ícones de linha e faixa do mosaico.",
+        "fundo": "amarelo",
+        "texto": "petroleo",
+        "destaque": "institucional",
+        "legenda": "petroleo",
+        "textura": "papel"
+      }
+    }
   }
 }

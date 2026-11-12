@@ -30,8 +30,8 @@
       "descricoes": {
         "Interno": "Comunicado para colaboradores · marca do Grupo",
         "Externo": "Comunicado para clientes e cooperados · Unimed + ANS",
-        "Campanha interna": "Campanha para colaboradores · visual das Tendências 2027",
-        "Campanha externa": "Campanha para o público · Tendências 2027 + ANS"
+        "Campanha interna": "Campanha para colaboradores · linha interna: clara e próxima, marca do Grupo",
+        "Campanha externa": "Campanha para o público · linha externa: Tendências 2027 completas + ANS"
       }
     },
     {
@@ -53,7 +53,7 @@
       "obrigatorio": true,
       "max": 50,
       "ideal": 32,
-      "ajuda": "Curto e direto: numa imagem, quanto menos texto, melhor."
+      "ajuda": "Curto e direto: numa imagem, quanto menos texto, melhor. Nas campanhas, a última palavra forte vira destaque em Slab; para escolher outra, escreva-a entre *asteriscos*."
     },
     {
       "id": "subtitulo",
@@ -63,6 +63,34 @@
       "max": 70,
       "formatacao": "simples",
       "ajuda": "Uma frase de apoio, se precisar."
+    },
+    {
+      "id": "estilo",
+      "rotulo": "Estilo da key art",
+      "tipo": "escolha",
+      "obrigatorio": false,
+      "opcoes": [
+        "Automático",
+        "Foto (Master)",
+        "Mosaico",
+        "Pílulas e pontos",
+        "Ícones"
+      ],
+      "descricoes": {
+        "Automático": "O padrão da linha: externa usa Foto (Master); interna usa Ícones",
+        "Foto (Master)": "Fundo petróleo, foto no quadro box com marcas de corte",
+        "Mosaico": "Fundo petróleo com o mosaico de formas",
+        "Pílulas e pontos": "Papel claro, pílulas, retícula e o símbolo em 3D",
+        "Ícones": "Fundo amarelo e cards com ícones de linha"
+      }
+    },
+    {
+      "id": "itens",
+      "rotulo": "Destaques com ícone",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 90,
+      "ajuda": "Só no estilo Ícones: até 6 palavras separadas por vírgula (ex.: Mamografia, Autoexame, Consulta). Cada uma vira um card com ícone."
     },
     {
       "id": "imagens",
@@ -112,6 +140,15 @@
         "titulo",
         "subtitulo"
       ]
+    },
+    {
+      "id": "keyart",
+      "nome": "Key art (campanhas)",
+      "campos": [
+        "estilo",
+        "itens"
+      ],
+      "vazio": "Automático, pela linha da campanha"
     },
     {
       "id": "imagens",

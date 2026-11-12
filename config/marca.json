@@ -65,6 +65,12 @@
     "arquivos": [
       {
         "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Light.woff2",
+        "peso": 200,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
         "arquivo": "assets/fonts/UnimedSans-Book.woff2",
         "peso": 300,
         "estilo": "normal"
@@ -110,6 +116,18 @@
         "arquivo": "assets/fonts/UnimedSans-Black.woff2",
         "peso": 900,
         "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Slab",
+        "arquivo": "assets/fonts/UnimedSlab-Book.woff2",
+        "peso": 400,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Slab",
+        "arquivo": "assets/fonts/UnimedSlab-Bold.woff2",
+        "peso": 700,
+        "estilo": "normal"
       }
     ],
     "_arquivos": "Arquivos da fonte Unimed Sans em assets/fonts/ (ex.: {\"familia\":\"Unimed Sans\",\"arquivo\":\"assets/fonts/UnimedSans-Bold.woff2\",\"peso\":700}). Com a lista preenchida, a prévia, a imagem, o PDF e o PowerPoint usam a fonte da marca; o e-mail usa onde o leitor permite e cai no Arial no resto.",
@@ -121,7 +139,7 @@
     "raioBotao": "24px 24px 0 24px"
   },
   "logos": {
-    "_regra": "Conteúdo interno, eventos e vagas: marca do Grupo Unimed Uberlândia. Comunicação externa: marca Unimed Uberlândia (box). Nunca usar o Grupo junto com Nexa Saúde, Pop Vita ou Corretora. Logo sem box nunca sobre foto. Não aplicar sobre laranja. Tamanho mínimo digital: 70 px de largura do box. Margem de segurança: largura da letra U (MS.139 p.48-54; Grupo p.5-11).",
+    "_regra": "Conteúdo interno, eventos e vagas: marca do Grupo Unimed Uberlândia. Comunicação externa: marca Unimed Uberlândia (box). Nunca usar o Grupo junto com Nexa Saúde, Pop Vita ou Corretora. Logo sem box nunca sobre foto. Não aplicar sobre laranja. Tamanho mínimo digital: 70 px de largura do box. Margem de segurança: largura da letra U (MS.139 p.48-54; Grupo p.5-11). REGRA FIXA: a marca Unimed Uberlândia é sempre a ORIGINAL, com o box verde e as letras brancas, em qualquer fundo. Nunca usar a versão de box branco (fundo branco com letras verdes).",
     "interno": {
       "nome": "Grupo Unimed Uberlândia",
       "claro": "assets/logos/grupo-verde.png",
@@ -133,10 +151,11 @@
     "externo": {
       "nome": "Unimed Uberlândia",
       "claro": "assets/logos/unimed-box.png",
-      "escuro": "assets/logos/unimed-box-branco.png",
+      "escuro": "assets/logos/unimed-box.png",
       "svg": "assets/logos/unimed-box.svg",
       "proporcao": 2.715,
-      "larguraEmail": 130
+      "larguraEmail": 130,
+      "_escuro": "Mesmo arquivo do claro de propósito: a Unimed nunca aparece com box branco."
     },
     "minimoPx": 70
   },
