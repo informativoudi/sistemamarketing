@@ -102,7 +102,7 @@
       ]));
     }
 
-    alvo.appendChild(cartao('Imagens aprovadas', m.fotografia ? m.fotografia._regra : 'Só estas aparecem para escolha no gerador.', [
+    alvo.appendChild(cartao('Imagens de exemplo', 'Aparecem como exemplo no gerador. Quem pede pode enviar a própria imagem do computador; o recorte e os cantos da marca são aplicados igual.', [
       el('div', { 'class': 'galeria' }, m.imagensAprovadas.map(function (i) {
         return el('figure', {}, [el('img', { src: i.arquivo, alt: i.descricao, loading: 'lazy' }), el('figcaption', { texto: i.descricao })]);
       }))

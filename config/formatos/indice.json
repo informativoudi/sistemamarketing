@@ -65,6 +65,55 @@
       "palavras": "cartilha documento política manual word"
     },
     {
+      "id": "palco",
+      "nome": "Palco",
+      "grupo": "Tela · 1280 × 720",
+      "ativo": true,
+      "palavras": "palco telão evento tela apresentação"
+    },
+    {
+      "id": "praia-banner-app",
+      "nome": "Praia Clube · Banner App",
+      "grupo": "Praia Clube · 1035 × 1395",
+      "ativo": true,
+      "palavras": "praia clube banner app aplicativo"
+    },
+    {
+      "id": "praia-notificacao-app",
+      "nome": "Praia Clube · Notificação App",
+      "grupo": "Praia Clube · 1080 × 1080",
+      "ativo": true,
+      "palavras": "praia clube notificação app aplicativo"
+    },
+    {
+      "id": "praia-popup-app",
+      "nome": "Praia Clube · Pop-up App",
+      "grupo": "Praia Clube · 1080 × 2104",
+      "ativo": true,
+      "palavras": "praia clube pop-up popup app aplicativo"
+    },
+    {
+      "id": "praia-push-app",
+      "nome": "Praia Clube · Push App",
+      "grupo": "Praia Clube · 1440 × 720",
+      "ativo": true,
+      "palavras": "praia clube push notificação app aplicativo"
+    },
+    {
+      "id": "praia-story",
+      "nome": "Praia Clube · Story Instagram",
+      "grupo": "Praia Clube · 1080 × 1920",
+      "ativo": true,
+      "palavras": "praia clube story stories instagram"
+    },
+    {
+      "id": "praia-banner-site",
+      "nome": "Praia Clube · Banner Site",
+      "grupo": "Praia Clube · 970 × 250",
+      "ativo": true,
+      "palavras": "praia clube banner site"
+    },
+    {
       "id": "post-linkedin",
       "nome": "Post LinkedIn",
       "grupo": "Digital",

@@ -11,8 +11,9 @@
   ],
   "regrasFixas": [
     "Não mudar nem interpretar o texto: só aplicar o padrão visual.",
-    "A tabela de cabeçalho aparece em todas as páginas do Word.",
-    "Fonte e espaçamento iguais aos dos outros documentos do padrão."
+    "Com tabela: a tabela de cabeçalho aparece em todas as páginas do Word. Sem tabela: só a faixa de formas.",
+    "Fonte e espaçamento iguais aos dos outros documentos do padrão.",
+    "Imagens vêm do computador de quem pede (a biblioteca é só exemplo)."
   ],
   "pagina": {
     "tamanho": "A4",
@@ -75,6 +76,20 @@
   },
   "campos": [
     {
+      "id": "tabelaCabecalho",
+      "rotulo": "Cabeçalho das páginas",
+      "tipo": "escolha",
+      "obrigatorio": true,
+      "opcoes": [
+        "Com tabela em todas as páginas",
+        "Sem tabela de cabeçalho"
+      ],
+      "descricoes": {
+        "Com tabela em todas as páginas": "Políticas, normas e documentos com ficha (nome, área, classificação, datas, versão)",
+        "Sem tabela de cabeçalho": "Cartilhas e guias sem ficha: só a faixa de formas no topo"
+      }
+    },
+    {
       "id": "titulo",
       "rotulo": "Nome do documento",
       "tipo": "texto",
@@ -97,6 +112,13 @@
       "max": 80000,
       "formatacao": true,
       "ajuda": "O texto não é alterado. Títulos de seção: linha curta sozinha, sem ponto final (pode começar com \"1.\", \"2.1\"…). Listas: linhas com \"- \". Conceito em caixa: selecione o parágrafo e use \"Box\" (se começar com \"Termo: definição\", o termo sai em destaque)."
+    },
+    {
+      "id": "imagensDoc",
+      "rotulo": "Imagens do documento",
+      "tipo": "imagens-documento",
+      "alvo": "texto",
+      "ajuda": "Envie do seu computador. Cada imagem entra no texto como [[imagem 1]], [[imagem 2]]… onde estiver o cursor; você pode mover essa linha para onde quiser. Sai na largura do texto, com os cantos da marca, no PDF e no Word."
     },
     {
       "id": "classificacao",
@@ -143,13 +165,22 @@
   "revisarLinguagem": false,
   "secoes": [
     {
+      "id": "modelo",
+      "nome": "Modelo",
+      "fixa": true,
+      "campos": [
+        "tabelaCabecalho"
+      ]
+    },
+    {
       "id": "essencial",
       "nome": "Conteúdo",
       "fixa": true,
       "campos": [
         "titulo",
         "arquivo",
-        "texto"
+        "texto",
+        "imagensDoc"
       ]
     },
     {

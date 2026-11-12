@@ -30,6 +30,8 @@
     var partes = String(texto || '').replace(/\r\n?/g, '\n').split(/\n[ \t]*\n/).map(function (p) { return p.trim(); }).filter(Boolean);
     var blocos = [];
     partes.forEach(function (p, i) {
+      var fig = /^\[\[\s*imagem\s+(\d+)\s*\]\]$/i.exec(p);
+      if (fig) { blocos.push({ tipo: 'imagem', n: Number(fig[1]) }); return; }
       var umaLinha = p.indexOf('\n') < 0;
       var puro = M.semMarcas(p).trim();
       var curto = puro.length <= max && !/[.!?;,…:]$/.test(puro) && !/^>>/.test(p);
@@ -52,22 +54,39 @@
       else { n += 1; numero = String(n); titulo = puro; }
       return { tipo: 'secao', numero: numero, sub: numero.indexOf('.') > 0, titulo: titulo };
     });
+    // Imagens do computador no meio do texto: largura do texto, altura pela proporção (até 460 px).
+    var LARG = 674, MAXH = 460;
+    var envios = Array.isArray(dados.imagensDoc) ? dados.imagensDoc : [];
+    var figuras = [];
+    itens = itens.map(function (b) {
+      if (b.tipo !== 'imagem') return b;
+      var im = envios[b.n - 1];
+      if (!im) return { tipo: 'paragrafo', texto: '[[imagem ' + b.n + ']]' };
+      var h = Math.round(LARG * im.h / im.w), w = LARG;
+      if (h > MAXH) { w = Math.round(LARG * MAXH / h); h = MAXH; }
+      var f = { arquivo: im.arquivo, descricao: im.nome || ('Imagem ' + b.n), w: w, h: h, x: 0.5, y: 0.5, zoom: 1, n: b.n };
+      figuras.push(f);
+      return { tipo: 'imagem', figura: f };
+    });
+    var faltando = itens.filter(function (b) { return b.tipo === 'paragrafo' && /^\[\[imagem \d+\]\]$/.test(b.texto); }).length;
+    var comTabela = dados.tabelaCabecalho !== 'Sem tabela de cabeçalho';
     var secoes = itens.filter(function (b) { return b.tipo === 'secao'; }).length;
     var caracteres = M.contar(dados.texto);
     return {
-      variante: 'documento', caracteres: caracteres, blocos: itens,
+      variante: 'documento', caracteres: caracteres, blocos: itens, figuras: figuras, comTabela: comTabela,
       ficha: {
         titulo: limpar(dados.titulo), area: limpar(dados.area) || '—', classificacao: dados.classificacao || 'Interno',
         dataAprovacao: dataBR(dados.dataAprovacao), dataRevisao: dataBR(dados.dataRevisao), versao: limpar(dados.versao) || '1.0'
       },
       realces: (formato.formatacao && formato.formatacao.realces) || [],
-      chips: ['Cartilha padrão', secoes + (secoes === 1 ? ' seção' : ' seções'), 'A4', 'Word + PDF'],
+      chips: ['Cartilha padrão', comTabela ? 'Com tabela de cabeçalho' : 'Sem tabela de cabeçalho', secoes + (secoes === 1 ? ' seção' : ' seções')].concat(figuras.length ? [figuras.length + (figuras.length === 1 ? ' imagem' : ' imagens')] : []),
       porque: [
         'Documento → padrão "Cartilha Padrão Unimed" (não o visual das peças).',
         'O texto entra exatamente como veio: só o visual muda.',
         secoes ? secoes + ' títulos de seção encontrados → numerados no quadro verde.' : 'Nenhum título de seção encontrado: linhas curtas sozinhas, sem ponto final, viram seção.',
-        'A tabela de cabeçalho se repete em todas as páginas (no Word, fica no cabeçalho da página).'
-      ]
+        comTabela ? 'Com tabela de cabeçalho → ela se repete em todas as páginas (no Word, fica no cabeçalho da página).' : 'Sem tabela de cabeçalho → só a faixa de formas no topo das páginas; os dados do documento ficam na capa e no rodapé.',
+        figuras.length ? figuras.length + ' imagem(ns) do computador no meio do texto, na largura do texto e com os cantos da marca.' : 'Sem imagens no texto.'
+      ].concat(faltando ? ['Atenção: ' + faltando + ' marcação(ões) [[imagem N]] sem imagem enviada com esse número.'] : [])
     };
   }
 
@@ -122,6 +141,10 @@
       if (b.tipo === 'secao') {
         return '<div class="bl sec' + (b.sub ? ' sub' : '') + '"><span class="num" data-x="caixa">' + esc(b.numero) + '</span><h2 data-x="texto">' + esc(b.titulo) + '</h2></div>';
       }
+      if (b.tipo === 'imagem') {
+        var fg = b.figura;
+        return '<figure class="bl figura"><img data-x="img" src="' + esc(fg.src || fg.arquivo) + '" alt="' + esc(fg.descricao) + '" style="width:' + fg.w + 'px;height:' + fg.h + 'px;border-radius:14px 14px 0 14px;"></figure>';
+      }
       if (b.tipo === 'lista') return '<ul class="bl">' + b.itens.map(function (i) { return '<li data-x="texto">' + rico(i) + '</li>'; }).join('') + '</ul>';
       if (b.tipo === 'box') {
         var puro = M.semMarcas(b.texto);
@@ -133,9 +156,10 @@
 
     var cab = '<div class="cabeca">' +
       (r27.mosaico ? '<img class="formas" data-x="img" src="' + esc(url(base, r27.mosaico)) + '" alt="">' : '') +
-      '<table class="ficha"><tr><td colspan="6" class="destaque"><span class="rot">Nominação do documento</span><span class="val">' + esc(f.titulo) + '</span></td></tr>' +
+      (plano.comTabela === false ? '</div>' : '') +
+      (plano.comTabela === false ? '' : '<table class="ficha"><tr><td colspan="6" class="destaque"><span class="rot">Nominação do documento</span><span class="val">' + esc(f.titulo) + '</span></td></tr>' +
       '<tr><td colspan="3"><span class="rot">Área | Dono do processo</span><span class="val">' + esc(f.area) + '</span></td><td colspan="3"><span class="rot">Classificação da informação</span><span class="val">' + esc(f.classificacao) + '</span></td></tr>' +
-      '<tr><td colspan="2"><span class="rot">Data da 1ª aprovação</span><span class="val">' + esc(f.dataAprovacao) + '</span></td><td colspan="2"><span class="rot">Data da última revisão</span><span class="val">' + esc(f.dataRevisao) + '</span></td><td colspan="2"><span class="rot">Versão</span><span class="val">' + esc(f.versao) + '</span></td></tr></table></div>';
+      '<tr><td colspan="2"><span class="rot">Data da 1ª aprovação</span><span class="val">' + esc(f.dataAprovacao) + '</span></td><td colspan="2"><span class="rot">Data da última revisão</span><span class="val">' + esc(f.dataRevisao) + '</span></td><td colspan="2"><span class="rot">Versão</span><span class="val">' + esc(f.versao) + '</span></td></tr></table></div>');
 
     var capa = '<div class="pagina capa" data-x="pagina"><div class="capa-card" data-x="caixa">' +
       '<img class="capa-logo" data-x="img" src="' + esc(url(base, 'assets/logos/unimed-box-branco.png')) + '" alt="Unimed Uberlândia">' +
@@ -169,6 +193,7 @@
       'ul.bl li:before{content:"";position:absolute;left:2px;top:9px;width:7px;height:7px;background:' + c.institucional + ';border-radius:2px 2px 0 2px;}' +
       '.conceito{background:' + c.apoioAreia + ';border-radius:4px 14px 14px 14px;padding:16px 20px;}.conceito p{margin:0;font-size:14px;}' +
       '.termo{font-weight:800;color:' + c.verdeEscuro + ';}strong{font-weight:700;color:' + c.verdeEscuro + ';}' +
+      '.figura{margin:6px 0 18px;text-align:center;}.figura img{display:inline-block;}' +
       '#fonte{position:absolute;left:-9999px;top:0;width:674px;}';
 
     // Paginação no navegador: mede cada bloco e abre página nova quando não cabe.
@@ -275,7 +300,7 @@
       { borda: hex(c.borda) });
     var formas = imgs.formas ? par(desenho('rIdFormas', Math.round(34 * imgs.formas.w / imgs.formas.h), 34, 'formas'), { depois: 100, linha: 240, jc: 'right' }) : '';
     var NS = 'xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"';
-    var header1 = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ' + NS + '>' + formas + ficha + par('', { depois: 0, linha: 240 }) + '</w:hdr>';
+    var header1 = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ' + NS + '>' + formas + (plano.comTabela === false ? '' : ficha) + par('', { depois: 0, linha: 240 }) + '</w:hdr>';
     var header2 = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:hdr ' + NS + '>' + par('', { depois: 0 }) + '</w:hdr>';
     var footer1 = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:ftr ' + NS + '>' +
       par(run('Unimed Uberlândia · ' + f.classificacao + ' · Página ', { sz: 16, cor: hex(c.textoSuave) }) + '<w:fldSimple w:instr="PAGE">' + run('1', { sz: 16, cor: hex(c.textoSuave) }) + '</w:fldSimple>' + run(' de ', { sz: 16, cor: hex(c.textoSuave) }) + '<w:fldSimple w:instr="NUMPAGES">' + run('1', { sz: 16, cor: hex(c.textoSuave) }) + '</w:fldSimple>', { depois: 0, linha: 240, jc: 'right' }) + '</w:ftr>';
@@ -293,8 +318,21 @@
     var capa = tabela([LARG], linha(celula(LARG, corpoCapa, { fundo: hex(c.verdeEscuro), mar: [900, 900] }), { altura: Math.round(250 * TW_MM) })) +
       '<w:p><w:r><w:br w:type="page"/></w:r></w:p>';
 
+    // Imagens do computador: entram como arquivos do Word (com os cantos já gravados no recorte).
+    var figs = [];
+    async function bytes(src) { var r = await fetch(src); return r.arrayBuffer(); }
+    for (var k = 0; k < (plano.figuras || []).length; k++) {
+      var fg = plano.figuras[k];
+      try { figs.push({ f: fg, dados: await bytes(fg.src || fg.arquivo), rid: 'rIdFig' + (k + 1), arq: 'fig' + (k + 1) + '.jpg' }); } catch (e) { /* segue sem */ }
+    }
+
     // Corpo.
     var corpo = plano.blocos.map(function (b) {
+      if (b.tipo === 'imagem') {
+        var it = figs.filter(function (q) { return q.f === b.figura; })[0];
+        if (!it) return '';
+        return par(desenho(it.rid, b.figura.w, b.figura.h, 'imagem' + it.rid), { depois: 240, linha: 240, jc: 'center' });
+      }
       if (b.tipo === 'secao') {
         var lado = b.sub ? 820 : 680;
         return par('', { depois: 0, linha: 120 }) + tabela([lado, 180, LARG - lado - 180], linha(
@@ -332,7 +370,7 @@
     };
     var IMG_T = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/image';
     zip.file('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">' +
-      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/>' +
+      '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="png" ContentType="image/png"/><Default Extension="jpg" ContentType="image/jpeg"/>' +
       '<Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>' +
       '<Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>' +
       '<Override PartName="/word/header1.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.header+xml"/>' +
@@ -352,6 +390,7 @@
       '<Relationship Id="rIdF1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer1.xml"/>',
       '<Relationship Id="rIdF2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/footer" Target="footer2.xml"/>'];
     if (imgs.logo) { zip.file('word/media/logo.png', imgs.logo.dados); relDoc.push('<Relationship Id="rIdLogo" Type="' + IMG_T + '" Target="media/logo.png"/>'); }
+    figs.forEach(function (q) { zip.file('word/media/' + q.arq, q.dados); relDoc.push('<Relationship Id="' + q.rid + '" Type="' + IMG_T + '" Target="media/' + q.arq + '"/>'); });
     zip.file('word/_rels/document.xml.rels', relsImg(relDoc));
     if (imgs.formas) {
       zip.file('word/media/formas.png', imgs.formas.dados);
@@ -367,5 +406,6 @@
   }
 
   raiz.UnimedModelos = raiz.UnimedModelos || {};
-  raiz.UnimedModelos.cartilha = { render: render, decidir: decidir, docx: docx };
+  function formaImagem() { return { raio: [14, 14, 0, 14], fundo: '#ffffff' }; }
+  raiz.UnimedModelos.cartilha = { render: render, decidir: decidir, docx: docx, formaImagem: formaImagem };
 })(window);

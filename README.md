@@ -80,9 +80,18 @@ As regras seguem os manuais oficiais: Aplicação da Marca Unimed (MS.139), Ling
 | Topo de e-mail | 800 × 300 px | 40 px | PNG, JPG |
 | Painel SMU | 720 × 360 px, 150 dpi | 36 px | PowerPoint, PDF |
 | Cartilha padrão Unimed | A4 | 16 mm | Word, PDF |
+| Palco | 1280 × 720 px | 64 px | PNG, JPG, PDF, PowerPoint |
+| Praia Clube · Banner App | 1035 × 1395 px | 70 px (110 px embaixo, reservados) | JPG, PNG |
+| Praia Clube · Notificação App | 1080 × 1080 px | 90 px | JPG, PNG |
+| Praia Clube · Pop-up App | 1080 × 2104 px | 100 px | JPG, PNG |
+| Praia Clube · Push App | 1440 × 720 px | 64 px | JPG, PNG |
+| Praia Clube · Story Instagram | 1080 × 1920 px | 90 px (250 em cima e 340 embaixo livres) | JPG, PNG |
+| Praia Clube · Banner Site | 970 × 250 px | 24 px | PNG, JPG |
 
 - **HTML só no e-mail e na newsletter**: é o que vai para a ferramenta de disparo. O HTML é responsivo: em telas até 620 px o respiro diminui, o título encolhe e as imagens empilham.
 - **Peças de tamanho fixo** usam um só desenho (`src/modelos/peca-fixa.js`) que se adapta à proporção: horizontal (texto à esquerda, foto sangrando à direita), quadrado e vertical (foto em cima). Tudo fica dentro da margem de segurança, e o texto encolhe sozinho se passar do espaço. A imagem sai no tamanho exato em pixels.
+- **Praia Clube**: público externo (Externo ou Campanha externa), sempre com Unimed + ANS.
+- **Margens por lado**: `margens: { topo, base }` no arquivo do formato. Uma margem maior que a normal é reservada (nada entra nela, nem ANS ou linha técnica).
 - **Painel SMU**: PowerPoint e PDF no tamanho físico de 150 dpi (4,8 × 2,4 polegadas).
 - **Newsletter**: abertura + até 4 notícias; a primeira em destaque com foto grande, as outras em lista com foto pequena.
 - **Cartilha padrão Unimed**: envie o Word original (ou cole o texto) e o conteúdo entra sem nenhuma mudança; o sistema só aplica o padrão: capa, tabela de cabeçalho em todas as páginas, seções numeradas no quadro verde, listas e conceitos em caixa areia. O Word é nativo (a tabela fica no cabeçalho da página do Word).
@@ -101,6 +110,24 @@ Nas peças de imagem, o campo "Para quem vai" tem quatro opções: Interno, Exte
   - textura real e prova de processo.
 - Cada tendência só entra se estiver **ativa** em `config/tendencias.json`. Cores e mote ficam no bloco `campanha`.
 - A campanha interna usa a marca do Grupo; a campanha externa usa Unimed + ANS.
+
+## Imagens do seu computador
+
+A biblioteca de imagens é só de exemplo. Em todos os formatos dá para **enviar a própria imagem** (JPG, PNG ou WebP, até 20 MB):
+
+- no campo Imagem, em "+ Enviar do computador";
+- em cada notícia da newsletter, em "Enviar foto do computador";
+- na cartilha, em "Imagens do documento". A imagem entra no texto como `[[imagem 1]]`, onde estiver o cursor.
+
+A imagem é lida e reduzida no próprio navegador (máximo de 2400 px no lado maior). O enquadramento, os cantos da marca e todos os downloads funcionam igual. No HTML do e-mail, o recorte vai para o banco de imagens. As imagens enviadas valem na sessão: o rascunho guarda o texto, mas não as imagens.
+
+## Cartilha com ou sem tabela de cabeçalho
+
+No formato Cartilha, o campo "Cabeçalho das páginas" define o modelo:
+- **Com tabela em todas as páginas**: para políticas e normas com ficha (nome, área, classificação, datas e versão).
+- **Sem tabela de cabeçalho**: para cartilhas e guias. Fica só a faixa de formas no topo, e os dados vão para a capa e o rodapé.
+
+Vale para a prévia, o PDF e o Word.
 
 ## Fotos com cantos fixos
 

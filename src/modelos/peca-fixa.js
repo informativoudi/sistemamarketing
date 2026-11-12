@@ -34,9 +34,17 @@
   /* ---------- Geometria a partir do tamanho e da margem ---------- */
   function geometria(f, temImagem, campanha) {
     var W = f.largura, H = f.altura, m = f.margem;
+    // Margens por lado (ex.: Banner App do Praia Clube com 110 px embaixo; Story com áreas do Instagram).
+    var mg = f.margens || {};
+    var mt = mg.topo != null ? mg.topo : m, mb = mg.base != null ? mg.base : m;
     var prop = W / H;
     var tipo = prop >= 1.6 ? 'largo' : prop <= 0.75 ? 'alto' : 'quadrado';
-    var g = { W: W, H: H, m: m, tipo: tipo, campanha: !!campanha };
+    // Margem reservada (maior que a normal): nada entra nela. Selo ANS e linha técnica ficam logo acima.
+    var reservada = mb > m;
+    var fb = reservada ? H - mb : H;                       // fim da área usável
+    var mbT = reservada ? mb + Math.round(m * 0.6) : mb;   // margem inferior do texto
+    var g = { W: W, H: H, m: m, mt: mt, mb: mb, mbT: mbT, fb: fb, tipo: tipo, campanha: !!campanha };
+    mb = mbT;
     if (campanha) {
       /* Campanha (Tendências 2027): foto sangrando (à direita no horizontal, em cima nos outros),
          fundo escuro, logo branco e faixa de formas embaixo. */
@@ -44,13 +52,13 @@
         g.U = H;
         g.foto = temImagem ? { x: Math.round(W * (prop >= 3 ? 0.62 : 0.55)), y: 0 } : null;
         if (g.foto) { g.foto.w = W - g.foto.x; g.foto.h = H; }
-        g.texto = { x: m, y: m, w: (g.foto ? g.foto.x : W) - m - Math.round(m * 0.9), h: H - 2 * m };
+        g.texto = { x: m, y: mt, w: (g.foto ? g.foto.x : W) - m - Math.round(m * 0.9), h: H - mt - mb };
       } else {
         g.U = W;
         g.rodapeH = Math.round(W * 0.065);
         g.foto = temImagem ? { x: 0, y: 0, w: W, h: Math.round(H * (tipo === 'alto' ? 0.46 : 0.44)) } : null;
-        var y0 = g.foto ? g.foto.h + Math.round(m * 0.55) : m + Math.round(W * 0.04);
-        g.texto = { x: m, y: y0, w: W - 2 * m, h: H - m - g.rodapeH - Math.round(m * 0.45) - y0 };
+        var y0 = g.foto ? Math.max(g.foto.h + Math.round(m * 0.55), mt) : mt + Math.round(W * 0.04);
+        g.texto = { x: m, y: y0, w: W - 2 * m, h: H - mb - g.rodapeH - Math.round(m * 0.45) - y0 };
       }
       return g;
     }
@@ -58,15 +66,17 @@
       g.U = H;
       g.foto = temImagem ? { x: Math.round(W * (prop >= 3 ? 0.64 : 0.58)), y: 0 } : null;
       if (g.foto) { g.foto.w = W - g.foto.x; g.foto.h = H; }
-      g.texto = { x: m, y: m, w: (g.foto ? g.foto.x : W) - m - Math.round(m * (g.foto ? 0.8 : 1)), h: H - 2 * m };
+      g.texto = { x: m, y: mt, w: (g.foto ? g.foto.x : W) - m - Math.round(m * (g.foto ? 0.8 : 1)), h: H - mt - mb };
     } else {
       g.U = W;
       var logoH = Math.round(W * 0.06);
-      var topoFoto = m + logoH + Math.round(m * 0.5);
-      var hFoto = Math.round(H * (tipo === 'alto' ? 0.42 : 0.33));
+      var topoFoto = mt + logoH + Math.round(m * 0.5);
+      // Vertical: a foto ocupa parte da área usável (entre as margens), não da peça inteira.
+      var usavel = H - mt - mb - logoH - Math.round(m * 0.5);
+      var hFoto = tipo === 'alto' ? Math.round(usavel * (prop < 0.6 ? 0.46 : 0.5)) : Math.round(H * 0.33);
       g.foto = temImagem ? { x: m, y: topoFoto, w: W - 2 * m, h: hFoto } : null;
       var yTexto = g.foto ? topoFoto + hFoto + Math.round(m * 0.45) : topoFoto;
-      g.texto = { x: m, y: yTexto, w: W - 2 * m, h: H - yTexto - m };
+      g.texto = { x: m, y: yTexto, w: W - 2 * m, h: H - yTexto - mb };
     }
     return g;
   }
@@ -118,7 +128,7 @@
     porque.push(imagens ? 'Com imagem → foto no quadro de ' + g.foto.w + ' × ' + g.foto.h + ' px.' : 'Sem imagem → fundo de apoio com a grade leve.');
     var titulo = puro(limpar(dados.titulo));
     var n = titulo.length;
-    var base = g.tipo === 'largo' ? 0.105 : g.tipo === 'alto' ? 0.085 : 0.068;
+    var base = g.tipo === 'largo' ? 0.105 : g.tipo === 'alto' ? (formato.largura / formato.altura < 0.6 ? 0.1 : 0.085) : 0.068;
     if (campanha) base = campanha.contraste ? (g.tipo === 'largo' ? 0.115 : g.tipo === 'alto' ? 0.095 : 0.082) : base * 1.08;
     var red = n > 65 ? 0.72 : n > 45 ? 0.85 : 1;
     var dataInfo = null;
@@ -175,10 +185,10 @@
     var maxLogo = g.tipo === 'largo' ? g.texto.w * 0.8 : g.texto.w * 0.62;
     if (logoW > maxLogo) { logoW = Math.round(maxLogo); logoH = Math.round(logoW / logo.proporcao); }
     logoW = Math.max(logoW, marca.logos.minimoPx || 70);
-    html.push('<img ' + IM + ' src="' + esc(url(base, logo.claro)) + '" alt="' + esc(logo.nome) + '" style="position:absolute;left:' + m + 'px;top:' + m + 'px;width:' + logoW + 'px;height:' + Math.round(logoW / logo.proporcao) + 'px;">');
+    html.push('<img ' + IM + ' src="' + esc(url(base, logo.claro)) + '" alt="' + esc(logo.nome) + '" style="position:absolute;left:' + m + 'px;top:' + g.mt + 'px;width:' + logoW + 'px;height:' + Math.round(logoW / logo.proporcao) + 'px;">');
     if (r27.mosaico && g.tipo !== 'largo') {
       var mh = Math.round(logoH * 0.9), mw = Math.round(mh * (r27.mosaicoLargura / r27.mosaicoAltura));
-      html.push('<img ' + IM + ' src="' + esc(url(base, r27.mosaico)) + '" alt="" style="position:absolute;left:' + (W - m - mw) + 'px;top:' + (m + Math.round((Math.round(logoW / logo.proporcao) - mh) / 2)) + 'px;width:' + mw + 'px;height:' + mh + 'px;">');
+      html.push('<img ' + IM + ' src="' + esc(url(base, r27.mosaico)) + '" alt="" style="position:absolute;left:' + (W - m - mw) + 'px;top:' + (g.mt + Math.round((Math.round(logoW / logo.proporcao) - mh) / 2)) + 'px;width:' + mw + 'px;height:' + mh + 'px;">');
     }
 
     // Foto: no horizontal sangra à direita com o canto do box; nos outros, quadro box dentro da margem.
@@ -221,7 +231,7 @@
     if (plano.publico.ans && marca.ans) {
       var ah = Math.max(14, s(g.tipo === 'largo' ? 0.045 : 0.026)), aw = Math.round(ah * marca.ans.proporcao);
       var ax = g.tipo === 'largo' && g.foto ? g.foto.x - Math.round(m * 0.8) - aw : W - m - aw;
-      html.push('<img ' + IM + ' src="' + esc(url(base, marca.ans.selo)) + '" alt="ANS - nº ' + esc(marca.ans.numero) + '" style="position:absolute;left:' + ax + 'px;top:' + (H - m - ah + Math.round(m * 0.5)) + 'px;width:' + aw + 'px;height:' + ah + 'px;">');
+      html.push('<img ' + IM + ' src="' + esc(url(base, marca.ans.selo)) + '" alt="ANS - nº ' + esc(marca.ans.numero) + '" style="position:absolute;left:' + ax + 'px;top:' + (g.fb - ah - Math.round(m * 0.5)) + 'px;width:' + aw + 'px;height:' + ah + 'px;">');
     }
 
     return embrulhar(html, fundo);
@@ -271,10 +281,10 @@
     var lh = Math.round(logoW / logo.proporcao);
     var mh = g.tipo === 'largo' ? Math.round(U * 0.075) : Math.round(g.rodapeH * 0.8), mw = r27.mosaico ? Math.round(mh * (r27.mosaicoLargura / r27.mosaicoAltura)) : 0;
     if (g.tipo === 'largo') {
-      h.push('<img ' + IM + ' src="' + esc(url(base, logo.claro)) + '" alt="' + esc(logo.nome) + '" style="position:absolute;left:' + m + 'px;top:' + m + 'px;width:' + logoW + 'px;height:' + lh + 'px;">');
-      if (r27.mosaico) h.push('<img ' + IM + ' src="' + esc(url(base, r27.mosaico)) + '" alt="" style="position:absolute;left:' + (g.texto.x + g.texto.w - mw) + 'px;top:' + (m + Math.round((lh - mh) / 2)) + 'px;width:' + mw + 'px;height:' + mh + 'px;">');
+      h.push('<img ' + IM + ' src="' + esc(url(base, logo.claro)) + '" alt="' + esc(logo.nome) + '" style="position:absolute;left:' + m + 'px;top:' + g.mt + 'px;width:' + logoW + 'px;height:' + lh + 'px;">');
+      if (r27.mosaico) h.push('<img ' + IM + ' src="' + esc(url(base, r27.mosaico)) + '" alt="" style="position:absolute;left:' + (g.texto.x + g.texto.w - mw) + 'px;top:' + (g.mt + Math.round((lh - mh) / 2)) + 'px;width:' + mw + 'px;height:' + mh + 'px;">');
     } else {
-      var yb = H - m - g.rodapeH;
+      var yb = H - g.mbT - g.rodapeH;
       h.push('<img ' + IM + ' src="' + esc(url(base, logo.claro)) + '" alt="' + esc(logo.nome) + '" style="position:absolute;left:' + m + 'px;top:' + (yb + Math.round((g.rodapeH - lh) / 2)) + 'px;width:' + logoW + 'px;height:' + lh + 'px;">');
       if (r27.mosaico) h.push('<img ' + IM + ' src="' + esc(url(base, r27.mosaico)) + '" alt="" style="position:absolute;left:' + (W - m - mw) + 'px;top:' + (yb + Math.round((g.rodapeH - mh) / 2)) + 'px;width:' + mw + 'px;height:' + mh + 'px;">');
     }
@@ -306,14 +316,14 @@
     // Prova de processo (tendência): código da peça e coordenadas, discretos.
     if (cp.prova) {
       var pp = Math.max(9, s(g.tipo === 'largo' ? 0.022 : 0.012));
-      var py = g.tipo === 'largo' ? H - m + Math.round(m * 0.35) - pp : H - Math.round(m * 0.55);
+      var py = g.tipo === 'largo' ? g.fb - Math.round(m * 0.65) - pp : g.fb - Math.round(m * 0.55);
       h.push('<p ' + TX + ' style="position:absolute;left:' + m + 'px;top:' + py + 'px;margin:0;font-size:' + pp + 'px;font-weight:700;letter-spacing:' + (pp * 0.18).toFixed(1) + 'px;line-height:1;text-transform:uppercase;color:' + cp.destaque + ';opacity:.75;white-space:nowrap;">' + esc((opcoes.codigo || '') + ' · ' + ((marca.rodape && marca.rodape.coordenadas) || '')) + '</p>');
     }
     // ANS (campanha externa).
     if (plano.publico.ans && marca.ans) {
       var ah = Math.max(14, s(g.tipo === 'largo' ? 0.045 : 0.024)), aw = Math.round(ah * marca.ans.proporcao);
       var ax = g.tipo === 'largo' ? (g.foto ? g.foto.x : W) - Math.round(m * 0.9) - aw : W - m - aw;
-      var ay = g.tipo === 'largo' ? H - m + Math.round(m * 0.35) - ah : H - Math.round(m * 0.55) - ah + Math.round(ah * 0.25);
+      var ay = g.tipo === 'largo' ? g.fb - Math.round(m * 0.65) - ah : g.fb - Math.round(m * 0.55) - ah + Math.round(ah * 0.25);
       h.push('<img ' + IM + ' src="' + esc(url(base, marca.ans.selo)) + '" alt="ANS - nº ' + esc(marca.ans.numero) + '" style="position:absolute;left:' + ax + 'px;top:' + ay + 'px;width:' + aw + 'px;height:' + ah + 'px;">');
     }
     return h;

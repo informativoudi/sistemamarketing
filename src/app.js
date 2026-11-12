@@ -110,6 +110,7 @@
   function imagensDoPlano(plano) {
     var l = plano.imagens ? plano.imagens.itens.slice() : [];
     (plano.noticias || []).forEach(function (n) { if (n.imagem) l.push(n.imagem); });
+    (plano.figuras || []).forEach(function (f) { l.push(f); });
     return l;
   }
 
@@ -169,6 +170,7 @@
     if (c.tipo === 'imagens-aprovadas') return campoImagens(c, caixa, id);
     if (c.tipo === 'noticias') return campoNoticias(c, caixa);
     if (c.tipo === 'arquivo') return campoArquivo(c, caixa, id);
+    if (c.tipo === 'imagens-documento') return campoImagensDocumento(c, caixa, id);
     if (c.tipo === 'texto-longo') entrada = el('textarea', { id: id, name: c.id, rows: 8 });
     else entrada = el('input', { id: id, name: c.id, type: c.tipo === 'data' ? 'date' : c.tipo === 'hora' ? 'time' : c.tipo === 'link' ? 'url' : 'text', placeholder: c.tipo === 'link' ? 'https://' : '' });
     var cont = contador(c, entrada);
@@ -190,6 +192,57 @@
     });
   }
 
+  /* ---------- Imagem do computador ----------
+     A biblioteca é só de exemplo: a pessoa pode usar a própria foto. A imagem é lida no navegador,
+     reduzida para no máximo 2400 px no lado maior (JPEG) e entra na lista desta sessão, junto da
+     biblioteca. Daí em diante vale igual a qualquer imagem: enquadramento, recorte e downloads. */
+  var MAX_LADO = 2400, MAX_MB = 20, contaEnvio = 0;
+  function lerImagemDoComputador(arquivo) {
+    return new Promise(function (ok, falha) {
+      if (!arquivo) return falha(new Error('Nenhum arquivo.'));
+      if (!/^image\/(jpeg|png|webp|gif|bmp)$/i.test(arquivo.type)) return falha(new Error('Use JPG, PNG ou WebP (HEIC do iPhone: exporte como JPG antes).'));
+      if (arquivo.size > MAX_MB * 1024 * 1024) return falha(new Error('Imagem acima de ' + MAX_MB + ' MB.'));
+      var leitor = new FileReader();
+      leitor.onerror = function () { falha(new Error('Não consegui ler o arquivo.')); };
+      leitor.onload = function () {
+        var im = new Image();
+        im.onerror = function () { falha(new Error('O arquivo não é uma imagem válida.')); };
+        im.onload = function () {
+          var esc = Math.min(1, MAX_LADO / Math.max(im.naturalWidth, im.naturalHeight));
+          var w = Math.round(im.naturalWidth * esc), h = Math.round(im.naturalHeight * esc);
+          var tela = document.createElement('canvas'); tela.width = w; tela.height = h;
+          var ctx = tela.getContext('2d');
+          ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, w, h); // PNG transparente vira fundo branco
+          ctx.imageSmoothingQuality = 'high';
+          ctx.drawImage(im, 0, 0, w, h);
+          contaEnvio += 1;
+          var nome = String(arquivo.name || 'imagem').replace(/\.[a-z0-9]+$/i, '');
+          ok({ id: 'enviada-' + Date.now().toString(36) + '-' + contaEnvio, arquivo: tela.toDataURL('image/jpeg', 0.9), descricao: nome, nome: nome, w: w, h: h, enviada: true });
+        };
+        im.src = leitor.result;
+      };
+      leitor.readAsDataURL(arquivo);
+    });
+  }
+  /* Guarda a imagem enviada junto da biblioteca (só nesta sessão). */
+  function registrarEnviada(img) { estado.marca.imagensAprovadas.push(img); return img; }
+  function botaoEnviar(rotulo, aoEnviar, multiplo) {
+    var inp = el('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp', 'class': 'sr-only', multiple: multiplo ? true : null, tabindex: '-1', 'aria-hidden': 'true' });
+    var status = el('span', { 'class': 'envio-status', role: 'status' });
+    var b = el('button', { type: 'button', 'class': 'btn-mini btn-enviar' }, [rotulo]);
+    b.addEventListener('click', function () { inp.click(); });
+    inp.addEventListener('change', async function () {
+      var lista = Array.prototype.slice.call(inp.files || []);
+      inp.value = '';
+      for (var i = 0; i < lista.length; i++) {
+        status.textContent = 'Preparando ' + lista[i].name + '…';
+        try { aoEnviar(registrarEnviada(await lerImagemDoComputador(lista[i]))); status.textContent = ''; }
+        catch (e) { status.textContent = lista[i].name + ': ' + e.message; }
+      }
+    });
+    return el('span', { 'class': 'envio' }, [b, inp, status]);
+  }
+
   /* ---------- Imagens: até 3, escolha na biblioteca e ajuste do enquadramento ---------- */
   function slotsPara(qtd) {
     var md = modelo();
@@ -200,7 +253,7 @@
 
   function campoImagens(c, caixa, id) {
     var limite = c.limite || 3;
-    var rotulo = el('span', { id: id + '-r', 'class': 'rot' }, [c.rotulo + ' ', el('span', { 'class': 'opc', texto: '(até ' + limite + ', da biblioteca aprovada)' })]);
+    var rotulo = el('span', { id: id + '-r', 'class': 'rot' }, [c.rotulo + ' ', el('span', { 'class': 'opc', texto: '(até ' + limite + ': do seu computador ou dos exemplos)' })]);
     var grade = el('div', { 'class': 'imagens multi', role: 'group', 'aria-labelledby': id + '-r' });
     var aviso = el('p', { 'class': 'aviso-campo', id: 'imagens-aviso', role: 'status', hidden: true });
     var ajustes = el('div', { 'class': 'ajustes-imagem', 'aria-live': 'polite' });
@@ -235,16 +288,23 @@
     }
     estado.redesenharImagens = redesenhar;
 
-    estado.marca.imagensAprovadas.forEach(function (img) {
+    function miniatura(img, noComeco) {
       var cb = el('input', { type: 'checkbox', name: c.id, value: img.id, 'aria-label': img.descricao });
       cb.addEventListener('change', function () {
         if (cb.checked) estado.imagens.push({ id: img.id, x: 0.5, y: 0.5, zoom: 1 });
         else estado.imagens = estado.imagens.filter(function (i) { return i.id !== img.id; });
         redesenhar(); agendarPrevia();
       });
-      grade.appendChild(el('label', { title: img.descricao }, [cb, el('img', { src: img.arquivo, alt: '' }), el('span', { 'class': 'ordem-n', 'aria-hidden': 'true' })]));
-    });
-    caixa.appendChild(rotulo); caixa.appendChild(grade);
+      var lb = el('label', { title: img.descricao, 'class': img.enviada ? 'enviada' : null }, [cb, el('img', { src: img.arquivo, alt: '' }), el('span', { 'class': 'ordem-n', 'aria-hidden': 'true' }), img.enviada ? el('span', { 'class': 'tag-enviada', texto: 'Sua' }) : null]);
+      if (noComeco) grade.insertBefore(lb, grade.firstChild); else grade.appendChild(lb);
+    }
+    estado.marca.imagensAprovadas.forEach(function (img) { miniatura(img); });
+    var enviar = botaoEnviar('+ Enviar do computador', function (img) {
+      miniatura(img, true);
+      if (estado.imagens.length < limite) estado.imagens.push({ id: img.id, x: 0.5, y: 0.5, zoom: 1 });
+      redesenhar(); agendarPrevia();
+    }, true);
+    caixa.appendChild(rotulo); caixa.appendChild(enviar); caixa.appendChild(grade);
     if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
     caixa.appendChild(aviso);
     caixa.appendChild(ajustes);
@@ -291,6 +351,7 @@
         }
         sel.addEventListener('change', function () { n.imagem = sel.value; n.x = 0.5; n.y = 0.5; n.zoom = 1; editor(); });
         editor();
+        var enviarN = botaoEnviar('Enviar foto do computador', function (img) { n.imagem = img.id; n.x = 0.5; n.y = 0.5; n.zoom = 1; desenhar(); mudou(); });
         var sobe = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Subir notícia ' + (i + 1), disabled: i === 0, onclick: function () { trocar(i, -1); } }, ['↑']);
         var desce = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Descer notícia ' + (i + 1), disabled: i === estado.noticias.length - 1, onclick: function () { trocar(i, 1); } }, ['↓']);
         var tirar = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Remover notícia ' + (i + 1), disabled: estado.noticias.length === 1, onclick: function () { estado.noticias.splice(i, 1); desenhar(); anuncio.textContent = 'Notícia removida.'; mudou(); } }, ['Remover']);
@@ -302,7 +363,7 @@
             entrada(n, 'texto', 'Resumo (opcional)', i, 'area'),
             entrada(n, 'linkTexto', 'Texto do link', i, 'text', 'Leia mais'),
             entrada(n, 'link', 'Link (opcional)', i, 'url', 'https://'),
-            el('div', { 'class': 'campo largo' }, [el('label', { 'for': 'n-' + i + '-imagem' }, ['Foto (opcional)']), sel, editorCaixa])
+            el('div', { 'class': 'campo largo' }, [el('label', { 'for': 'n-' + i + '-imagem' }, ['Foto (opcional)']), el('div', { 'class': 'linha-foto' }, [sel, enviarN]), editorCaixa])
           ])
         ]));
       });
@@ -317,6 +378,47 @@
     mais.addEventListener('click', function () { if (estado.noticias.length < limite) { estado.noticias.push(nova()); desenhar(estado.noticias.length - 1); mudou(); } });
     estado.redesenharNoticias = function () { desenhar(); };
     caixa.appendChild(lista); caixa.appendChild(mais); caixa.appendChild(anuncio);
+    if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
+    desenhar();
+    return caixa;
+  }
+
+  /* ---------- Cartilha: imagens no meio do texto ----------
+     Cada imagem enviada ganha um número; "Inserir no texto" coloca [[imagem N]] onde está o cursor
+     no Conteúdo. Ela sai na largura do texto, com os cantos da marca, no PDF e no Word. */
+  function campoImagensDocumento(c, caixa, id) {
+    caixa.classList.add('largo');
+    var lista = el('div', { 'class': 'doc-imagens' });
+    function inserir(n) {
+      var t = $('f-' + (c.alvo || 'texto'));
+      if (!t) return;
+      var pos = t.selectionStart != null ? t.selectionStart : t.value.length;
+      var antes = t.value.slice(0, pos), depois = t.value.slice(pos);
+      var marca = (antes && !/\n\n$/.test(antes) ? (/\n$/.test(antes) ? '\n' : '\n\n') : '') + '[[imagem ' + n + ']]' + (depois && !/^\n\n/.test(depois) ? '\n\n' : '');
+      t.value = antes + marca + depois;
+      t.focus(); t.setSelectionRange(pos + marca.length, pos + marca.length);
+      t.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    function desenhar() {
+      lista.textContent = '';
+      estado.docImagens.forEach(function (im, i) {
+        lista.appendChild(el('figure', { 'class': 'doc-imagem' }, [
+          el('img', { src: im.arquivo, alt: '' }),
+          el('figcaption', {}, [el('b', { texto: 'Imagem ' + (i + 1) }), el('span', { texto: im.nome })]),
+          el('div', { 'class': 'doc-imagem-acoes' }, [
+            el('button', { type: 'button', 'class': 'btn-mini', onclick: function () { inserir(i + 1); } }, ['Inserir no texto']),
+            el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Remover imagem ' + (i + 1), onclick: function () { estado.docImagens.splice(i, 1); desenhar(); agendarPrevia(); } }, ['Remover'])
+          ])
+        ]));
+      });
+    }
+    estado.redesenharDocImagens = desenhar;
+    caixa.appendChild(el('span', { id: id + '-r', 'class': 'rot' }, [c.rotulo + ' ', el('span', { 'class': 'opc', texto: '(opcional, do seu computador)' })]));
+    caixa.appendChild(botaoEnviar('+ Enviar imagens', function (img) {
+      estado.docImagens.push(img); desenhar();
+      inserir(estado.docImagens.length);
+    }, true));
+    caixa.appendChild(lista);
     if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
     desenhar();
     return caixa;
@@ -463,6 +565,7 @@
     caixa.textContent = '';
     estado.imagens = [];
     estado.noticias = [];
+    estado.docImagens = estado.docImagens || [];
     estado.ordem = null;
     estado.redesenharImagens = estado.desenharOrdem = estado.marcarVazios = estado.redesenharNoticias = null;
     var porId = {};
@@ -492,6 +595,7 @@
       if (c.tipo === 'imagens-aprovadas') { dados[c.id] = estado.imagens.map(function (i) { return { id: i.id, x: i.x, y: i.y, zoom: i.zoom }; }); return; }
       if (c.tipo === 'noticias') { dados[c.id] = estado.noticias.map(function (n) { return Object.assign({}, n); }); return; }
       if (c.tipo === 'arquivo') return;
+      if (c.tipo === 'imagens-documento') { dados[c.id] = estado.docImagens.slice(); return; }
       if (c.tipo === 'escolha') {
         var marcado = f.querySelector('input[name="' + c.id + '"]:checked');
         dados[c.id] = marcado ? marcado.value : '';
@@ -513,8 +617,10 @@
     estado.formato.campos.forEach(function (c) {
       var v = dados[c.id];
       if (v == null) return;
-      if (c.tipo === 'imagens-aprovadas') { estado.imagens = (v || []).map(function (i) { return Object.assign({}, i); }); if (estado.redesenharImagens) estado.redesenharImagens(); return; }
-      if (c.tipo === 'noticias') { estado.noticias = (v || []).map(function (n) { return Object.assign({}, n); }); if (!estado.noticias.length) estado.noticias.push({ titulo: '', texto: '', linkTexto: '', link: '', imagem: '' }); if (estado.redesenharNoticias) estado.redesenharNoticias(); return; }
+      var existe = function (id) { return estado.marca.imagensAprovadas.some(function (a) { return a.id === id; }); };
+      if (c.tipo === 'imagens-aprovadas') { estado.imagens = (v || []).filter(function (i) { return existe(i.id); }).map(function (i) { return Object.assign({}, i); }); if (estado.redesenharImagens) estado.redesenharImagens(); return; }
+      if (c.tipo === 'imagens-documento') return; // imagens do computador não ficam no rascunho
+      if (c.tipo === 'noticias') { estado.noticias = (v || []).map(function (n) { var x = Object.assign({}, n); if (x.imagem && !existe(x.imagem)) x.imagem = ''; return x; }); if (!estado.noticias.length) estado.noticias.push({ titulo: '', texto: '', linkTexto: '', link: '', imagem: '' }); if (estado.redesenharNoticias) estado.redesenharNoticias(); return; }
       if (c.tipo === 'arquivo') return;
       if (c.tipo === 'escolha') { var r = f.querySelector('input[name="' + c.id + '"][value="' + v + '"]'); if (r) r.checked = true; return; }
       var e = f.elements[c.id];
@@ -581,7 +687,7 @@
       return c.tipo !== 'escolha' && c.tipo !== 'arquivo' && (Array.isArray(v) ? v.filter(function (n) { return n && (n.id || M.limpar(n.titulo)); }).length : M.limpar(v || ''));
     });
     var limpo = {};
-    estado.formato.campos.forEach(function (c) { limpo[c.id] = dados[c.id]; });
+    estado.formato.campos.forEach(function (c) { if (c.tipo !== 'imagens-documento' && c.tipo !== 'arquivo') limpo[c.id] = dados[c.id]; });
     if (dados.ordem) limpo.ordem = dados.ordem;
     gravar(CHAVE_RASCUNHO + estado.formato.id, tem ? { quando: new Date().toISOString(), dados: limpo, edicao: estado.edicao } : null);
   }
@@ -756,6 +862,7 @@
       var r = await atualizarPrevia(codigo, pub.srcs);
       var impressao = await R.hash(r.html);
       var conteudo = Object.assign({}, dados); delete conteudo._imagensAprovadas; delete conteudo._linguagem;
+      estado.formato.campos.forEach(function (c) { if (c.tipo === 'imagens-documento') conteudo[c.id] = (conteudo[c.id] || []).map(function (i) { return { nome: i.nome, w: i.w, h: i.h }; }); });
       if (anterior) conteudo.versao_de = anterior;
       estado.imagensEmbutidas = pub.embutidas;
       var registro = {
@@ -910,7 +1017,7 @@
     var nome = $('f-solicitante').value, area = $('f-area').value;
     $('formulario').reset();
     $('f-solicitante').value = nome; $('f-area').value = area;
-    estado.edicao = null; estado.editando = false; estado.pendente = null;
+    estado.edicao = null; estado.editando = false; estado.pendente = null; estado.docImagens = [];
     $('gerar-rotulo').textContent = 'Gerar peça';
     $('rascunho').hidden = true;
     mostrarFormulario();
@@ -961,8 +1068,17 @@
     // Atalhos: os formatos ativos primeiro e em destaque; "em breve" apagados.
     var atalhos = $('atalhos');
     var ordenados = estado.indice.formatos.slice().sort(function (a, b) { return (b.ativo ? 1 : 0) - (a.ativo ? 1 : 0); });
-    ordenados.filter(function (f) { return f.ativo; }).forEach(function (f) {
-      atalhos.appendChild(el('button', { type: 'button', 'class': f.ativo ? 'ativo' : 'breve', disabled: !f.ativo, onclick: function () { escolher(f); } }, [f.nome, f.ativo ? null : el('small', { texto: 'em breve' })]));
+    // Nuvem de palavras: tamanhos e cores da paleta variando (os principais maiores), sempre legível.
+    var ESTILOS = ['n-petroleo', 'n-citrico', 'n-institucional', 'n-azul', 'n-areia', 'n-verde', 'n-amarelo', 'n-contorno', 'n-rosa'];
+    var TAMANHOS = ['t3', 't1', 't2', 't1', 't3', 't2', 't1', 't2'];
+    atalhos.classList.add('nuvem');
+    ordenados.filter(function (f) { return f.ativo; }).forEach(function (f, i) {
+      var tam = i < 2 ? 't4' : TAMANHOS[i % TAMANHOS.length];
+      var nome = f.nome.replace(/^Praia Clube · /, '');
+      var b = el('button', { type: 'button', 'class': 'ativo ' + ESTILOS[i % ESTILOS.length] + ' ' + tam, title: f.nome + (f.grupo ? ' · ' + f.grupo : ''), onclick: function () { escolher(f); } }, [
+        /^Praia Clube/.test(f.nome) ? el('small', { texto: 'Praia Clube' }) : null, nome
+      ]);
+      atalhos.appendChild(b);
     });
 
     var busca = $('formato-busca');
