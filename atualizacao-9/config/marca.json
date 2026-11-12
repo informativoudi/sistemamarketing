@@ -1,0 +1,293 @@
+{
+  "_sobre": "Núcleo da Marca. Regras fixas tiradas dos manuais oficiais: Manual de Aplicação da Marca Unimed (MS.139), Manual de Linguagem da Marca (MS.138) e Manual de Marca Grupo Unimed Uberlândia (v1.0). Só mude quando um manual mudar e suba a versão.",
+  "versao": "2027.3",
+  "fontes": [
+    {
+      "nome": "Manual de Aplicação da Marca Unimed",
+      "codigo": "MS.139 v1"
+    },
+    {
+      "nome": "Manual de Linguagem da Marca Unimed",
+      "codigo": "MS.138 v2"
+    },
+    {
+      "nome": "Manual de Marca Grupo Unimed Uberlândia",
+      "codigo": "v1.0"
+    }
+  ],
+  "cores": {
+    "_regra": "Paleta oficial (MS.138 p.101). Verde Unimed é a cor principal; cítrico e laranja só em destaques (datas, CTAs); cores de apoio na comunicação institucional; verde escuro no lugar do preto nos textos. Tons de 80%, 60%, 40% e 20% são permitidos.",
+    "institucional": "#00995d",
+    "citrico": "#b1d34b",
+    "verdeEscuro": "#004e4c",
+    "laranja": "#f47920",
+    "apoioTerra": "#d2a494",
+    "apoioRosa": "#f1cdcd",
+    "apoioAreia": "#ece3d9",
+    "apoioAmarelo": "#ffe596",
+    "apoioVerde": "#cde3bb",
+    "apoioAzul": "#a4d8de",
+    "branco": "#ffffff",
+    "fundoPagina": "#f4f1ec",
+    "texto": "#3c3c3b",
+    "textoSuave": "#6f6f6e",
+    "borda": "#e3ddd4"
+  },
+  "nomesCores": {
+    "institucional": "Verde Unimed · Pantone 348c",
+    "citrico": "Verde cítrico · Pantone 381c",
+    "verdeEscuro": "Verde escuro · Pantone 7722c",
+    "laranja": "Laranja · Pantone 1585c",
+    "apoioTerra": "Apoio · Pantone 7521c",
+    "apoioRosa": "Apoio · Pantone 691c",
+    "apoioAreia": "Apoio · Pantone 7527c",
+    "apoioAmarelo": "Apoio · Pantone 1205c",
+    "apoioVerde": "Apoio · Pantone 7485c",
+    "apoioAzul": "Apoio · Pantone 304c",
+    "branco": "Branco",
+    "fundoPagina": "Fundo do e-mail (apoio areia clareado)",
+    "texto": "Texto corrido",
+    "textoSuave": "Texto de apoio",
+    "borda": "Linhas e divisões"
+  },
+  "tipografia": {
+    "_regra": "Família Unimed (Sans, Slab, Serif, Brush). Sans para títulos, legendas e meios digitais; Slab ou Serif para textos extensos; Brush só em selos e chamadas curtas. Títulos em caixa alta e baixa (não só caixa alta). Alinhamento à esquerda. Evitar muitas cores e estilos ao mesmo tempo (MS.138 p.109-114).",
+    "familia": "'Unimed Sans', Arial, Helvetica, sans-serif",
+    "familiaSlab": "'Unimed Slab', Georgia, 'Times New Roman', serif",
+    "familiaExportacao": "Unimed Sans",
+    "hierarquia": {
+      "chapeu": "Sans, caixa alta, semibold",
+      "titulo": "Sans, caixa alta e baixa, bold",
+      "subtitulo": "Sans, caixa alta e baixa, book itálico",
+      "tituloSecundario": "Sans bold, 60% do título principal",
+      "texto": "Sans (digital) ou Slab/Serif, book"
+    },
+    "arquivos": [
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Book.woff2",
+        "peso": 300,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Regular.woff2",
+        "peso": 400,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-RegularItalic.woff2",
+        "peso": 400,
+        "estilo": "italic"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-SemiBold.woff2",
+        "peso": 600,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Bold.woff2",
+        "peso": 700,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-BoldItalic.woff2",
+        "peso": 700,
+        "estilo": "italic"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-ExtraBold.woff2",
+        "peso": 800,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Black.woff2",
+        "peso": 900,
+        "estilo": "normal"
+      }
+    ],
+    "_arquivos": "Arquivos da fonte Unimed Sans em assets/fonts/ (ex.: {\"familia\":\"Unimed Sans\",\"arquivo\":\"assets/fonts/UnimedSans-Bold.woff2\",\"peso\":700}). Com a lista preenchida, a prévia, a imagem, o PDF e o PowerPoint usam a fonte da marca; o e-mail usa onde o leitor permite e cai no Arial no resto.",
+    "_exportacao": "PowerPoint e Word usam 'Unimed Sans' (instale a fonte no computador para editar com ela; sem a fonte o Office troca por uma parecida)."
+  },
+  "forma": {
+    "_regra": "O box Unimed tem três cantos arredondados e o inferior direito reto (MS.139 p.6).",
+    "raioCard": "16px 16px 0 16px",
+    "raioBotao": "24px 24px 0 24px"
+  },
+  "logos": {
+    "_regra": "Conteúdo interno, eventos e vagas: marca do Grupo Unimed Uberlândia. Comunicação externa: marca Unimed Uberlândia (box). Nunca usar o Grupo junto com Nexa Saúde, Pop Vita ou Corretora. Logo sem box nunca sobre foto. Não aplicar sobre laranja. Tamanho mínimo digital: 70 px de largura do box. Margem de segurança: largura da letra U (MS.139 p.48-54; Grupo p.5-11).",
+    "interno": {
+      "nome": "Grupo Unimed Uberlândia",
+      "claro": "assets/logos/grupo-verde.png",
+      "escuro": "assets/logos/grupo-branco.png",
+      "svg": "assets/logos/grupo-verde.svg",
+      "proporcao": 6.231,
+      "larguraEmail": 300
+    },
+    "externo": {
+      "nome": "Unimed Uberlândia",
+      "claro": "assets/logos/unimed-box.png",
+      "escuro": "assets/logos/unimed-box.png",
+      "svg": "assets/logos/unimed-box.svg",
+      "proporcao": 2.715,
+      "larguraEmail": 130
+    },
+    "minimoPx": 70
+  },
+  "ans": {
+    "_regra": "Registro da operadora na ANS: obrigatório em comunicação externa sobre planos de saúde.",
+    "numero": "384577",
+    "selo": "assets/logos/ans.png",
+    "proporcao": 4.4
+  },
+  "linguagem": {
+    "_regra": "Tom de voz próximo, didático e propositivo (MS.138 p.89-93; Grupo p.24).",
+    "principios": [
+      "Frases curtas, em ordem direta.",
+      "Claro, direto e objetivo. Passo a passo quando for orientação.",
+      "Evitar estrangeirismos e explicar termos técnicos com simplicidade.",
+      "Pautar em fatos e dados; recomendar com autoridade em saúde.",
+      "Listas com até 5 itens.",
+      "Texto do botão propositivo, convidando para a ação."
+    ],
+    "frasesLongasPalavras": 30,
+    "maxItensLista": 5,
+    "maxExclamacoes": 1,
+    "estrangeirismos": {
+      "feedback": "retorno",
+      "deadline": "prazo",
+      "meeting": "reunião",
+      "call": "ligação ou reunião",
+      "briefing": "orientação",
+      "update": "atualização",
+      "check-in": "confirmação de presença",
+      "kick-off": "início",
+      "insight": "percepção",
+      "insights": "percepções",
+      "budget": "orçamento",
+      "workshop": "oficina",
+      "save the date": "reserve a data",
+      "happy hour": "confraternização",
+      "coffee break": "pausa para o café",
+      "home office": "trabalho remoto",
+      "follow-up": "acompanhamento",
+      "cases": "casos",
+      "networking": "troca de contatos",
+      "performance": "desempenho"
+    }
+  },
+  "fotografia": {
+    "_regra": "Retratos humanos e reais, câmera na altura dos olhos, luz equilibrada, fundos suaves, expressão sincera, sem filtros ou saturação excessiva. Imagens feitas com IA seguem as mesmas regras (Grupo p.19; MS.138 p.166)."
+  },
+  "imagensAprovadas": [
+    {
+      "id": "medica-e-paciente",
+      "arquivo": "assets/fotos/medica-e-paciente.jpg",
+      "descricao": "Médica e paciente idoso sorrindo"
+    },
+    {
+      "id": "meninas-abraco",
+      "arquivo": "assets/fotos/meninas-abraco.jpg",
+      "descricao": "Duas meninas abraçadas"
+    },
+    {
+      "id": "medica-consulta",
+      "arquivo": "assets/fotos/medica-consulta.jpg",
+      "descricao": "Médica em consulta"
+    },
+    {
+      "id": "medico-cooperado",
+      "arquivo": "assets/fotos/medico-cooperado.jpg",
+      "descricao": "Médico cooperado sorrindo"
+    },
+    {
+      "id": "abraco-familia",
+      "arquivo": "assets/fotos/abraco-familia.jpg",
+      "descricao": "Abraço em família"
+    },
+    {
+      "id": "colaboradores",
+      "arquivo": "assets/fotos/colaboradores.jpg",
+      "descricao": "Colaboradores no escritório"
+    }
+  ],
+  "rodape": {
+    "site": "unimeduberlandia.coop.br",
+    "coordenadas": "18°55′S 48°16′W",
+    "mote": "Presença que transforma",
+    "_regra": "Fechamento do e-mail: mote da marca e site. O registro ANS continua nas peças externas (obrigatório). O código da peça fica só dentro do HTML, para rastrear sem aparecer."
+  },
+  "areas": [
+    "Comunicação e Marketing",
+    "Comercial",
+    "Relacionamento com o Cliente",
+    "Gestão de Pessoas",
+    "Cooperativismo",
+    "Medicina Preventiva",
+    "Rede Credenciada",
+    "Tecnologia da Informação",
+    "Financeiro",
+    "Jurídico",
+    "Diretoria",
+    "Outra"
+  ],
+  "papeisCores": {
+    "_regra": "Cada cor da Palheta oficial tem uma função fixa. Assim as peças ficam consistentes e cada destaque tem significado.",
+    "marca": {
+      "cor": "institucional",
+      "uso": "Logo, chapéu (linha acima do título), marcadores de lista, links e a última palavra do nome da área."
+    },
+    "estrutura": {
+      "cor": "verdeEscuro",
+      "uso": "Títulos, nome da área, rodapé e o quadro dos ícones. Substitui o preto nos textos fortes."
+    },
+    "acao": {
+      "cor": "laranja",
+      "uso": "Só o botão e o quadradinho de assinatura 2027. Laranja indica onde clicar."
+    },
+    "destaque": {
+      "cor": "citrico",
+      "uso": "Data, números, barra curta acima do chapéu, detalhe dos ícones e código no rodapé."
+    },
+    "fundo": {
+      "cor": "apoio",
+      "uso": "Cores de apoio só como fundo suave: bloco da área (muda com o tema) e caixa da data."
+    },
+    "texto": {
+      "cor": "texto",
+      "uso": "Texto corrido."
+    }
+  },
+  "icones": {
+    "_regra": "Ícones de linha da linguagem 2027 (CERVELLO): traço branco de 2px, cantos retos e um detalhe em cítrico, dentro de um quadro verde escuro no formato box. Cada área tem o seu.",
+    "pasta": "assets/icones/",
+    "padrao": "bem-vindo",
+    "porArea": {
+      "Comunicação e Marketing": "comercial-relacionamento",
+      "Comercial": "relatorios",
+      "Relacionamento com o Cliente": "gestao-de-chamados",
+      "Gestão de Pessoas": "apoio-ao-colaborador",
+      "Cooperativismo": "relacionamento-cooperado",
+      "Medicina Preventiva": "rede-assistencial-regulacao",
+      "Rede Credenciada": "rede-assistencial-regulacao",
+      "Tecnologia da Informação": "tecnologia-sistemas",
+      "Financeiro": "relatorios",
+      "Jurídico": "juridico-ouvidoria",
+      "Diretoria": "governanca-auditoria",
+      "Outra": "bem-vindo"
+    }
+  },
+  "recursos2027": {
+    "_regra": "Visual 2027 das peças internas, inspirado na Atualização CERVELLO, de forma sutil: grade de 12 colunas quase invisível, faixa curta do mosaico, ícone da área no quadro box e nome da área em dois tons.",
+    "mosaico": "assets/mosaico-2027.png",
+    "mosaicoLargura": 120,
+    "mosaicoAltura": 30,
+    "grade": "assets/grade-12.png"
+  }
+}

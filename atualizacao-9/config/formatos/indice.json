@@ -1,0 +1,117 @@
+{
+  "_sobre": "Catálogo de formatos. 'ativo': true aparece para uso; false aparece como 'em breve'. Para liberar um formato novo, crie o arquivo de regras e o modelo e mude para true.",
+  "formatos": [
+    {
+      "id": "email-marketing",
+      "nome": "E-mail marketing",
+      "grupo": "E-mail",
+      "ativo": true,
+      "palavras": "email e-mail newsletter comunicado disparo"
+    },
+    {
+      "id": "newsletter",
+      "nome": "Newsletter",
+      "grupo": "E-mail",
+      "ativo": true,
+      "palavras": "newsletter boletim informativo notícias e-mail"
+    },
+    {
+      "id": "peca-quadrada",
+      "nome": "Peça quadrada",
+      "grupo": "Imagem · 1080 × 1080",
+      "ativo": true,
+      "palavras": "quadrada feed instagram linkedin post redes sociais 1080"
+    },
+    {
+      "id": "banner-portal",
+      "nome": "Banner Portal Unimed",
+      "grupo": "Imagem · 1500 × 500",
+      "ativo": true,
+      "palavras": "banner portal site home"
+    },
+    {
+      "id": "notificacao-portal",
+      "nome": "Imagem Notificação Portal",
+      "grupo": "Imagem · 2400 × 600",
+      "ativo": true,
+      "palavras": "notificação portal aviso"
+    },
+    {
+      "id": "notificacao-app",
+      "nome": "Imagem Notificação App",
+      "grupo": "Imagem · 914 × 1600",
+      "ativo": true,
+      "palavras": "notificação app aplicativo push"
+    },
+    {
+      "id": "topo-email",
+      "nome": "Topo de e-mail",
+      "grupo": "Imagem · 800 × 300",
+      "ativo": true,
+      "palavras": "topo e-mail cabeçalho email banner"
+    },
+    {
+      "id": "painel-smu",
+      "nome": "Painel SMU",
+      "grupo": "Tela · 720 × 360",
+      "ativo": true,
+      "palavras": "painel smu tv tela"
+    },
+    {
+      "id": "cartilha-documento",
+      "nome": "Cartilha padrão Unimed",
+      "grupo": "Documentos",
+      "ativo": true,
+      "palavras": "cartilha documento política manual word"
+    },
+    {
+      "id": "post-linkedin",
+      "nome": "Post LinkedIn",
+      "grupo": "Digital",
+      "ativo": false,
+      "palavras": "linkedin post rede social"
+    },
+    {
+      "id": "carrossel-instagram",
+      "nome": "Carrossel Instagram",
+      "grupo": "Digital",
+      "ativo": false,
+      "palavras": "instagram carrossel feed rede social"
+    },
+    {
+      "id": "story-instagram",
+      "nome": "Story Instagram",
+      "grupo": "Digital",
+      "ativo": false,
+      "palavras": "instagram story stories"
+    },
+    {
+      "id": "viva-engage",
+      "nome": "Post Viva Engage",
+      "grupo": "Digital",
+      "ativo": false,
+      "palavras": "viva engage yammer interno"
+    },
+    {
+      "id": "cartaz",
+      "nome": "Cartaz A3/A4",
+      "grupo": "Gráfico",
+      "ativo": false,
+      "palavras": "cartaz poster mural impresso"
+    },
+    {
+      "id": "convite",
+      "nome": "Convite",
+      "grupo": "Gráfico",
+      "ativo": false,
+      "palavras": "convite evento"
+    },
+    {
+      "id": "flyer",
+      "nome": "Flyer",
+      "grupo": "Gráfico",
+      "ativo": false,
+      "palavras": "flyer panfleto folheto impresso"
+    }
+  ]
+}

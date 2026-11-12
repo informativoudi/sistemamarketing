@@ -1,0 +1,218 @@
+{
+  "_sobre": "Cartilhas, políticas e documentos seguem o padrão 'Cartilha Padrão Unimed' (não o visual 2027 das peças). O texto entra como veio: só o visual muda. Entrega só em Word e PDF.",
+  "id": "cartilha-documento",
+  "nome": "Cartilha / Documento",
+  "sigla": "DOC",
+  "ativo": true,
+  "padrao": "Cartilha Padrão Unimed",
+  "entrega": [
+    "Word (.docx)",
+    "PDF"
+  ],
+  "regrasFixas": [
+    "Não mudar nem interpretar o texto: só aplicar o padrão visual.",
+    "A tabela de cabeçalho aparece em todas as páginas do Word.",
+    "Fonte e espaçamento iguais aos dos outros documentos do padrão."
+  ],
+  "pagina": {
+    "tamanho": "A4",
+    "margem": "16mm"
+  },
+  "cabecalho": {
+    "_regra": "Faixa de formas no canto superior direito e tabela com cantos 4px 12px 12px 12px, repetida em todas as páginas.",
+    "faixaFormas": {
+      "largura": "72.3mm",
+      "altura": "9mm",
+      "alinhamento": "direita"
+    },
+    "linhas": [
+      [
+        {
+          "rotulo": "Nominação do documento",
+          "campo": "titulo"
+        }
+      ],
+      [
+        {
+          "rotulo": "Área | Dono do processo",
+          "campo": "area"
+        },
+        {
+          "rotulo": "Classificação da informação",
+          "campo": "classificacao"
+        }
+      ],
+      [
+        {
+          "rotulo": "Data da 1ª aprovação",
+          "campo": "dataAprovacao"
+        },
+        {
+          "rotulo": "Data da última revisão",
+          "campo": "dataRevisao"
+        },
+        {
+          "rotulo": "Versão",
+          "campo": "versao"
+        }
+      ]
+    ],
+    "estilo": {
+      "rotulo": "Sans bold 8px, caixa alta, espaçamento 0,06em, cinza",
+      "valor": "Sans extra bold 11px, caixa alta, verde petróleo",
+      "fundoPrimeiraLinha": "pastel verde",
+      "borda": "1px cinza claro"
+    }
+  },
+  "capa": {
+    "_regra": "Capa com degradê do verde institucional ao petróleo (160°), pinheiro branco a 10% no canto, logo Unimed box branco, chapéu em cítrico com o nome da área, título em Sans Black caixa alta branco e barra cítrico de 84 × 5 px. Rodapé da capa: versão e Unimed Uberlândia.",
+    "raio": "4px 28px 28px 28px"
+  },
+  "corpo": {
+    "secao": "Número dentro de quadro verde institucional 34 × 34 px (raio 10 10 10 3) + título Sans extra bold 22px",
+    "paragrafo": "Sans 16px, entrelinha 1,65, justificado, cor de texto",
+    "conceito": "Caixa areia com raio 4 14 14 14: termo em Sans extra bold verde petróleo + definição Sans 14px justificada"
+  },
+  "campos": [
+    {
+      "id": "titulo",
+      "rotulo": "Nome do documento",
+      "tipo": "texto",
+      "obrigatorio": true,
+      "max": 120,
+      "ajuda": "Ex.: Política de Gestão de Pessoas. Aparece na capa e na tabela de cabeçalho."
+    },
+    {
+      "id": "arquivo",
+      "rotulo": "Documento original (Word)",
+      "tipo": "arquivo",
+      "preenche": "texto",
+      "ajuda": "Envie o .docx e o texto entra no campo \"Conteúdo\" exatamente como está. Ou cole o texto direto."
+    },
+    {
+      "id": "texto",
+      "rotulo": "Conteúdo",
+      "tipo": "texto-longo",
+      "obrigatorio": true,
+      "max": 80000,
+      "formatacao": true,
+      "ajuda": "O texto não é alterado. Títulos de seção: linha curta sozinha, sem ponto final (pode começar com \"1.\", \"2.1\"…). Listas: linhas com \"- \". Conceito em caixa: selecione o parágrafo e use \"Box\" (se começar com \"Termo: definição\", o termo sai em destaque)."
+    },
+    {
+      "id": "classificacao",
+      "rotulo": "Classificação da informação",
+      "tipo": "escolha",
+      "opcoes": [
+        "Interno",
+        "Público",
+        "Confidencial"
+      ],
+      "obrigatorio": true
+    },
+    {
+      "id": "versao",
+      "rotulo": "Versão",
+      "tipo": "texto",
+      "max": 10,
+      "obrigatorio": false
+    },
+    {
+      "id": "dataAprovacao",
+      "rotulo": "Data da 1ª aprovação",
+      "tipo": "data",
+      "obrigatorio": false
+    },
+    {
+      "id": "dataRevisao",
+      "rotulo": "Data da última revisão",
+      "tipo": "data",
+      "obrigatorio": false
+    }
+  ],
+  "referencia": "Projeto 'Cartilha Padrão Unimed' (Política de Gestão de Pessoas, Cartilha Auditoria Interna e demais cartilhas).",
+  "modelo": "cartilha",
+  "quadro": 834,
+  "exportar": [
+    "docx",
+    "pdf"
+  ],
+  "previaPede": [
+    "titulo",
+    "texto"
+  ],
+  "revisarLinguagem": false,
+  "secoes": [
+    {
+      "id": "essencial",
+      "nome": "Conteúdo",
+      "fixa": true,
+      "campos": [
+        "titulo",
+        "arquivo",
+        "texto"
+      ]
+    },
+    {
+      "id": "ficha",
+      "nome": "Ficha do documento",
+      "fixa": true,
+      "campos": [
+        "classificacao",
+        "versao",
+        "dataAprovacao",
+        "dataRevisao"
+      ]
+    }
+  ],
+  "formatacao": {
+    "_regra": "Negrito, itálico e realce arredondado no texto (o título não tem formatação; o subtítulo só negrito e itálico). O realce usa as cores de apoio e o cítrico, sempre com texto verde petróleo. Um parágrafo inteiro em destaque vira um box com a forma da marca. Laranja fica reservado para o botão.",
+    "marcas": {
+      "negrito": "**texto**",
+      "italico": "*texto*",
+      "realce": "==(cor)texto==",
+      "box": ">>(cor) parágrafo inteiro"
+    },
+    "realces": [
+      {
+        "id": "citrico",
+        "nome": "Cítrico",
+        "cor": "citrico",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "amarelo",
+        "nome": "Amarelo",
+        "cor": "apoioAmarelo",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "verde",
+        "nome": "Verde claro",
+        "cor": "apoioVerde",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "azul",
+        "nome": "Azul claro",
+        "cor": "apoioAzul",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "rosa",
+        "nome": "Rosa",
+        "cor": "apoioRosa",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "areia",
+        "nome": "Areia",
+        "cor": "apoioAreia",
+        "texto": "verdeEscuro"
+      }
+    ]
+  },
+  "arvore": {
+    "secaoMaxCaracteres": 90
+  },
+  "validacoes": {}
+}

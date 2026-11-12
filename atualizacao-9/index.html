@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gerador de Peças · Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Seções"><a href="index.html" aria-current="page">Criar peça</a><a href="painel.html" class="restrito">Área restrita</a></nav>
+</header>
+
+<main class="casca">
+  <section class="busca" id="busca">
+    <h1>O que você <span>precisa criar?</span></h1>
+    <p class="lede">Escolha o formato, cole o conteúdo e o sistema monta a peça no padrão da marca Unimed.</p>
+    <div class="combo">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#004e4c" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.6-4.6"></path></svg>
+      <input id="formato-busca" type="text" role="combobox" aria-expanded="false" aria-controls="formato-lista" aria-autocomplete="list" autocomplete="off" placeholder="Ex.: e-mail, newsletter, banner, cartilha…" aria-label="Buscar formato">
+      <ul id="formato-lista" role="listbox" hidden></ul>
+    </div>
+    <div class="atalhos" id="atalhos"></div>
+  </section>
+
+  <section class="trabalho" id="trabalho" hidden>
+    <div class="abas" role="tablist" aria-label="Alternar entre editar e ver a prévia">
+      <button type="button" role="tab" id="aba-editar" aria-controls="painel-editar" aria-selected="true">Editar</button>
+      <button type="button" role="tab" id="aba-previa" aria-controls="painel-previa" aria-selected="false" tabindex="-1">Prévia</button>
+    </div>
+    <div id="painel-editar" class="painel-editar" role="tabpanel" aria-labelledby="aba-editar">
+      <form id="formulario" novalidate>
+        <div class="cartao quem" id="quem">
+          <div class="quem-resumo" id="quem-resumo" hidden>
+            <p>Pedido por <b id="quem-nome"></b> · <span id="quem-area"></span></p>
+            <button class="link" type="button" id="quem-trocar">Trocar</button>
+          </div>
+          <div id="quem-campos">
+            <h2>Quem está pedindo</h2>
+            <p class="sub">Sua área vira o cabeçalho e a assinatura do e-mail. Fica guardado neste aparelho para as próximas peças.</p>
+            <div class="campos">
+              <div class="campo" data-campo="solicitante">
+                <label for="f-solicitante">Seu nome</label>
+                <input id="f-solicitante" name="solicitante" type="text" autocomplete="name" maxlength="80">
+              </div>
+              <div class="campo" data-campo="area">
+                <label for="f-area">Sua área</label>
+                <select id="f-area" name="area"><option value="">Selecione…</option></select>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="cartao conteudo">
+          <div class="conteudo-topo">
+            <h2 id="titulo-formato">Conteúdo</h2>
+            <button class="link" type="button" id="trocar">Trocar formato</button>
+          </div>
+          <div id="rascunho" class="alerta ok rascunho" role="status" hidden></div>
+          <div id="campos"></div>
+          <div id="mensagens"></div>
+          <div class="barra-acoes">
+            <p class="pendencias" id="pendencias" aria-live="polite"></p>
+            <button class="btn primario" type="submit" id="gerar"><span id="gerar-rotulo">Gerar peça</span> <span aria-hidden="true">→</span></button>
+          </div>
+        </div>
+      </form>
+
+      <div class="cartao feito" id="feito" hidden>
+        <h2 id="feito-titulo">Peça registrada</h2>
+        <div class="codigo" id="codigo"></div>
+        <p id="feito-texto">Guarde esse código. Ele identifica esta versão oficial da peça no painel.</p>
+        <div class="alerta aviso" id="pendente" hidden>
+          <p id="pendente-texto"></p>
+          <button class="btn-mini" type="button" id="tentar">Tentar registrar de novo</button>
+        </div>
+        <div class="acoes" id="acoes-html">
+          <button class="btn primario" type="button" id="copiar">Copiar para o disparo</button>
+          <button class="btn secundario" type="button" id="baixar">Baixar HTML <span aria-hidden="true">↓</span></button>
+        </div>
+        <h3 class="feito-sub" id="exportar-titulo">Baixar para ajustes</h3>
+        <p class="ajuda" id="exportar-ajuda"></p>
+        <div class="acoes exportar" role="group" aria-labelledby="exportar-titulo" id="exportar-grupo"></div>
+        <p class="ajuda" id="copiado" role="status"></p>
+        <div class="acoes fim">
+          <button class="btn secundario" type="button" id="editar">Editar esta peça</button>
+          <button class="link" type="button" id="nova">Começar uma peça nova</button>
+        </div>
+      </div>
+    </div>
+
+    <aside class="previa" id="painel-previa" role="tabpanel" aria-labelledby="aba-previa" aria-label="Prévia">
+      <div class="cabeca"><h2 class="previa-titulo">Prévia</h2><span id="largura" class="previa-largura"></span></div>
+      <div class="decisao" id="decisao"></div>
+      <div class="moldura" id="moldura"><div class="vazio" id="vazio">Preencha título e texto para ver a prévia.</div><div class="palco" id="palco" hidden><iframe id="quadro" title="Prévia da peça"></iframe></div></div>
+      <details class="porque-caixa" id="porque-caixa" hidden><summary>Por que ficou assim?</summary><ul class="porque" id="porque"></ul></details>
+    </aside>
+  </section>
+</main>
+
+<script src="src/motor.js"></script>
+<script src="src/modelos/email-marketing.js"></script>
+<script src="src/modelos/peca-fixa.js"></script>
+<script src="src/modelos/cartilha.js"></script>
+<script src="src/registro.js"></script>
+<script src="src/exportar.js"></script>
+<script src="src/recorte.js"></script>
+<script src="src/formatacao.js"></script>
+<script src="src/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+{
+  "_sobre": "Peça de tamanho fixo. Medidas, margem de segurança e downloads permitidos vêm daqui; o desenho é o mesmo para todas (src/modelos/peca-fixa.js).",
+  "id": "banner-portal",
+  "nome": "Banner Portal Unimed",
+  "sigla": "BP",
+  "modelo": "peca-fixa",
+  "largura": 1500,
+  "altura": 500,
+  "margem": 50,
+  "exportar": [
+    "png",
+    "jpg",
+    "pdf",
+    "pptx"
+  ],
+  "escalaImagem": 1,
+  "previaPede": [
+    "titulo"
+  ],
+  "campos": [
+    {
+      "id": "publico",
+      "rotulo": "Para quem vai",
+      "tipo": "escolha",
+      "obrigatorio": true,
+      "opcoes": [
+        "Interno",
+        "Externo"
+      ],
+      "descricoes": {
+        "Interno": "Colaboradores · marca do Grupo",
+        "Externo": "Clientes e cooperados · marca Unimed + ANS (evento: marca do Grupo)"
+      }
+    },
+    {
+      "id": "tema",
+      "rotulo": "Tema",
+      "tipo": "escolha",
+      "obrigatorio": true,
+      "opcoes": [
+        "Institucional",
+        "Saúde",
+        "Evento",
+        "Aviso"
+      ]
+    },
+    {
+      "id": "titulo",
+      "rotulo": "Título",
+      "tipo": "texto",
+      "obrigatorio": true,
+      "max": 60,
+      "ideal": 39,
+      "ajuda": "Curto e direto: numa imagem, quanto menos texto, melhor."
+    },
+    {
+      "id": "subtitulo",
+      "rotulo": "Apoio",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 90,
+      "formatacao": "simples",
+      "ajuda": "Uma frase de apoio, se precisar."
+    },
+    {
+      "id": "imagens",
+      "rotulo": "Imagem",
+      "tipo": "imagens-aprovadas",
+      "obrigatorio": false,
+      "limite": 1,
+      "ajuda": "Uma foto da biblioteca aprovada. O tamanho é fixo; arraste para ajustar o enquadramento."
+    },
+    {
+      "id": "data",
+      "rotulo": "Data",
+      "tipo": "data",
+      "obrigatorio": false
+    },
+    {
+      "id": "hora",
+      "rotulo": "Horário",
+      "tipo": "hora",
+      "obrigatorio": false
+    },
+    {
+      "id": "chamada",
+      "rotulo": "Chamada",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 24,
+      "ajuda": "Vira um botão laranja na imagem (ex.: \"Saiba mais\"). Não tem link: é uma imagem."
+    },
+    {
+      "id": "cabecalho",
+      "rotulo": "Nome no chapéu",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 40,
+      "ajuda": "Em branco, entra o nome da sua área."
+    }
+  ],
+  "secoes": [
+    {
+      "id": "essencial",
+      "nome": "Conteúdo",
+      "fixa": true,
+      "campos": [
+        "publico",
+        "tema",
+        "titulo",
+        "subtitulo"
+      ]
+    },
+    {
+      "id": "imagens",
+      "nome": "Imagem",
+      "campos": [
+        "imagens"
+      ],
+      "vazio": "Sem imagem"
+    },
+    {
+      "id": "quando",
+      "nome": "Data e chamada",
+      "campos": [
+        "data",
+        "hora",
+        "chamada"
+      ],
+      "vazio": "Sem data e sem chamada"
+    },
+    {
+      "id": "visual",
+      "nome": "Chapéu",
+      "campos": [
+        "cabecalho"
+      ],
+      "vazio": "Nome da sua área"
+    }
+  ],
+  "publicos": {
+    "_regra": "Manual de Marca do Grupo (p.5-8): a marca do Grupo Unimed Uberlândia vale para conteúdos internos, eventos internos e externos e publicação de vagas. Comunicação externa (clientes, planos, campanhas) usa só a marca Unimed Uberlândia, com o registro ANS.",
+    "Interno": {
+      "logo": "interno",
+      "assinatura": "Grupo Unimed Uberlândia",
+      "ans": false,
+      "layout": "interno-2027",
+      "selo": "Comunicado interno"
+    },
+    "Externo": {
+      "logo": "externo",
+      "assinatura": "Unimed Uberlândia",
+      "ans": true,
+      "porTema": {
+        "Evento": {
+          "logo": "interno",
+          "assinatura": "Grupo Unimed Uberlândia",
+          "ans": false,
+          "motivo": "evento externo usa a marca do Grupo (Manual do Grupo, p.5)",
+          "layout": "interno-2027",
+          "selo": "Evento"
+        }
+      },
+      "layout": "externo"
+    }
+  },
+  "temas": {
+    "_regra": "Papéis fixos de cor: botão sempre laranja, data sempre cítrico. No externo, a faixa do cabeçalho leva a cor do tema (logo nunca sobre o laranja). No interno 2027, o tema muda só o fundo suave do bloco da área (cores de apoio).",
+    "Institucional": {
+      "faixa": "verdeEscuro",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioAreia",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Institucional"
+    },
+    "Saúde": {
+      "faixa": "institucional",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioVerde",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Saúde"
+    },
+    "Evento": {
+      "faixa": "citrico",
+      "textoFaixa": "verdeEscuro",
+      "fundoInterno": "apoioAzul",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Evento"
+    },
+    "Aviso": {
+      "faixa": "laranja",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioAmarelo",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Aviso"
+    }
+  },
+  "arvore": {
+    "imagem": {
+      "maximo": 1
+    }
+  },
+  "validacoes": {},
+  "quadro": 1500
+}
