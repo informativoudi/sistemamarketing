@@ -28,12 +28,13 @@
   }
 
   /* Monta o e-mail num quadro invisível, do tamanho real, e espera as imagens. */
-  function montar(html) {
+  function montar(html, largura) {
+    largura = largura || 680;
     return new Promise(function (ok, falha) {
       var quadro = document.createElement('iframe');
       quadro.setAttribute('aria-hidden', 'true');
       quadro.tabIndex = -1;
-      quadro.style.cssText = 'position:fixed;left:-10000px;top:0;width:680px;height:2000px;border:0;visibility:hidden;';
+      quadro.style.cssText = 'position:fixed;left:-20000px;top:0;width:' + largura + 'px;height:2000px;border:0;visibility:hidden;';
       document.body.appendChild(quadro);
       var limite = setTimeout(function () { falha(new Error('O e-mail demorou demais para montar.')); }, 20000);
       quadro.onload = function () {
@@ -48,9 +49,9 @@
           quadro.style.height = Math.ceil(doc.documentElement.scrollHeight) + 'px';
           setTimeout(function () {
             clearTimeout(limite);
-            var cartao = doc.querySelector('[data-x="email"]');
+            var cartao = doc.querySelector('[data-x="email"],[data-x="peca"]');
             if (!cartao) return falha(new Error('Modelo sem área de e-mail marcada.'));
-            ok({ quadro: quadro, doc: doc, cartao: cartao, sair: function () { quadro.remove(); } });
+            ok({ quadro: quadro, doc: doc, cartao: cartao, largura: largura, sair: function () { quadro.remove(); } });
           }, 60);
         });
       };
@@ -66,36 +67,66 @@
     setTimeout(function () { URL.revokeObjectURL(a.href); }, 4000);
   }
 
-  async function fotografar(m, escala) {
+  var PESOS = ['300', '400', 'italic 400', '600', '700', 'italic 700', '800', '900'];
+  function carregarPesos(doc) {
+    var f = doc && doc.fonts;
+    if (!f || !f.load) return Promise.resolve();
+    return Promise.all(PESOS.map(function (w) { return f.load(w + ' 16px "Unimed Sans"').catch(function () {}); })).then(function () { return f.ready; });
+  }
+  async function fotografar(m, escala, alvo) {
     await carregar('html2canvas');
-    return raiz.html2canvas(m.cartao, { scale: escala || 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: 680 });
+    // O desenho usa as fontes carregadas na página e na peça: carrega todos os pesos nas duas.
+    await Promise.all([carregarPesos(document), carregarPesos(m.doc)]);
+    return raiz.html2canvas(alvo || m.cartao, {
+      scale: escala || 2, useCORS: true, backgroundColor: '#ffffff', logging: false, windowWidth: m.largura,
+      // Garante todos os pesos da Unimed Sans carregados na cópia antes de desenhar.
+      onclone: function (doc) { return carregarPesos(doc); }
+    });
   }
 
-  /* ---------- Imagem ---------- */
-  async function png(html, nome) {
-    var m = await montar(html);
+  /* ---------- Imagem (PNG ou JPG) ----------
+     info.escala: 2 no e-mail (nítido em tela retina); 1 nas peças de tamanho fixo (pixels exatos). */
+  async function imagem(html, nome, info, tipo) {
+    info = info || {};
+    var m = await montar(html, info.largura);
     try {
-      var tela = await fotografar(m, 2);
-      await new Promise(function (ok) { tela.toBlob(function (b) { baixarBlob(b, nome + '.png'); ok(); }, 'image/png'); });
+      var tela = await fotografar(m, info.escala || 2);
+      var mime = tipo === 'jpg' ? 'image/jpeg' : 'image/png';
+      await new Promise(function (ok) { tela.toBlob(function (b) { baixarBlob(b, nome + '.' + tipo); ok(); }, mime, 0.92); });
     } finally { m.sair(); }
   }
+  function png(html, nome, info) { return imagem(html, nome, info, 'png'); }
+  function jpg(html, nome, info) { return imagem(html, nome, info, 'jpg'); }
 
-  /* ---------- PDF ---------- */
-  async function pdf(html, nome) {
-    var m = await montar(html);
+  /* ---------- PDF ----------
+     Uma página do tamanho da peça; com [data-x="pagina"] (cartilha), uma página por folha A4.
+     info.dpi: resolução de impressão (ex.: Painel SMU 150 dpi → tamanho físico certo). */
+  async function pdf(html, nome, info) {
+    info = info || {};
+    var m = await montar(html, info.largura);
     try {
       await carregar('jspdf');
-      var tela = await fotografar(m, 2);
-      var base = m.cartao.getBoundingClientRect();
-      var w = base.width, h = base.height;
       var J = raiz.jspdf.jsPDF;
-      var doc = new J({ orientation: h > w ? 'portrait' : 'landscape', unit: 'px', format: [w, h], hotfixes: ['px_scaling'], compress: true });
-      doc.addImage(tela.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, w, h);
-      // Mantém os botões clicáveis no PDF.
-      Array.prototype.forEach.call(m.cartao.querySelectorAll('a[href]'), function (a) {
-        var r = a.getBoundingClientRect();
-        doc.link(r.left - base.left, r.top - base.top, r.width, r.height, { url: a.href });
-      });
+      var paginas = Array.prototype.slice.call(m.doc.querySelectorAll('[data-x="pagina"]')).filter(function (p) { return p.getBoundingClientRect().height > 0; });
+      var alvos = paginas.length ? paginas : [m.cartao];
+      var doc = null;
+      for (var i = 0; i < alvos.length; i++) {
+        var alvo = alvos[i];
+        var base = alvo.getBoundingClientRect();
+        var w = base.width, h = base.height;
+        var tela = await fotografar(m, info.escalaPdf || 2, alvo);
+        var unid = info.dpi ? 'in' : 'px', fw = info.dpi ? w / info.dpi : w, fh = info.dpi ? h / info.dpi : h;
+        var orient = fh > fw ? 'portrait' : 'landscape';
+        if (!doc) doc = new J({ orientation: orient, unit: unid, format: [fw, fh], hotfixes: ['px_scaling'], compress: true });
+        else doc.addPage([fw, fh], orient);
+        doc.addImage(tela.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, fw, fh);
+        // Mantém os links clicáveis no PDF.
+        var k = info.dpi ? 1 / info.dpi : 1;
+        Array.prototype.forEach.call(alvo.querySelectorAll('a[href]'), function (a) {
+          var r = a.getBoundingClientRect();
+          doc.link((r.left - base.left) * k, (r.top - base.top) * k, r.width * k, r.height * k, { url: a.href });
+        });
+      }
       doc.setProperties({ title: nome, creator: 'Gerador de Peças · Unimed Uberlândia' });
       doc.save(nome + '.pdf');
     } finally { m.sair(); }
@@ -112,7 +143,8 @@
     var m = /rgba\([^)]*,\s*([\d.]+)\)/.exec(cor || '');
     return m ? Math.round((1 - Number(m[1])) * 100) : 0;
   }
-  var PX = 1 / 96; // polegadas por pixel
+  var fonteAtual = 'Arial';
+  var PX = 1 / 96; // polegadas por pixel (o Painel SMU usa 150 dpi)
 
   function trechos(el, win) {
     var lista = [];
@@ -134,7 +166,8 @@
             if (nos[0] === f) t = esp + t.replace(/^\s+/, '');
             if (nos[nos.length - 1] === f) t = t.replace(/\s+$/, '') + esp;
           }
-          var op = { color: hex(st.color) || '3C3C3B', transparency: transparencia(st.color) || undefined, bold: Number(st.fontWeight) >= 600 || st.fontWeight === 'bold', italic: st.fontStyle === 'italic' };
+          var face = faceDoPeso(fonteAtual, st.fontWeight);
+          var op = { color: hex(st.color) || '3C3C3B', fontFace: face || undefined, transparency: transparencia(st.color) || undefined, bold: (Number(st.fontWeight) >= 650 && Number(st.fontWeight) < 750) || st.fontWeight === 'bold', italic: st.fontStyle === 'italic' };
           lista.push({ text: t, options: op });
         } else if (f.nodeName === 'BR') {
           if (lista.length) lista[lista.length - 1].options.breakLine = true;
@@ -176,11 +209,23 @@
     return new Promise(function (ok) { var f = new FileReader(); f.onload = function () { ok(f.result); }; f.readAsDataURL(b); });
   }
 
+  /* Pesos da Unimed Sans no Office: 700 é "Bold"; ExtraBold e Black são famílias próprias. */
+  function faceDoPeso(fonte, peso) {
+    if (!/unimed sans/i.test(fonte)) return null;
+    peso = Number(peso) || 400;
+    if (peso >= 850) return 'Unimed Sans Black';
+    if (peso >= 750) return 'Unimed Sans ExtraBold';
+    if (peso >= 550 && peso < 650) return 'Unimed Sans SemiBold';
+    if (peso <= 320) return 'Unimed Sans Book';
+    return null;
+  }
+
   async function pptx(html, nome, info) {
-    var m = await montar(html);
+    info = info || {};
+    var m = await montar(html, info.largura);
+    PX = 1 / (info.dpi || 96);
     try {
       await carregar('pptx');
-      info = info || {};
       var win = m.quadro.contentWindow;
       var base = m.cartao.getBoundingClientRect();
       var W = base.width * PX, H = base.height * PX;
@@ -193,6 +238,7 @@
       var s = P.addSlide();
       s.background = { color: 'FFFFFF' };
       var fonte = info.fonte || 'Arial';
+      fonteAtual = fonte;
 
       var itens = m.cartao.querySelectorAll('[data-x]');
       var lista = [m.cartao].concat(Array.prototype.slice.call(itens));
@@ -204,9 +250,9 @@
         var x = (r.left - base.left) * PX, y = (r.top - base.top) * PX, w = r.width * PX, h = r.height * PX;
         var st = win.getComputedStyle(el);
 
-        if (tipo === 'caixa' || tipo === 'email') {
+        if (tipo === 'caixa' || tipo === 'email' || tipo === 'peca') {
           var cor = hex(st.backgroundColor);
-          if (!cor) continue;
+          if (!cor) { await fundoImagem(el, st, s, x, y, w, h); continue; } // ex.: textura por cima da peça
           var raio = parseFloat(st.borderTopLeftRadius) || 0;
           var retoBD = raio > 0 && (parseFloat(st.borderBottomRightRadius) || 0) === 0;
           if (raio > 0) {
@@ -236,9 +282,9 @@
           s.addText(partes, {
             x: x + pl * PX, y: y + pt * PX,
             w: Math.max(0.2, (r.width - pl - pr + folga) * PX), h: Math.max(0.15, (r.height - pt - pb) * PX),
-            fontFace: fonte, fontSize: Math.round(tam * 0.75 * 2) / 2,
-            lineSpacing: Math.round(alt * 0.75 * 10) / 10,
-            charSpacing: (parseFloat(st.letterSpacing) || 0) * 0.75 || undefined,
+            fontFace: fonte, fontSize: Math.round(tam * 72 * PX * 2) / 2,
+            lineSpacing: Math.round(alt * 72 * PX * 10) / 10,
+            charSpacing: (parseFloat(st.letterSpacing) || 0) * 72 * PX || undefined,
             align: alinhar,
             valign: el.getAttribute('data-forma') === 'botao' || st.verticalAlign === 'middle' ? 'middle' : 'top',
             margin: 0, fit: 'none', wrap: true, paraSpaceBefore: 0, paraSpaceAfter: 0
@@ -250,5 +296,8 @@
     } finally { m.sair(); }
   }
 
-  raiz.UnimedExportar = { png: png, pdf: pdf, pptx: pptx };
+  /* Arquivo pronto (ex.: Word gerado pelo modelo da cartilha). */
+  async function arquivo(blob, nomeArquivo) { baixarBlob(blob, nomeArquivo); }
+
+  raiz.UnimedExportar = { png: png, jpg: jpg, pdf: pdf, pptx: pptx, arquivo: arquivo, carregar: carregar, montar: montar };
 })(window);

@@ -24,7 +24,11 @@
   var CHAVE_QUEM = 'unimed-gerador-quem';
   var CHAVE_RASCUNHO = 'unimed-gerador-rascunho-';
 
+  /* Modo teste (index.html?teste=1): usa as regras propostas pelo assistente, guardadas só neste navegador. */
+  var MODO_TESTE = /[?&]teste=1/.test(location.search);
+  function regrasTeste() { try { return JSON.parse(localStorage.getItem('unimed-teste-config') || '{}'); } catch (e) { return {}; } }
   async function json(caminho) {
+    if (MODO_TESTE) { var t = regrasTeste(); if (t[caminho]) return JSON.parse(JSON.stringify(t[caminho])); }
     var r = await fetch(caminho, { cache: 'no-store' });
     if (!r.ok) throw new Error('Não encontrei ' + caminho);
     return r.json();
@@ -95,6 +99,20 @@
     if (alvo) alvo.focus({ preventScroll: true });
   }
 
+  /* ---------- Modelo do formato (o desenho) e decisões ---------- */
+  function modelo() { return window.UnimedModelos[estado.formato.modelo || estado.formato.id]; }
+  function decidir(dados) {
+    var md = modelo();
+    return md && md.decidir ? md.decidir(estado.formato, estado.marca, estado.tendencias, dados) : M.decidir(estado.formato, estado.marca, estado.tendencias, dados);
+  }
+  function exporta(tipo) { return (estado.formato.exportar || ['html', 'png', 'pdf', 'pptx']).indexOf(tipo) >= 0; }
+  /* Todas as imagens que o plano usa (as do bloco de imagens e as das notícias da newsletter). */
+  function imagensDoPlano(plano) {
+    var l = plano.imagens ? plano.imagens.itens.slice() : [];
+    (plano.noticias || []).forEach(function (n) { if (n.imagem) l.push(n.imagem); });
+    return l;
+  }
+
   /* ---------- Quem está pedindo (fica guardado no aparelho) ---------- */
   function mostrarQuem(compacto) {
     var nome = M.limpar($('f-solicitante').value), area = $('f-area').value;
@@ -149,6 +167,8 @@
       return caixa;
     }
     if (c.tipo === 'imagens-aprovadas') return campoImagens(c, caixa, id);
+    if (c.tipo === 'noticias') return campoNoticias(c, caixa);
+    if (c.tipo === 'arquivo') return campoArquivo(c, caixa, id);
     if (c.tipo === 'texto-longo') entrada = el('textarea', { id: id, name: c.id, rows: 8 });
     else entrada = el('input', { id: id, name: c.id, type: c.tipo === 'data' ? 'date' : c.tipo === 'hora' ? 'time' : c.tipo === 'link' ? 'url' : 'text', placeholder: c.tipo === 'link' ? 'https://' : '' });
     var cont = contador(c, entrada);
@@ -172,6 +192,8 @@
 
   /* ---------- Imagens: até 3, escolha na biblioteca e ajuste do enquadramento ---------- */
   function slotsPara(qtd) {
+    var md = modelo();
+    if (md && md.slots) return md.slots(estado.formato, qtd, lerDados());
     var lay = (estado.formato.arvore.imagem && estado.formato.arvore.imagem.layouts) || {};
     return lay[String(qtd)] || [];
   }
@@ -230,6 +252,144 @@
     return caixa;
   }
 
+  /* ---------- Newsletter: lista de notícias (até 4) ---------- */
+  function campoNoticias(c, caixa) {
+    var limite = c.limite || 4;
+    var tam = (estado.formato.arvore && estado.formato.arvore.noticias) || { destaque: { w: 536, h: 268 }, demais: { w: 176, h: 132 } };
+    caixa.classList.add('largo');
+    var lista = el('div', { 'class': 'noticias' });
+    var mais = el('button', { type: 'button', 'class': 'btn secundario btn-mais' }, ['+ Adicionar notícia']);
+    var anuncio = el('span', { 'class': 'sr-only', 'aria-live': 'polite' });
+    if (!estado.noticias.length) estado.noticias.push(nova());
+    function nova() { return { titulo: '', texto: '', linkTexto: '', link: '', imagem: '', x: 0.5, y: 0.5, zoom: 1 }; }
+    function mudou() { agendarPrevia(); }
+    function entrada(n, k, rot, i, tipo, extra) {
+      var idc = 'n-' + i + '-' + k;
+      var inp = tipo === 'area' ? el('textarea', { id: idc, rows: 3 }) : el('input', { id: idc, type: tipo || 'text', placeholder: extra || '' });
+      inp.value = n[k] || '';
+      inp.addEventListener('input', function () { n[k] = inp.value; });
+      var lab = el('label', { 'for': idc }, [rot]);
+      if (k === 'texto' && c.maxTexto) {
+        var ct = el('span', { 'class': 'cont' });
+        var at = function () { var q = M.contar(inp.value); ct.textContent = q + '/' + c.maxTexto; ct.classList.toggle('estourou', q > c.maxTexto); };
+        inp.addEventListener('input', at); at(); lab.appendChild(ct);
+      }
+      return el('div', { 'class': 'campo' + (tipo === 'area' || k === 'titulo' ? ' largo' : '') }, [lab, inp]);
+    }
+    function desenhar(foco) {
+      lista.textContent = '';
+      estado.noticias.forEach(function (n, i) {
+        var t = i === 0 ? tam.destaque : tam.demais;
+        var sel = el('select', { id: 'n-' + i + '-imagem' }, [el('option', { value: '', texto: 'Sem foto' })].concat(estado.marca.imagensAprovadas.map(function (a) { return el('option', { value: a.id, texto: a.descricao }); })));
+        sel.value = n.imagem || '';
+        var editorCaixa = el('div', { 'class': 'noticia-foto' });
+        function editor() {
+          editorCaixa.textContent = '';
+          var ap = estado.marca.imagensAprovadas.filter(function (a) { return a.id === n.imagem; })[0];
+          if (!ap) return;
+          editorCaixa.appendChild(Rc.editor({ id: 'noticia' + i, numero: i + 1, src: ap.arquivo, w: t.w, h: t.h, rotulo: 'Foto da notícia ' + (i + 1), ajuste: n, aoMudar: function (aj) { n.x = aj.x; n.y = aj.y; n.zoom = aj.zoom; mudou(); } }));
+        }
+        sel.addEventListener('change', function () { n.imagem = sel.value; n.x = 0.5; n.y = 0.5; n.zoom = 1; editor(); });
+        editor();
+        var sobe = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Subir notícia ' + (i + 1), disabled: i === 0, onclick: function () { trocar(i, -1); } }, ['↑']);
+        var desce = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Descer notícia ' + (i + 1), disabled: i === estado.noticias.length - 1, onclick: function () { trocar(i, 1); } }, ['↓']);
+        var tirar = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Remover notícia ' + (i + 1), disabled: estado.noticias.length === 1, onclick: function () { estado.noticias.splice(i, 1); desenhar(); anuncio.textContent = 'Notícia removida.'; mudou(); } }, ['Remover']);
+        lista.appendChild(el('fieldset', { 'class': 'noticia' }, [
+          el('legend', {}, [el('b', { texto: 'Notícia ' + (i + 1) }), el('span', { 'class': 'opc', texto: i === 0 ? ' · destaque, foto ' + t.w + ' × ' + t.h : ' · lista, foto ' + t.w + ' × ' + t.h })]),
+          el('div', { 'class': 'noticia-acoes' }, [sobe, desce, tirar]),
+          el('div', { 'class': 'campos' }, [
+            entrada(n, 'titulo', 'Título', i),
+            entrada(n, 'texto', 'Resumo (opcional)', i, 'area'),
+            entrada(n, 'linkTexto', 'Texto do link', i, 'text', 'Leia mais'),
+            entrada(n, 'link', 'Link (opcional)', i, 'url', 'https://'),
+            el('div', { 'class': 'campo largo' }, [el('label', { 'for': 'n-' + i + '-imagem' }, ['Foto (opcional)']), sel, editorCaixa])
+          ])
+        ]));
+      });
+      mais.disabled = estado.noticias.length >= limite;
+      mais.textContent = estado.noticias.length >= limite ? 'Limite de ' + limite + ' notícias' : '+ Adicionar notícia';
+      if (foco != null) { var f = document.getElementById('n-' + foco + '-titulo'); if (f) f.focus(); }
+    }
+    function trocar(i, d) {
+      var j = i + d; var t = estado.noticias[i]; estado.noticias[i] = estado.noticias[j]; estado.noticias[j] = t;
+      desenhar(j); anuncio.textContent = 'Notícia agora na posição ' + (j + 1) + '.'; mudou();
+    }
+    mais.addEventListener('click', function () { if (estado.noticias.length < limite) { estado.noticias.push(nova()); desenhar(estado.noticias.length - 1); mudou(); } });
+    estado.redesenharNoticias = function () { desenhar(); };
+    caixa.appendChild(lista); caixa.appendChild(mais); caixa.appendChild(anuncio);
+    if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
+    desenhar();
+    return caixa;
+  }
+
+  /* ---------- Documento original (Word): o texto entra no campo sem mudar nada ---------- */
+  function campoArquivo(c, caixa, id) {
+    caixa.classList.add('largo');
+    var inp = el('input', { id: id, type: 'file', accept: '.docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+    var status = el('p', { 'class': 'ajuda', role: 'status' });
+    inp.addEventListener('change', async function () {
+      var f = inp.files && inp.files[0];
+      if (!f) return;
+      status.textContent = 'Lendo ' + f.name + '…';
+      try {
+        await window.UnimedExportar.carregar('pptx'); // traz o JSZip
+        var texto = await lerDocx(f);
+        var alvo = $('f-' + (c.preenche || 'texto'));
+        if (alvo) { alvo.value = texto; alvo.dispatchEvent(new Event('input', { bubbles: true })); }
+        var t = $('f-titulo');
+        if (t && !t.value && f.name) { t.value = f.name.replace(/\.docx$/i, '').replace(/[_-]+/g, ' '); t.dispatchEvent(new Event('input', { bubbles: true })); }
+        status.textContent = 'Pronto: o texto de ' + f.name + ' entrou no campo "Conteúdo", sem mudanças. Confira os títulos das seções.';
+      } catch (e) { status.textContent = 'Não consegui ler o arquivo (' + e.message + '). Cole o texto no campo "Conteúdo".'; }
+    });
+    caixa.appendChild(el('label', { 'for': id }, [el('span', {}, [c.rotulo + ' ', el('span', { 'class': 'opc', texto: '(opcional)' })])]));
+    caixa.appendChild(inp);
+    if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
+    caixa.appendChild(status);
+    return caixa;
+  }
+
+  /* Lê um .docx no navegador: títulos (estilo de título ou linha curta toda em negrito), listas e parágrafos. */
+  async function lerDocx(arquivo) {
+    var zip = await window.JSZip.loadAsync(await arquivo.arrayBuffer());
+    var xml = await zip.file('word/document.xml').async('string');
+    var doc = new DOMParser().parseFromString(xml, 'application/xml');
+    var W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+    var corpo = doc.getElementsByTagNameNS(W, 'body')[0];
+    var saida = [];
+    function textoDe(p) {
+      var t = '';
+      Array.prototype.forEach.call(p.getElementsByTagNameNS(W, '*'), function (n) {
+        if (n.localName === 't') t += n.textContent;
+        else if (n.localName === 'tab') t += ' ';
+        else if (n.localName === 'br') t += ' ';
+      });
+      return t.replace(/\s+/g, ' ').trim();
+    }
+    function paragrafo(p) {
+      var t = textoDe(p);
+      if (!t) return;
+      var est = p.getElementsByTagNameNS(W, 'pStyle')[0];
+      var nomeEst = est ? est.getAttributeNS(W, 'val') || est.getAttribute('w:val') || '' : '';
+      var lista = p.getElementsByTagNameNS(W, 'numPr').length > 0 || /list|lista/i.test(nomeEst);
+      var runs = Array.prototype.filter.call(p.getElementsByTagNameNS(W, 'r'), function (r) { return r.getElementsByTagNameNS(W, 't').length; });
+      var tudoNegrito = runs.length && runs.every(function (r) { var b = r.getElementsByTagNameNS(W, 'b')[0]; return b && b.getAttributeNS(W, 'val') !== '0' && b.getAttribute('w:val') !== '0'; });
+      var titulo = /heading|t[ií]tulo|title/i.test(nomeEst) || (tudoNegrito && t.length <= 90 && !/[.;,:]$/.test(t));
+      if (lista && !titulo) saida.push('- ' + t);
+      else if (titulo) saida.push('\n' + t.replace(/[.:]$/, '') + '\n');
+      else saida.push('\n' + t + '\n');
+    }
+    Array.prototype.forEach.call(corpo.childNodes, function (n) {
+      if (n.localName === 'p') paragrafo(n);
+      else if (n.localName === 'tbl') {
+        Array.prototype.forEach.call(n.getElementsByTagNameNS(W, 'tr'), function (tr) {
+          var cel = Array.prototype.map.call(tr.getElementsByTagNameNS(W, 'tc'), textoDe).filter(Boolean);
+          if (cel.length) saida.push('\n' + cel.join(' | ') + '\n');
+        });
+      }
+    });
+    return saida.join('\n').replace(/\n{3,}/g, '\n\n').trim();
+  }
+
   /* ---------- Ordem dos blocos (modular) ---------- */
   function campoOrdem() {
     var b = estado.formato.blocos;
@@ -271,7 +431,7 @@
         var campo = mapa[li.getAttribute('data-bloco')];
         if (!campo) return;
         var v = dados[campo];
-        var cheio = Array.isArray(v) ? v.length > 0 : !!M.limpar(M.semMarcas ? M.semMarcas(v || '') : (v || ''));
+        var cheio = Array.isArray(v) ? v.filter(function (n) { return n && (n.id || M.limpar(n.titulo)); }).length > 0 : !!M.limpar(M.semMarcas ? M.semMarcas(v || '') : (v || ''));
         li.classList.toggle('vazio', !cheio);
       });
     }
@@ -302,8 +462,9 @@
     var caixa = $('campos');
     caixa.textContent = '';
     estado.imagens = [];
+    estado.noticias = [];
     estado.ordem = null;
-    estado.redesenharImagens = estado.desenharOrdem = estado.marcarVazios = null;
+    estado.redesenharImagens = estado.desenharOrdem = estado.marcarVazios = estado.redesenharNoticias = null;
     var porId = {};
     estado.formato.campos.forEach(function (c) { porId[c.id] = c; });
     secoesDoFormato().forEach(function (s) {
@@ -329,6 +490,8 @@
     var dados = {};
     estado.formato.campos.forEach(function (c) {
       if (c.tipo === 'imagens-aprovadas') { dados[c.id] = estado.imagens.map(function (i) { return { id: i.id, x: i.x, y: i.y, zoom: i.zoom }; }); return; }
+      if (c.tipo === 'noticias') { dados[c.id] = estado.noticias.map(function (n) { return Object.assign({}, n); }); return; }
+      if (c.tipo === 'arquivo') return;
       if (c.tipo === 'escolha') {
         var marcado = f.querySelector('input[name="' + c.id + '"]:checked');
         dados[c.id] = marcado ? marcado.value : '';
@@ -351,6 +514,8 @@
       var v = dados[c.id];
       if (v == null) return;
       if (c.tipo === 'imagens-aprovadas') { estado.imagens = (v || []).map(function (i) { return Object.assign({}, i); }); if (estado.redesenharImagens) estado.redesenharImagens(); return; }
+      if (c.tipo === 'noticias') { estado.noticias = (v || []).map(function (n) { return Object.assign({}, n); }); if (!estado.noticias.length) estado.noticias.push({ titulo: '', texto: '', linkTexto: '', link: '', imagem: '' }); if (estado.redesenharNoticias) estado.redesenharNoticias(); return; }
+      if (c.tipo === 'arquivo') return;
       if (c.tipo === 'escolha') { var r = f.querySelector('input[name="' + c.id + '"][value="' + v + '"]'); if (r) r.checked = true; return; }
       var e = f.elements[c.id];
       if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: false })); }
@@ -371,7 +536,11 @@
       }
       var c = porId[id]; if (!c || c.tipo === 'escolha') return;
       var v = dados[id];
-      if (Array.isArray(v)) { if (v.length) partes.push(v.length + (v.length > 1 ? ' imagens' : ' imagem')); return; }
+      if (Array.isArray(v)) {
+        var q = c.tipo === 'noticias' ? v.filter(function (n) { return M.limpar(n.titulo); }).length : v.length;
+        if (q) partes.push(q + (c.tipo === 'noticias' ? (q > 1 ? ' notícias' : ' notícia') : (q > 1 ? ' imagens' : ' imagem')));
+        return;
+      }
       v = M.limpar(M.semMarcas ? M.semMarcas(v || '') : (v || ''));
       if (!v) return;
       if (c.tipo === 'data') { var d = v.split('-'); v = d.length === 3 ? d[2] + '/' + d[1] + '/' + d[0] : v; }
@@ -396,7 +565,8 @@
     estado.formato.campos.forEach(function (c) {
       if (!c.obrigatorio || c.tipo === 'escolha') return;
       var v = dados[c.id];
-      if (Array.isArray(v) ? !v.length : !M.limpar(v || '')) faltam.push(c.rotulo.toLowerCase());
+      var vazio = Array.isArray(v) ? !v.filter(function (n) { return n && (n.id || M.limpar(n.titulo)); }).length : !M.limpar(v || '');
+      if (vazio) faltam.push(c.rotulo.toLowerCase());
     });
     var p = $('pendencias');
     p.textContent = faltam.length ? 'Falta: ' + faltam.join(', ') : 'Tudo certo para gerar';
@@ -408,7 +578,7 @@
     if (!estado.formato) return;
     var tem = estado.formato.campos.some(function (c) {
       var v = dados[c.id];
-      return c.tipo !== 'escolha' && (Array.isArray(v) ? v.length : M.limpar(v || ''));
+      return c.tipo !== 'escolha' && c.tipo !== 'arquivo' && (Array.isArray(v) ? v.filter(function (n) { return n && (n.id || M.limpar(n.titulo)); }).length : M.limpar(v || ''));
     });
     var limpo = {};
     estado.formato.campos.forEach(function (c) { limpo[c.id] = dados[c.id]; });
@@ -438,9 +608,10 @@
   var rodada = 0;
   /* Recorta as imagens no tamanho fixo de cada quadro (JPEG 2x). */
   async function recortar(plano) {
-    if (!plano.imagens) return;
-    await Promise.all(plano.imagens.itens.map(async function (it) {
-      it.src = await Rc.cortar(it.arquivo, it.w, it.h, it, 2);
+    var md = modelo();
+    await Promise.all(imagensDoPlano(plano).map(async function (it) {
+      var forma = md && md.formaImagem ? md.formaImagem(plano, it, estado.marca) : null;
+      it.src = await Rc.cortar(it.arquivo, it.w, it.h, it, 2, forma);
     }));
   }
 
@@ -455,6 +626,7 @@
     if (palco.hidden) return;
     var doc; try { doc = q.contentDocument; } catch (e) { return; }
     if (!doc || !doc.documentElement) return;
+    LARGURA_QUADRO = estado.formato.quadro || 680;
     q.style.width = LARGURA_QUADRO + 'px';
     var h = doc.documentElement.scrollHeight;
     var s = Math.min(1, palco.clientWidth / LARGURA_QUADRO);
@@ -467,19 +639,26 @@
     var minha = ++rodada;
     var dados = lerDados();
     if (!codigo) { atualizarPainel(dados); salvarRascunho(dados); }
-    if (!M.limpar(dados.titulo) || !M.limpar(dados.texto)) {
+    var pede = estado.formato.previaPede || ['titulo', 'texto'];
+    if (pede.some(function (k) { return !M.limpar(dados[k]); })) {
       $('palco').hidden = true; $('vazio').hidden = false; $('decisao').textContent = ''; $('porque').textContent = ''; $('porque-caixa').hidden = true;
       $('imagens-aviso') && ($('imagens-aviso').hidden = true);
       return null;
     }
-    var plano = M.decidir(estado.formato, estado.marca, estado.tendencias, dados);
+    var plano = decidir(dados);
     try { await recortar(plano); } catch (e) { /* segue com a imagem original */ }
-    if (srcs && plano.imagens) plano.imagens.itens.forEach(function (it, i) { if (srcs[i]) it.src = srcs[i]; });
     if (minha !== rodada && !codigo) return null;
-    var modelo = window.UnimedModelos[estado.formato.id];
-    var opcoesPrevia = { codigo: 'UNI-' + estado.formato.sigla + '-PRÉVIA', baseUrl: baseLocal() };
-    var html = modelo.render(plano, dados, estado.marca, codigo ? { codigo: codigo, baseUrl: estado.sistema.baseUrlPublica || baseLocal() } : opcoesPrevia);
-    $('quadro').srcdoc = codigo ? modelo.render(plano, dados, estado.marca, Object.assign({}, opcoesPrevia, { codigo: codigo })) : html;
+    var md = modelo();
+    var opcoesPrevia = { codigo: codigo || 'UNI-' + estado.formato.sigla + '-PRÉVIA', baseUrl: baseLocal() };
+    // Versão local (arquivos do site + recortes embutidos): prévia e downloads de imagem, PDF e PowerPoint.
+    var htmlLocal = md.render(plano, dados, estado.marca, opcoesPrevia);
+    // HTML final para a caixa de entrada: endereço público e imagens do banco de imagens.
+    var html = htmlLocal;
+    if (codigo && exporta('html')) {
+      if (srcs) imagensDoPlano(plano).forEach(function (it, i) { if (srcs[i]) it.src = srcs[i]; });
+      html = md.render(plano, dados, estado.marca, { codigo: codigo, baseUrl: estado.sistema.baseUrlPublica || baseLocal() });
+    }
+    $('quadro').srcdoc = htmlLocal;
     $('palco').hidden = false; $('vazio').hidden = true;
 
     // Imagem escolhida que não entra (modelo curto): avisa no próprio campo.
@@ -488,33 +667,41 @@
       var semLugar = (dados.imagens || []).length > 0 && !plano.imagens;
       avisoImg.hidden = !semLugar;
       if (semLugar) {
-        var ate = estado.formato.arvore.variante && estado.formato.arvore.variante.curto && estado.formato.arvore.variante.curto.ate;
+        var arv = estado.formato.arvore || {};
+        var ate = arv.variante && arv.variante.curto && arv.variante.curto.ate;
         avisoImg.textContent = 'O texto está no modelo curto' + (ate ? ' (até ' + ate + ' caracteres)' : '') + ', que não leva imagem. Escreva um pouco mais para as fotos entrarem.';
       }
     }
 
     var chips = $('decisao'); chips.textContent = '';
-    chips.appendChild(el('span', { 'class': 'var', texto: 'Modelo ' + plano.varianteNome }));
-    chips.appendChild(el('span', { texto: plano.publico.nome }));
-    chips.appendChild(el('span', { texto: 'Tema ' + plano.tema.rotulo }));
-    if (plano.imagens) chips.appendChild(el('span', { texto: plano.imagens.quantidade + (plano.imagens.quantidade > 1 ? ' imagens' : ' imagem') }));
+    if (plano.chips) plano.chips.forEach(function (t, i) { chips.appendChild(el('span', { 'class': i === 0 ? 'var' : null, texto: t })); });
+    else {
+      chips.appendChild(el('span', { 'class': 'var', texto: 'Modelo ' + plano.varianteNome }));
+      chips.appendChild(el('span', { texto: plano.publico.nome }));
+      chips.appendChild(el('span', { texto: 'Tema ' + plano.tema.rotulo }));
+      if (plano.noticias) chips.appendChild(el('span', { texto: plano.noticias.length + (plano.noticias.length === 1 ? ' notícia' : ' notícias') }));
+    }
+    if (plano.imagens && !plano.chips) chips.appendChild(el('span', { texto: plano.imagens.quantidade + (plano.imagens.quantidade > 1 ? ' imagens' : ' imagem') }));
     var lista = $('porque'); lista.textContent = '';
     plano.porque.forEach(function (p) { lista.appendChild(el('li', { texto: p })); });
     $('porque-caixa').hidden = !plano.porque.length;
-    return { plano: plano, html: html, dados: dados };
+    return { plano: plano, html: html, htmlLocal: htmlLocal, dados: dados };
   }
 
   /* Na hora de gerar: envia os recortes ao banco de imagens (Supabase Storage) para o e-mail
      ter endereços públicos. Sem banco, as imagens ficam embutidas (serve para baixar, não para disparo). */
   async function publicarImagens(codigo) {
     var dados = lerDados();
-    var plano = M.decidir(estado.formato, estado.marca, estado.tendencias, dados);
-    if (!plano.imagens) return { srcs: null, embutidas: false };
+    var plano = decidir(dados);
+    var lista = imagensDoPlano(plano);
+    if (!lista.length) return { srcs: null, embutidas: false };
+    // Imagens (PNG/JPG/PDF/PowerPoint) já levam o recorte dentro do arquivo: só o HTML precisa do banco de imagens.
+    if (!exporta('html')) return { srcs: null, embutidas: false };
     await recortar(plano);
     var cfg = estado.sistema.registro || {};
     if (cfg.modo !== 'supabase' || !R.enviarImagem) return { srcs: null, embutidas: true };
     try {
-      var srcs = await Promise.all(plano.imagens.itens.map(function (it, i) {
+      var srcs = await Promise.all(lista.map(function (it, i) {
         return R.enviarImagem(cfg, codigo + '/imagem-' + (i + 1) + '.jpg', Rc.paraBlob(it.src));
       }));
       return { srcs: srcs, embutidas: false };
@@ -578,9 +765,9 @@
         area: area,
         formato: estado.formato.id,
         tema: dados.tema,
-        variante: r.plano.variante,
+        variante: r.plano.variante || null,
         titulo: M.limpar(dados.titulo),
-        caracteres: r.plano.caracteres,
+        caracteres: r.plano.caracteres || 0,
         imagem: (dados.imagens || []).map(function (i) { return i.id; }).join(', ') || null,
         tem_data: !!r.plano.data,
         tem_botao: !!r.plano.botao,
@@ -595,7 +782,7 @@
       catch (e) { falha = e; }
 
       // A peça existe mesmo se o banco não respondeu: dá para copiar e baixar.
-      estado.ultimoHtml = r.html; estado.ultimoCodigo = codigo; estado.ultimoTitulo = M.limpar(dados.titulo);
+      estado.ultimoHtml = r.html; estado.ultimoHtmlLocal = r.htmlLocal; estado.ultimoPlano = r.plano; estado.ultimoDados = dados; estado.ultimoCodigo = codigo; estado.ultimoTitulo = M.limpar(dados.titulo);
       var m = /^(.*?)(?:-V(\d+))?$/.exec(codigo);
       estado.edicao = { base: m[1], versao: m[2] ? Number(m[2]) : 1, ultimo: codigo };
       estado.editando = false;
@@ -609,7 +796,29 @@
     } finally { botao.disabled = false; rotulo.textContent = rotuloAntes; }
   }
 
+  var ROTULOS = { png: 'Imagem (PNG)', jpg: 'Imagem (JPG)', pdf: 'PDF', pptx: 'PowerPoint', docx: 'Word' };
+  /* Downloads permitidos para o formato (config "exportar"). HTML só onde vale (e-mail). */
+  function montarDownloads() {
+    var html = exporta('html');
+    $('acoes-html').hidden = !html;
+    var tipos = (estado.formato.exportar || ['html', 'png', 'pdf', 'pptx']).filter(function (t) { return t !== 'html'; });
+    var grupo = $('exportar-grupo'); grupo.textContent = '';
+    tipos.forEach(function (t, i) {
+      var b = el('button', { type: 'button', 'class': html ? 'btn-mini' : (i === 0 ? 'btn primario' : 'btn secundario'), 'data-exportar': t }, [ROTULOS[t] || t.toUpperCase()]);
+      b.addEventListener('click', exportar);
+      grupo.appendChild(b);
+    });
+    $('exportar-titulo').textContent = html ? 'Baixar para ajustes' : 'Baixar a peça';
+    var ajuda = [];
+    if (tipos.indexOf('pptx') >= 0) ajuda.push('O PowerPoint vem com os textos editáveis.');
+    if (tipos.indexOf('docx') >= 0) ajuda.push('O Word vem no padrão, com a tabela de cabeçalho em todas as páginas.');
+    if (tipos.indexOf('png') >= 0 || tipos.indexOf('jpg') >= 0) ajuda.push(estado.formato.largura ? 'A imagem sai em ' + estado.formato.largura + ' × ' + estado.formato.altura + ' px.' : 'A imagem e o PDF saem iguais à prévia.');
+    if (estado.formato.dpi) ajuda.push('Resolução de ' + estado.formato.dpi + ' dpi.');
+    $('exportar-ajuda').textContent = ajuda.join(' ');
+  }
+
   function mostrarFeito(falha, versao) {
+    montarDownloads();
     $('codigo').textContent = estado.ultimoCodigo;
     $('feito-titulo').textContent = falha ? 'Peça pronta, ainda sem registro' : versao ? 'Nova versão registrada' : 'Peça registrada';
     $('feito-texto').textContent = falha
@@ -625,7 +834,8 @@
     $('feito').hidden = false;
     mudarAba('editar');
     $('feito').scrollIntoView({ block: 'start', behavior: 'smooth' });
-    $('copiar').focus({ preventScroll: true });
+    var primeiro = exporta('html') ? $('copiar') : $('exportar-grupo').querySelector('button');
+    if (primeiro) primeiro.focus({ preventScroll: true });
   }
 
   async function tentarDeNovo() {
@@ -671,12 +881,24 @@
     var tipo = ev.currentTarget.getAttribute('data-exportar');
     var botoes = document.querySelectorAll('[data-exportar]');
     var aviso = $('copiado');
-    var nomes = { png: 'a imagem', pdf: 'o PDF', pptx: 'o PowerPoint' };
-    var feito = { png: 'A imagem foi baixada.', pdf: 'O PDF foi baixado.' };
+    var nomes = { png: 'a imagem', jpg: 'a imagem', pdf: 'o PDF', pptx: 'o PowerPoint', docx: 'o Word' };
+    var feito = { png: 'A imagem foi baixada.', jpg: 'A imagem foi baixada.', pdf: 'O PDF foi baixado.', docx: 'O Word foi baixado. A tabela de cabeçalho se repete em todas as páginas.' };
     botoes.forEach(function (b) { b.disabled = true; });
     aviso.textContent = 'Preparando ' + nomes[tipo] + '…';
     try {
-      await window.UnimedExportar[tipo](estado.ultimoHtml, estado.ultimoCodigo, { codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao });
+      var info = {
+        codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao,
+        largura: estado.formato.quadro || 680,
+        escala: estado.formato.escalaImagem || 2,
+        dpi: estado.formato.dpi || null
+      };
+      if (tipo === 'docx') {
+        await window.UnimedExportar.carregar('pptx'); // traz o JSZip
+        var blob = await modelo().docx(estado.ultimoPlano, estado.ultimoDados, estado.marca, { baseUrl: baseLocal(), codigo: estado.ultimoCodigo });
+        await window.UnimedExportar.arquivo(blob, estado.ultimoCodigo + '.docx');
+      } else {
+        await window.UnimedExportar[tipo](estado.ultimoHtmlLocal || estado.ultimoHtml, estado.ultimoCodigo, info);
+      }
       aviso.textContent = tipo === 'pptx' ? 'PowerPoint baixado. Os textos podem ser editados; o código da peça continua no rodapé.' : feito[tipo];
     } catch (e) {
       aviso.textContent = 'Não consegui gerar ' + nomes[tipo] + ': ' + e.message;
@@ -718,6 +940,15 @@
       $('busca').appendChild(el('div', { 'class': 'alerta erro', role: 'alert', texto: 'Não consegui carregar as regras da marca (' + e.message + '). Abra pelo endereço do site, não direto do arquivo.' }));
       return;
     }
+    if (MODO_TESTE) {
+      var testadas = Object.keys(regrasTeste());
+      document.body.classList.add('modo-teste');
+      $('busca').insertBefore(el('div', { 'class': 'alerta aviso faixa-teste', role: 'status' }, [
+        el('b', { texto: 'Modo teste. ' }),
+        testadas.length ? 'Você está vendo as regras propostas pelo assistente (' + testadas.join(', ') + '), ainda não publicadas. ' : 'Nenhuma regra em teste neste navegador. ',
+        el('a', { href: 'index.html', texto: 'Sair do teste' })
+      ]), $('busca').firstChild);
+    }
     var area = $('f-area');
     estado.marca.areas.forEach(function (a) { area.appendChild(el('option', { value: a, texto: a })); });
     var quem = ler(CHAVE_QUEM);
@@ -730,7 +961,7 @@
     // Atalhos: os formatos ativos primeiro e em destaque; "em breve" apagados.
     var atalhos = $('atalhos');
     var ordenados = estado.indice.formatos.slice().sort(function (a, b) { return (b.ativo ? 1 : 0) - (a.ativo ? 1 : 0); });
-    ordenados.slice(0, 5).forEach(function (f) {
+    ordenados.filter(function (f) { return f.ativo; }).forEach(function (f) {
       atalhos.appendChild(el('button', { type: 'button', 'class': f.ativo ? 'ativo' : 'breve', disabled: !f.ativo, onclick: function () { escolher(f); } }, [f.nome, f.ativo ? null : el('small', { texto: 'em breve' })]));
     });
 
@@ -748,6 +979,8 @@
 
     $('formulario').addEventListener('input', agendarPrevia);
     $('formulario').addEventListener('change', agendarPrevia);
+    // Trocar o público pode mudar o quadro da foto (campanha): redesenha o enquadramento.
+    $('formulario').addEventListener('change', function (e) { if (e.target && e.target.name === 'publico' && estado.redesenharImagens) estado.redesenharImagens(); });
     $('formulario').addEventListener('submit', gerar);
     $('trocar').addEventListener('click', function () { $('trabalho').hidden = true; $('busca').classList.remove('compacta'); busca.value = ''; busca.focus(); });
     $('baixar').addEventListener('click', baixar);
@@ -755,7 +988,6 @@
     $('nova').addEventListener('click', nova);
     $('editar').addEventListener('click', editar);
     $('tentar').addEventListener('click', tentarDeNovo);
-    document.querySelectorAll('[data-exportar]').forEach(function (b) { b.addEventListener('click', exportar); });
 
     $('aba-editar').addEventListener('click', function () { mudarAba('editar'); });
     $('aba-previa').addEventListener('click', function () { mudarAba('previa'); });
@@ -766,6 +998,8 @@
       $(previa ? 'aba-previa' : 'aba-editar').focus();
     });
     $('quadro').addEventListener('load', ajustarQuadro);
+    // A cartilha pagina depois de carregar as fontes: reajusta a altura da prévia.
+    window.addEventListener('message', function (e) { if (e.data && e.data.tipo === 'unimed-paginado') ajustarQuadro(); });
     window.addEventListener('resize', ajustarQuadro);
   }
   iniciar();

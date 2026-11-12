@@ -18,7 +18,7 @@
     <p class="lede">Escolha o formato, cole o conteúdo e o sistema monta a peça no padrão da marca Unimed.</p>
     <div class="combo">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#004e4c" stroke-width="2" stroke-linecap="square" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M21 21l-4.6-4.6"></path></svg>
-      <input id="formato-busca" type="text" role="combobox" aria-expanded="false" aria-controls="formato-lista" aria-autocomplete="list" autocomplete="off" placeholder="Ex.: e-mail marketing, post LinkedIn, carrossel…" aria-label="Buscar formato">
+      <input id="formato-busca" type="text" role="combobox" aria-expanded="false" aria-controls="formato-lista" aria-autocomplete="list" autocomplete="off" placeholder="Ex.: e-mail, newsletter, banner, cartilha…" aria-label="Buscar formato">
       <ul id="formato-lista" role="listbox" hidden></ul>
     </div>
     <div class="atalhos" id="atalhos"></div>
@@ -74,17 +74,13 @@
           <p id="pendente-texto"></p>
           <button class="btn-mini" type="button" id="tentar">Tentar registrar de novo</button>
         </div>
-        <div class="acoes">
+        <div class="acoes" id="acoes-html">
           <button class="btn primario" type="button" id="copiar">Copiar para o disparo</button>
           <button class="btn secundario" type="button" id="baixar">Baixar HTML <span aria-hidden="true">↓</span></button>
         </div>
-        <h3 class="feito-sub">Baixar para ajustes</h3>
-        <p class="ajuda">O PowerPoint vem com os textos editáveis. A imagem e o PDF saem iguais ao e-mail.</p>
-        <div class="acoes exportar" role="group" aria-label="Baixar para ajustes">
-          <button class="btn-mini" type="button" data-exportar="png">Imagem (PNG)</button>
-          <button class="btn-mini" type="button" data-exportar="pdf">PDF</button>
-          <button class="btn-mini" type="button" data-exportar="pptx">PowerPoint</button>
-        </div>
+        <h3 class="feito-sub" id="exportar-titulo">Baixar para ajustes</h3>
+        <p class="ajuda" id="exportar-ajuda"></p>
+        <div class="acoes exportar" role="group" aria-labelledby="exportar-titulo" id="exportar-grupo"></div>
         <p class="ajuda" id="copiado" role="status"></p>
         <div class="acoes fim">
           <button class="btn secundario" type="button" id="editar">Editar esta peça</button>
@@ -104,6 +100,8 @@
 
 <script src="src/motor.js"></script>
 <script src="src/modelos/email-marketing.js"></script>
+<script src="src/modelos/peca-fixa.js"></script>
+<script src="src/modelos/cartilha.js"></script>
 <script src="src/registro.js"></script>
 <script src="src/exportar.js"></script>
 <script src="src/recorte.js"></script>

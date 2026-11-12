@@ -391,5 +391,12 @@
       "botao": "ctaTexto"
     }
   },
-  "_secoes": "As seções organizam o formulário: a 'fixa' fica sempre aberta; as outras abrem e fecham e mostram um resumo do que foi preenchido. 'ordem' é o campo especial da ordem dos blocos."
+  "_secoes": "As seções organizam o formulário: a 'fixa' fica sempre aberta; as outras abrem e fecham e mostram um resumo do que foi preenchido. 'ordem' é o campo especial da ordem dos blocos.",
+  "exportar": [
+    "html",
+    "png",
+    "pdf",
+    "pptx"
+  ],
+  "_exportar": "HTML só no e-mail (e na newsletter): é o que vai para a ferramenta de disparo."
 }

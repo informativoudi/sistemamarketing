@@ -85,3 +85,22 @@ Outras opções dos campos:
 - **Se o banco não responder**, a peça fica pronta para copiar e baixar, com o botão "Tentar registrar de novo".
 - **No celular**, as abas Editar | Prévia ficam fixas no topo, e a prévia encolhe para caber na tela.
 - **A prévia usa os arquivos do próprio site**; a peça final usa o endereço público (`baseUrlPublica`), que funciona dentro da caixa de entrada.
+
+## Formatos de tamanho fixo
+
+Cada um tem um arquivo em `config/formatos/` com `"modelo": "peca-fixa"`. Para mudar medida, margem ou downloads, edite:
+
+- `largura`, `altura`, `margem` (px) e `quadro` (largura da prévia; igual à largura);
+- `exportar`: lista com `png`, `jpg`, `pdf`, `pptx` (e `html` só no e-mail/newsletter; `docx` só na cartilha);
+- `dpi` (opcional): resolução física do PowerPoint e do PDF (o Painel SMU usa 150);
+- `escalaImagem: 1` faz a imagem sair no tamanho exato em pixels.
+
+Para criar um formato novo de imagem, copie um desses arquivos, mude `id`, `nome`, `sigla` e as medidas, e inclua em `config/formatos/indice.json`.
+
+## Newsletter
+
+`config/formatos/newsletter.json` usa o desenho do e-mail. O campo `noticias` aceita até `limite` notícias; os tamanhos das fotos ficam em `arvore.noticias` (destaque e lista).
+
+## Cartilha padrão Unimed
+
+`config/formatos/cartilha-documento.json`. O texto nunca é alterado. Títulos de seção são linhas curtas sozinhas, sem ponto final (podem começar com "1.", "2.1"…); listas, linhas com "- "; conceito em caixa, parágrafo com Box (se começar com "Termo: definição", o termo sai em destaque). A leitura do Word original reconhece estilos de título, linhas curtas todas em negrito e listas.

@@ -159,21 +159,54 @@
       var abre = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr>';
       if (t.length === 1) return abre + '<td>' + foto(t[0]) + '</td></tr></table>';
       if (t.length === 2) {
-        return abre + '<td width="' + t[0].w + '" valign="top" style="width:49.25%;">' + foto(t[0]) + '</td>' +
-          '<td width="' + g + '" style="width:' + g + 'px;font-size:0;line-height:0;">&nbsp;</td>' +
-          '<td width="' + t[1].w + '" valign="top" style="width:49.25%;">' + foto(t[1]) + '</td></tr></table>';
+        return abre + '<td class="col" width="' + t[0].w + '" valign="top" style="width:49.25%;">' + foto(t[0]) + '</td>' +
+          '<td class="vao" width="' + g + '" style="width:' + g + 'px;font-size:0;line-height:0;">&nbsp;</td>' +
+          '<td class="col" width="' + t[1].w + '" valign="top" style="width:49.25%;">' + foto(t[1]) + '</td></tr></table>';
       }
-      return abre + '<td width="' + t[0].w + '" valign="top" style="width:65.67%;">' + foto(t[0]) + '</td>' +
-        '<td width="' + g + '" style="width:' + g + 'px;font-size:0;line-height:0;">&nbsp;</td>' +
-        '<td width="' + t[1].w + '" valign="top" style="width:32.84%;">' +
+      return abre + '<td class="col" width="' + t[0].w + '" valign="top" style="width:65.67%;">' + foto(t[0]) + '</td>' +
+        '<td class="vao" width="' + g + '" style="width:' + g + 'px;font-size:0;line-height:0;">&nbsp;</td>' +
+        '<td class="col" width="' + t[1].w + '" valign="top" style="width:32.84%;">' +
         '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td>' + foto(t[1]) + '</td></tr>' +
         '<tr><td height="' + g + '" style="height:' + g + 'px;font-size:0;line-height:0;">&nbsp;</td></tr>' +
         '<tr><td>' + foto(t[2]) + '</td></tr></table></td></tr></table>';
     }
 
+    /* ---------- Newsletter: 1ª notícia em destaque, as outras em lista com foto pequena ---------- */
+    function blocoNoticias() {
+      var ns = plano.noticias;
+      if (!ns || !ns.length) return '';
+      function linkN(n) {
+        return n.link ? '<p style="margin:10px 0 0;font-family:' + F + ';font-size:15px;line-height:1.4;"><a ' + TX + ' href="' + esc(n.link) + '" target="_blank" style="color:' + c.institucional + ';font-weight:bold;text-decoration:none;">' + esc(n.linkTexto) + ' &rarr;</a></p>' : '';
+      }
+      function fotoN(im) {
+        var src = im.src || url(base, im.arquivo);
+        return '<img data-x="img" src="' + esc(src) + '" width="' + im.w + '" height="' + im.h + '" alt="' + esc(im.descricao) + '" style="display:block;width:100%;max-width:' + im.w + 'px;height:auto;border:0;border-radius:' + (box ? '12px 12px 0 12px' : '0') + ';">';
+      }
+      var h = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:6px 0 10px;">';
+      ns.forEach(function (n, i) {
+        if (i === 0) {
+          h += '<tr><td style="padding:0 0 26px;">' +
+            (n.imagem ? fotoN(n.imagem) + '<div style="height:16px;line-height:16px;font-size:0;">&nbsp;</div>' : '') +
+            '<p ' + TX + ' style="margin:0 0 6px;font-family:' + F + ';font-size:11px;font-weight:bold;letter-spacing:2px;line-height:14px;text-transform:uppercase;color:' + c.institucional + ';">Destaque</p>' +
+            '<h2 ' + TX + ' style="margin:0;font-family:' + F + ';font-size:24px;line-height:1.2;font-weight:bold;color:' + c.verdeEscuro + ';">' + esc(n.titulo) + '</h2>' +
+            (n.texto ? '<p ' + TX + ' style="margin:8px 0 0;font-family:' + F + ';font-size:16px;line-height:1.55;color:' + c.texto + ';">' + rico(n.texto) + '</p>' : '') +
+            linkN(n) + '</td></tr>';
+        } else {
+          h += '<tr><td style="border-top:1px solid ' + c.borda + ';padding:22px 0;">' +
+            '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
+            (n.imagem ? '<td class="col" width="' + n.imagem.w + '" valign="top" style="width:' + n.imagem.w + 'px;">' + fotoN(n.imagem) + '</td><td class="vao" width="20" style="width:20px;font-size:0;line-height:0;">&nbsp;</td>' : '') +
+            '<td class="col" valign="top">' +
+            '<h3 ' + TX + ' style="margin:0;font-family:' + F + ';font-size:19px;line-height:1.25;font-weight:bold;color:' + c.verdeEscuro + ';">' + esc(n.titulo) + '</h3>' +
+            (n.texto ? '<p ' + TX + ' style="margin:6px 0 0;font-family:' + F + ';font-size:15px;line-height:1.5;color:' + c.texto + ';">' + rico(n.texto) + '</p>' : '') +
+            linkN(n) + '</td></tr></table></td></tr>';
+        }
+      });
+      return h + '</table>';
+    }
+
     var barra = '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;"><tr><td ' + CX + ' width="28" height="4" bgcolor="' + c.citrico + '" style="width:28px;height:4px;line-height:4px;font-size:0;background:' + c.citrico + ';">&nbsp;</td></tr></table>';
     var chapeu = barra + '<p ' + TX + ' style="margin:0 0 10px;font-family:' + F + ';font-size:12px;font-weight:bold;letter-spacing:2px;line-height:16px;text-transform:uppercase;color:' + c.institucional + ';">' + esc(plano.tema.rotulo) + '</p>';
-    var h1 = '<h1 ' + TX + ' style="margin:0 0 ' + (dados.subtitulo ? '10px' : '20px') + ';font-family:' + F + ';font-size:' + plano.tituloPx + 'px;line-height:1.1;font-weight:bold;letter-spacing:-0.5px;color:' + c.verdeEscuro + ';">' + titulo + quadrado + '</h1>';
+    var h1 = '<h1 class="t1" ' + TX + ' style="margin:0 0 ' + (dados.subtitulo ? '10px' : '20px') + ';font-family:' + F + ';font-size:' + plano.tituloPx + 'px;line-height:1.1;font-weight:bold;letter-spacing:-0.5px;color:' + c.verdeEscuro + ';">' + titulo + quadrado + '</h1>';
     var subtitulo = dados.subtitulo ? '<p ' + TX + ' style="margin:0 0 22px;font-family:' + F + ';font-size:18px;font-style:italic;line-height:1.45;color:' + c.textoSuave + ';">' + rico(String(dados.subtitulo).replace(/==\(([a-z0-9-]+)\)([\s\S]+?)==/gi, '$2').replace(/==([\s\S]+?)==/g, '$1')) + '</p>' : '';
 
     /* ---------- Blocos na ordem escolhida (cabeçalho e rodapé fixos) ---------- */
@@ -182,6 +215,7 @@
       titulo: chapeu + h1 + subtitulo,
       data: blocoData(),
       texto: corpo,
+      noticias: blocoNoticias(),
       botao: ''
     };
     if (plano.botao) {
@@ -205,7 +239,7 @@
     }
     /* Fonte da marca: quem tem suporte (Apple Mail, iOS, exportações) usa Unimed Sans; o resto cai no Arial. */
     var fontes = (marca.tipografia.arquivos || []).length ? '<style>' + marca.tipografia.arquivos.map(function (a) {
-      return '@font-face{font-family:"' + a.familia + '";src:url(' + url(base, a.arquivo) + ') format("' + (/\.woff2$/.test(a.arquivo) ? 'woff2' : /\.woff$/.test(a.arquivo) ? 'woff' : 'opentype') + '");font-weight:' + a.peso + ';font-style:normal;}';
+      return '@font-face{font-family:"' + a.familia + '";src:url(' + url(base, a.arquivo) + ') format("' + (/\.woff2$/.test(a.arquivo) ? 'woff2' : /\.woff$/.test(a.arquivo) ? 'woff' : 'opentype') + '");font-weight:' + a.peso + ';font-style:' + (a.estilo || 'normal') + ';font-display:swap;}';
     }).join('') + '</style>\n' : '';
 
     var corFaixaTexto = plano.tema.textoFaixa;
@@ -219,8 +253,8 @@
       var p2 = plano.areaPartes;
       topo = '' +
         '<tr><td style="padding:26px 32px 20px;"><table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr>' +
-        '<td valign="middle"><img data-x="img" src="' + esc(url(base, logo.claro)) + '" width="' + larguraLogo + '" height="' + alturaLogo + '" alt="' + esc(logo.nome) + '" style="display:block;border:0;"></td>' +
-        (r27.mosaico ? '<td valign="middle" align="right" width="' + r27.mosaicoLargura + '"><img data-x="img" src="' + esc(url(base, r27.mosaico)) + '" width="' + r27.mosaicoLargura + '" height="' + r27.mosaicoAltura + '" alt="" style="display:block;border:0;"></td>' : '') +
+        '<td valign="middle"><img class="logo" data-x="img" src="' + esc(url(base, logo.claro)) + '" width="' + larguraLogo + '" height="' + alturaLogo + '" alt="' + esc(logo.nome) + '" style="display:block;border:0;"></td>' +
+        (r27.mosaico ? '<td class="mosaico" valign="middle" align="right" width="' + r27.mosaicoLargura + '"><img data-x="img" src="' + esc(url(base, r27.mosaico)) + '" width="' + r27.mosaicoLargura + '" height="' + r27.mosaicoAltura + '" alt="" style="display:block;border:0;"></td>' : '') +
         '</tr></table></td></tr>\n' +
         '<tr><td ' + CX + ' bgcolor="' + plano.tema.fundoInterno + '"' + (r27.grade ? ' background="' + esc(url(base, r27.grade)) + '"' : '') + ' style="background-color:' + plano.tema.fundoInterno + ';' + (r27.grade ? 'background-image:url(' + esc(url(base, r27.grade)) + ');background-repeat:repeat-y;' : '') + 'padding:22px 32px;">' +
         '<table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr>' +
@@ -237,8 +271,21 @@
         '<p ' + TX + ' style="margin:0;font-family:' + F + ';font-size:24px;font-weight:bold;line-height:1.15;letter-spacing:-0.3px;color:' + corFaixaTexto + ';">' + esc(plano.cabecalho) + '</p></td></tr>\n';
     }
 
-    return '' +
-'<!doctype html>\n<!-- Peça ' + esc(codigo) + ' · Gerador de Peças Unimed Uberlândia -->\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="x-unimed-codigo" content="' + esc(codigo) + '">\n' + fontes + '<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="x-apple-disable-message-reformatting">\n<title>' + esc(puro(dados.titulo)) + '</title>\n</head>\n' +
+    /* Responsivo: em telas até 620px o respiro lateral diminui, o título encolhe e as imagens empilham. */
+    var responsivo = '<style>\n' +
+      'body{-webkit-text-size-adjust:100%;}\n' +
+      '@media only screen and (max-width:620px){\n' +
+      '  .px{padding-left:20px!important;padding-right:20px!important;}\n' +
+      '  .t1{font-size:28px!important;line-height:1.15!important;}\n' +
+      '  .col{display:block!important;width:100%!important;max-width:100%!important;}\n' +
+      '  .col + .vao{display:block!important;width:100%!important;height:8px!important;}\n' +
+      '  .col img{width:100%!important;max-width:100%!important;height:auto!important;}\n' +
+      '  .logo{width:190px!important;height:auto!important;}\n' +
+      '  .mosaico{width:72px!important;}.mosaico img{width:72px!important;height:auto!important;}\n' +
+      '}\n</style>\n';
+
+    var saida = '' +
+'<!doctype html>\n<!-- Peça ' + esc(codigo) + ' · Gerador de Peças Unimed Uberlândia -->\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="x-unimed-codigo" content="' + esc(codigo) + '">\n' + fontes + '<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="x-apple-disable-message-reformatting">\n<title>' + esc(puro(dados.titulo)) + '</title>\n' + responsivo + '</head>\n' +
 '<body style="margin:0;padding:0;background:' + c.fundoPagina + ';">\n' +
 '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">' + preheader + '</div>\n' +
 '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + c.fundoPagina + '" style="background:' + c.fundoPagina + ';"><tr><td align="center" style="padding:24px 12px;">\n' +
@@ -255,9 +302,15 @@ topo +
 ans +
 '</table></td></tr>\n' +
 '</table>\n</td></tr></table>\n</body>\n</html>\n';
+    return saida.replace(/<td((?:(?!class=)[^>])*?)style="([^"]*?padding:[^";]*32px[^"]*)"/g, '<td class="px"$1style="$2"');
   }
 
-  var api = { render: render, esc: esc };
+  /* Cantos das fotos gravados no recorte (moldura box): o e-mail tem fundo branco atrás das fotos. */
+  function formaImagem(plano) {
+    return plano.flags && plano.flags.molduraBox ? { raio: [12, 12, 0, 12], fundo: '#ffffff' } : null;
+  }
+
+  var api = { render: render, esc: esc, formaImagem: formaImagem };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { raiz.UnimedModelos = raiz.UnimedModelos || {}; raiz.UnimedModelos['email-marketing'] = api; }
 })(typeof window !== 'undefined' ? window : this);

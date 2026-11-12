@@ -160,7 +160,7 @@
       avisos.push({ campo: 'data', msg: 'Horário e local só aparecem quando há uma data.' });
     }
 
-    var ling = dados._linguagem;
+    var ling = formato.revisarLinguagem === false ? null : dados._linguagem;
     if (ling && ling.maxItensLista) {
       dividirTexto(dados.texto, 0, false).forEach(function (b) {
         if (b.tipo === 'lista' && b.itens.length > ling.maxItensLista) avisos.push({ campo: 'texto', msg: 'Uma lista tem ' + b.itens.length + ' itens. Até ' + ling.maxItensLista + ' o texto não fica cansativo; separe ou resuma.' });
@@ -179,6 +179,19 @@
     imgs.forEach(function (im) {
       var ok = (dados._imagensAprovadas || []).some(function (i) { return i.id === im.id; });
       if (!ok) erros.push({ campo: 'imagens', msg: 'Use só imagens da biblioteca aprovada.' });
+    });
+
+    // Newsletter: notícias (título obrigatório; link precisa de texto e começa com https).
+    (formato.campos || []).forEach(function (c) {
+      if (c.tipo !== 'noticias') return;
+      var lista = (Array.isArray(dados[c.id]) ? dados[c.id] : []).filter(function (n) { return limpar(n.titulo) || limpar(n.texto) || limpar(n.link); });
+      if (c.obrigatorio && !lista.length) erros.push({ campo: c.id, msg: 'Inclua pelo menos uma notícia.' });
+      lista.forEach(function (n, i) {
+        var q = 'Notícia ' + (i + 1);
+        if (!limpar(n.titulo)) erros.push({ campo: c.id, msg: q + ': falta o título.' });
+        if (limpar(n.link) && !linkValido(n.link, val.linkPrecisaHttps)) erros.push({ campo: c.id, msg: q + ': o link precisa começar com https://' });
+        if (c.maxTexto && contar(n.texto) > c.maxTexto) erros.push({ campo: c.id, msg: q + ': o texto tem ' + contar(n.texto) + ' caracteres; o máximo é ' + c.maxTexto + '.' });
+      });
     });
 
     if (dados.ordem && formato.blocos) {
@@ -232,6 +245,20 @@
 
     var blocos = dividirTexto(dados.texto, arv.intertitulo.maxCaracteres, variante !== 'curto');
 
+    // Newsletter: notícias com imagem recortada no tamanho do destaque (1ª) ou da lista (demais).
+    var noticias = null;
+    if (Array.isArray(dados.noticias)) {
+      var tamN = arv.noticias || { destaque: { w: 536, h: 268 }, demais: { w: 176, h: 132 } };
+      noticias = dados.noticias.filter(function (n) { return limpar(n.titulo); }).slice(0, (arv.noticias && arv.noticias.maximo) || 4).map(function (n, i) {
+        var ap = n.imagem && (marca.imagensAprovadas || []).filter(function (a) { return a.id === n.imagem; })[0];
+        var t = i === 0 ? tamN.destaque : tamN.demais;
+        return {
+          titulo: limpar(n.titulo), texto: limpar(n.texto), link: limpar(n.link), linkTexto: limpar(n.linkTexto) || 'Leia mais',
+          imagem: ap ? { id: ap.id, arquivo: ap.arquivo, descricao: ap.descricao, w: t.w, h: t.h, x: n.x == null ? 0.5 : n.x, y: n.y == null ? 0.5 : n.y, zoom: n.zoom || 1 } : null
+        };
+      });
+    }
+
     // Nome da área em dois tons (linguagem 2027): última palavra em destaque.
     var palavras = cabecalho.split(/\s+/);
     var areaPartes = palavras.length > 1
@@ -263,6 +290,7 @@
         destaque: cores[tema.destaque], textoDestaque: cores[tema.textoDestaque] || '#ffffff'
       },
       imagens: imagens,
+      noticias: noticias,
       ordem: ordem,
       realces: formato.formatacao ? formato.formatacao.realces : [],
       data: data ? { info: data, hora: limpar(dados.hora), local: limpar(dados.local), grande: variante === 'curto' } : null,
@@ -285,7 +313,7 @@
         temBotao ? ('Tem botão → CTA laranja' + (variante === 'longo' && arv.botao.repetirNoLongo && blocos.length > 2 ? ', repetido no fim com a data.' : '.')) : 'Sem botão.',
         imagens ? (imagens.quantidade === 1 ? '1 imagem → horizontal 536 × 300.' : imagens.quantidade === 2 ? '2 imagens → lado a lado.' : '3 imagens → mosaico (uma grande e duas menores).') : (escolhidas.length && !arv.imagem[variante] ? 'No modelo curto a imagem não entra.' : 'Sem imagem.'),
         ordem.join(',') === padraoOrdem.join(',') ? 'Blocos na ordem padrão.' : 'Ordem dos blocos personalizada.'
-      ]
+      ].concat(noticias ? [noticias.length + (noticias.length === 1 ? ' notícia' : ' notícias') + ' → a primeira em destaque com foto grande, as outras em lista com foto pequena.'] : [])
     };
   }
 

@@ -4,9 +4,65 @@
     {
       "id": "email-marketing",
       "nome": "E-mail marketing",
-      "grupo": "Digital",
+      "grupo": "E-mail",
       "ativo": true,
       "palavras": "email e-mail newsletter comunicado disparo"
+    },
+    {
+      "id": "newsletter",
+      "nome": "Newsletter",
+      "grupo": "E-mail",
+      "ativo": true,
+      "palavras": "newsletter boletim informativo notícias e-mail"
+    },
+    {
+      "id": "peca-quadrada",
+      "nome": "Peça quadrada",
+      "grupo": "Imagem · 1080 × 1080",
+      "ativo": true,
+      "palavras": "quadrada feed instagram linkedin post redes sociais 1080"
+    },
+    {
+      "id": "banner-portal",
+      "nome": "Banner Portal Unimed",
+      "grupo": "Imagem · 1500 × 500",
+      "ativo": true,
+      "palavras": "banner portal site home"
+    },
+    {
+      "id": "notificacao-portal",
+      "nome": "Imagem Notificação Portal",
+      "grupo": "Imagem · 2400 × 600",
+      "ativo": true,
+      "palavras": "notificação portal aviso"
+    },
+    {
+      "id": "notificacao-app",
+      "nome": "Imagem Notificação App",
+      "grupo": "Imagem · 914 × 1600",
+      "ativo": true,
+      "palavras": "notificação app aplicativo push"
+    },
+    {
+      "id": "topo-email",
+      "nome": "Topo de e-mail",
+      "grupo": "Imagem · 800 × 300",
+      "ativo": true,
+      "palavras": "topo e-mail cabeçalho email banner"
+    },
+    {
+      "id": "painel-smu",
+      "nome": "Painel SMU",
+      "grupo": "Tela · 720 × 360",
+      "ativo": true,
+      "palavras": "painel smu tv tela"
+    },
+    {
+      "id": "cartilha-documento",
+      "nome": "Cartilha padrão Unimed",
+      "grupo": "Documentos",
+      "ativo": true,
+      "palavras": "cartilha documento política manual word"
     },
     {
       "id": "post-linkedin",
@@ -28,27 +84,6 @@
       "grupo": "Digital",
       "ativo": false,
       "palavras": "instagram story stories"
-    },
-    {
-      "id": "banner-site",
-      "nome": "Banner do site",
-      "grupo": "Digital",
-      "ativo": false,
-      "palavras": "site banner home"
-    },
-    {
-      "id": "popup-site",
-      "nome": "Pop-up do site",
-      "grupo": "Digital",
-      "ativo": false,
-      "palavras": "site popup pop-up"
-    },
-    {
-      "id": "push-app",
-      "nome": "Push do app",
-      "grupo": "Digital",
-      "ativo": false,
-      "palavras": "app push notificação"
     },
     {
       "id": "viva-engage",
@@ -77,14 +112,6 @@
       "grupo": "Gráfico",
       "ativo": false,
       "palavras": "flyer panfleto folheto impresso"
-    },
-    {
-      "id": "cartilha-documento",
-      "nome": "Cartilha / Documento",
-      "grupo": "Documentos",
-      "ativo": false,
-      "palavras": "cartilha documento política manual norma procedimento word",
-      "padrao": "Cartilha Padrão Unimed"
     }
   ]
 }

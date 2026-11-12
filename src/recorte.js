@@ -36,10 +36,23 @@
     return { dw: dw, dh: dh, ox: W / 2 - x * dw, oy: H / 2 - y * dh, x: x, y: y, zoom: zoom };
   }
 
-  async function cortar(src, w, h, aj, escala) {
+  /* Caminho com cantos individuais [sup.esq, sup.dir, inf.dir, inf.esq]. */
+  function caminho(ctx, W, H, r) {
+    var a = Math.min(r[0] || 0, W / 2, H / 2), b = Math.min(r[1] || 0, W / 2, H / 2), c = Math.min(r[2] || 0, W / 2, H / 2), d = Math.min(r[3] || 0, W / 2, H / 2);
+    ctx.beginPath();
+    ctx.moveTo(a, 0); ctx.lineTo(W - b, 0); if (b) ctx.arcTo(W, 0, W, b, b); else ctx.lineTo(W, 0);
+    ctx.lineTo(W, H - c); if (c) ctx.arcTo(W, H, W - c, H, c); else ctx.lineTo(W, H);
+    ctx.lineTo(d, H); if (d) ctx.arcTo(0, H, 0, H - d, d); else ctx.lineTo(0, H);
+    ctx.lineTo(0, a); if (a) ctx.arcTo(0, 0, a, 0, a); else ctx.lineTo(0, 0);
+    ctx.closePath();
+  }
+
+  /* forma (opcional): { raio: [se, sd, id, ie] em px do tamanho final, fundo: '#cor' do que fica atrás }.
+     Os cantos ficam gravados na própria imagem: saem iguais no e-mail, no PDF e no PowerPoint. */
+  async function cortar(src, w, h, aj, escala, forma) {
     escala = escala || 2;
     aj = aj || {};
-    var chave = [src, w, h, (aj.x || 0.5).toFixed(3), (aj.y || 0.5).toFixed(3), (aj.zoom || 1).toFixed(2), escala].join('|');
+    var chave = [src, w, h, (aj.x || 0.5).toFixed(3), (aj.y || 0.5).toFixed(3), (aj.zoom || 1).toFixed(2), escala, forma ? JSON.stringify(forma) : ''].join('|');
     if (cacheCorte[chave]) return cacheCorte[chave];
     var im = await carregar(src);
     var W = w * escala, H = h * escala;
@@ -49,6 +62,14 @@
     var ctx = tela.getContext('2d');
     ctx.imageSmoothingQuality = 'high';
     ctx.drawImage(im, g.ox, g.oy, g.dw, g.dh);
+    if (forma && forma.raio && forma.raio.some(function (r) { return r > 0; })) {
+      var r = forma.raio.map(function (v) { return (v || 0) * escala; });
+      ctx.globalCompositeOperation = 'destination-in';
+      caminho(ctx, W, H, r); ctx.fill();
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.fillStyle = forma.fundo || '#ffffff'; ctx.fillRect(0, 0, W, H);
+      ctx.globalCompositeOperation = 'source-over';
+    }
     var dado = tela.toDataURL('image/jpeg', 0.86);
     cacheCorte[chave] = dado;
     return dado;

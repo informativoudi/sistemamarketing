@@ -1,8 +1,12 @@
 /* Interface do gerador e do painel · Unimed Uberlândia */
-@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Book.otf") format("opentype"); font-weight: 400; font-display: swap; }
-@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Regular.otf") format("opentype"); font-weight: 500; font-display: swap; }
-@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Bold.otf") format("opentype"); font-weight: 700; font-display: swap; }
-@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Black.otf") format("opentype"); font-weight: 900; font-display: swap; }
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Book.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-RegularItalic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-SemiBold.woff2") format("woff2"); font-weight: 600; font-style: normal; font-display: swap; }
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; font-display: swap; }
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-ExtraBold.woff2") format("woff2"); font-weight: 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Black.woff2") format("woff2"); font-weight: 900; font-style: normal; font-display: swap; }
 
 :root {
   --petroleo: #004e4c; --institucional: #00995d; --escuro: #004e4c; --citrico: #b1d34b;
@@ -302,10 +306,9 @@ details.secao > .campos { padding: 4px 16px 18px; border-top: 1px solid var(--bo
 @media (max-width: 560px) { details.secao > summary { grid-template-columns: minmax(0, 1fr) auto; } .secao-resumo { grid-column: 1; grid-row: 2; text-align: left; } details.secao > summary::after { grid-column: 2; grid-row: 1 / span 2; } }
 
 /* Barra de formatação só no campo em uso */
-.campo.com-formatacao .fmt-barra { display: none; }
-.campo.com-formatacao:focus-within .fmt-barra { display: flex; }
-.campo.com-formatacao .fmt-barra + input, .campo.com-formatacao .fmt-barra + textarea { border-top-left-radius: 10px; border-top-right-radius: 10px; }
-.campo.com-formatacao:focus-within .fmt-barra + input, .campo.com-formatacao:focus-within .fmt-barra + textarea { border-top-left-radius: 0; border-top-right-radius: 0; }
+/* A barra ocupa sempre o mesmo espaço (nada pula ao clicar fora); fica apagada quando o campo não está em uso. */
+.campo.com-formatacao .fmt-barra { opacity: .45; transition: opacity .15s; }
+.campo.com-formatacao:focus-within .fmt-barra, .campo.com-formatacao .fmt-barra:hover { opacity: 1; }
 
 /* Contador: passou do tamanho ideal */
 .campo label .cont.acima-ideal { color: var(--aviso-texto); font-weight: 700; }
@@ -369,3 +372,46 @@ details.secao > .campos { padding: 4px 16px 18px; border-top: 1px solid var(--bo
 .versao-de { display: block; font-weight: 500; font-size: 12px; color: var(--suave); }
 .fmt-box { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
 .fmt-box-ico { width: 14px; height: 10px; background: var(--apoio-verde, #cde3bb); border: 1.5px solid var(--petroleo); border-radius: 4px 4px 0 4px; }
+
+/* Newsletter · notícias */
+.noticias { display: grid; gap: 12px; }
+.noticia { position: relative; border: 1.5px solid var(--borda); border-radius: 14px 14px 0 14px; padding: 12px 16px 16px; margin: 0; background: #fff; }
+.noticia legend { padding: 0 6px; font-size: 14px; color: var(--petroleo); }
+.noticia-acoes { position: absolute; top: 10px; right: 12px; display: flex; gap: 4px; }
+.noticia .campos { margin-top: 10px; }
+.noticia-foto { margin-top: 8px; max-width: 360px; }
+.btn-mais { margin-top: 10px; align-self: flex-start; padding: 10px 18px; min-height: 42px; font-size: 14px; }
+.campo input[type=file] { padding: 9px 10px; background: var(--fundo); }
+
+/* Assistente da marca (IA) */
+.assistente { border: 2px solid var(--institucional); }
+.assistente-topo { display: flex; align-items: center; gap: 10px; }
+.assistente-topo h2 { margin: 0; }
+.selo.ia { background: var(--petroleo); color: #fff; }
+.assistente-exemplos { margin: 4px 0 12px; }
+.assistente-exemplos .btn-mini { font-weight: 500; }
+.assistente-form textarea { width: 100%; border: 1.5px solid var(--borda-forte); border-radius: 12px 12px 0 12px; padding: 12px; min-height: 84px; resize: vertical; }
+.assistente-form textarea:focus { border-color: var(--institucional); outline: none; box-shadow: 0 0 0 3px rgba(0,153,93,.16); }
+.assistente-escopo { margin-top: 10px; max-width: 420px; }
+.assistente-escopo select { border: 1.5px solid var(--borda-forte); border-radius: 10px; padding: 9px 10px; background: #fff; }
+.assistente-conversa { display: grid; gap: 10px; margin-bottom: 12px; }
+.msg-pessoa { justify-self: end; max-width: 80%; background: var(--petroleo); color: #fff; padding: 10px 14px; border-radius: 14px 14px 0 14px; }
+.msg-ia { background: var(--fundo); padding: 12px 14px; border-radius: 14px 14px 14px 0; }
+.msg-ia p { margin: 0 0 8px; }
+.msg-ia.carregando { color: var(--suave); font-style: italic; }
+.msg-ia.erro { background: var(--erro-fundo); color: var(--erro); }
+.msg-ia.descartada { opacity: .5; }
+.msg-ia .limites { margin: 0 0 8px; padding-left: 18px; font-size: 13px; color: var(--aviso-texto); }
+.mudanca { background: #fff; border: 1px solid var(--borda); border-radius: 10px; margin: 8px 0; }
+.mudanca summary { cursor: pointer; padding: 8px 12px; font-size: 13px; }
+.dif { margin: 0; max-height: 360px; overflow: auto; padding: 10px 12px; font-size: 12px; line-height: 1.45; background: #fbfaf8; border-top: 1px solid var(--borda); white-space: pre; }
+.dif-linha { display: block; min-height: 1.45em; }
+.dif-mais { background: #e3f3e9; color: #0b5a34; }
+.dif-menos { background: #fbe4e2; color: #8a1f17; }
+.dif-pulo { color: var(--suave); }
+.faixa-teste { margin: 0 0 12px; text-align: left; }
+.campanha-radar .papeis { margin-top: 8px; }
+.assistente, .assistente-conversa, .assistente-conversa > * { min-width: 0; }
+.msg-ia { overflow: hidden; }
+.msg-pessoa { overflow-wrap: anywhere; }
+.campanha-radar .papel:last-child { grid-template-columns: 1fr; }

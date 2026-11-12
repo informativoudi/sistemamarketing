@@ -44,9 +44,10 @@
     } catch (e) { return { github: '', nome: '', foto: '' }; }
   }
 
-  function guardarSessao(acesso, renovar, expiraEm) {
+  function guardarSessao(acesso, renovar, expiraEm, tokenGithub) {
     var info = lerToken(acesso);
-    gravar({ token: acesso, renovar: renovar, expira: Date.now() + (Number(expiraEm) || 3600) * 1000, github: info.github, nome: info.nome, foto: info.foto });
+    var gh = tokenGithub || (memoria && memoria.tokenGithub) || null; // permissão do GitHub para publicar (não expira)
+    gravar({ token: acesso, renovar: renovar, expira: Date.now() + (Number(expiraEm) || 3600) * 1000, github: info.github, nome: info.nome, foto: info.foto, tokenGithub: gh });
   }
 
   async function token() {
@@ -64,7 +65,9 @@
 
   function entrarComGitHub() {
     var volta = location.href.split('#')[0].split('?')[0];
-    location.href = base() + '/auth/v1/authorize?provider=github&redirect_to=' + encodeURIComponent(volta);
+    // Pede ao GitHub a permissão de gravar no repositório público: é ela que publica as mudanças aprovadas no assistente.
+    var escopo = (sistema && sistema.repositorio && sistema.repositorio.escopoGithub) || 'public_repo';
+    location.href = base() + '/auth/v1/authorize?provider=github&scopes=' + encodeURIComponent(escopo) + '&redirect_to=' + encodeURIComponent(volta);
   }
 
   async function sair() {
@@ -95,7 +98,7 @@
       if (/access_denied/i.test(p.get('error'))) return { erro: 'O login foi cancelado no GitHub.' };
       return { erro: d || 'Não foi possível entrar com o GitHub.' };
     }
-    guardarSessao(p.get('access_token'), p.get('refresh_token'), p.get('expires_in'));
+    guardarSessao(p.get('access_token'), p.get('refresh_token'), p.get('expires_in'), p.get('provider_token'));
     return { ok: true };
   }
 
@@ -105,7 +108,7 @@
     Object.keys(attrs || {}).forEach(function (k) {
       if (k === 'texto') n.textContent = attrs[k];
       else if (k.indexOf('on') === 0) n.addEventListener(k.slice(2), attrs[k]);
-      else n.setAttribute(k, attrs[k]);
+      else if (attrs[k] !== null && attrs[k] !== undefined && attrs[k] !== false) n.setAttribute(k, attrs[k] === true ? '' : attrs[k]);
     });
     (filhos || []).forEach(function (f) { if (f) n.appendChild(typeof f === 'string' ? document.createTextNode(f) : f); });
     return n;
@@ -201,5 +204,11 @@
     return r.status === 204 ? null : r.json().catch(function () { return null; });
   }
 
-  raiz.UnimedAcesso = { proteger: proteger, banco: banco, token: token, carregarSistema: carregarSistema, bancoLigado: bancoLigado, sair: sair, el: el };
+  function tokenGithub() { return (memoria && memoria.tokenGithub) || null; }
+  function sistemaAtual() { return sistema; }
+  function urlBanco() { return base(); }
+  function chaveBanco() { return cfg().supabaseChaveAnonima; }
+
+  raiz.UnimedAcesso = { proteger: proteger, banco: banco, token: token, carregarSistema: carregarSistema, bancoLigado: bancoLigado, sair: sair, el: el,
+    tokenGithub: tokenGithub, sistema: sistemaAtual, urlBanco: urlBanco, chaveBanco: chaveBanco, entrarComGitHub: entrarComGitHub, ehLocal: ehLocal };
 })(window);

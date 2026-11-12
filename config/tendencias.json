@@ -1,5 +1,5 @@
 {
-  "_sobre": "Radar de Tendências. Para ligar ou desligar uma tendência, troque o status: \"ativa\", \"teste\" ou \"arquivada\". Só as ativas chegam às peças.",
+  "_sobre": "Radar de Tendências. Status: \"ativa\", \"teste\" ou \"arquivada\". Só as ativas chegam às peças. O bloco \"campanha\" define o visual das campanhas internas e externas; a tendência principal é a do ciclo atual.",
   "ciclo": "2027",
   "conceito": "Humano por natureza",
   "tendencias": [
@@ -7,7 +7,7 @@
       "id": "prova-de-processo",
       "nome": "Prova de processo",
       "status": "ativa",
-      "comoAplica": "Rodapé técnico com o código da peça e as coordenadas de Uberlândia."
+      "comoAplica": "Nas campanhas: linha técnica discreta com o código da peça e as coordenadas de Uberlândia."
     },
     {
       "id": "quadrado-laranja",
@@ -25,13 +25,13 @@
       "id": "titulo-contraste",
       "nome": "Título em contraste",
       "status": "ativa",
-      "comoAplica": "Título em peso Black, caixa alta, entrelinha apertada."
+      "comoAplica": "Nas campanhas: título em peso Black, caixa alta, entrelinha apertada. E-mail e comunicados seguem caixa alta e baixa."
     },
     {
       "id": "textura-papel",
       "nome": "Textura real",
       "status": "ativa",
-      "comoAplica": "Somente em peças gráficas e campanhas. Não se aplica a e-mail."
+      "comoAplica": "Grão de papel bem leve por cima das campanhas (internas e externas). Não se aplica a e-mail."
     },
     {
       "id": "bento-dark-neon",
@@ -39,5 +39,12 @@
       "status": "teste",
       "comoAplica": "Ainda em teste: não aparece nas peças geradas."
     }
-  ]
+  ],
+  "principal": "humano-por-natureza-2027",
+  "campanha": {
+    "_regra": "Visual das campanhas internas e externas (peças de imagem). Usa as tendências ativas abaixo: título em contraste, ponto laranja, moldura box, textura real e prova de processo.",
+    "fundo": "verdeEscuro",
+    "destaque": "citrico",
+    "mote": "Presença que transforma"
+  }
 }

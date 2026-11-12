@@ -54,7 +54,7 @@
     "_regra": "Família Unimed (Sans, Slab, Serif, Brush). Sans para títulos, legendas e meios digitais; Slab ou Serif para textos extensos; Brush só em selos e chamadas curtas. Títulos em caixa alta e baixa (não só caixa alta). Alinhamento à esquerda. Evitar muitas cores e estilos ao mesmo tempo (MS.138 p.109-114).",
     "familia": "'Unimed Sans', Arial, Helvetica, sans-serif",
     "familiaSlab": "'Unimed Slab', Georgia, 'Times New Roman', serif",
-    "familiaExportacao": "Arial",
+    "familiaExportacao": "Unimed Sans",
     "hierarquia": {
       "chapeu": "Sans, caixa alta, semibold",
       "titulo": "Sans, caixa alta e baixa, bold",
@@ -62,8 +62,58 @@
       "tituloSecundario": "Sans bold, 60% do título principal",
       "texto": "Sans (digital) ou Slab/Serif, book"
     },
-    "arquivos": [],
-    "_arquivos": "Arquivos da fonte Unimed Sans em assets/fonts/ (ex.: {\"familia\":\"Unimed Sans\",\"arquivo\":\"assets/fonts/UnimedSans-Bold.woff2\",\"peso\":700}). Com a lista preenchida, a prévia, a imagem, o PDF e o PowerPoint usam a fonte da marca; o e-mail usa onde o leitor permite e cai no Arial no resto."
+    "arquivos": [
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Book.woff2",
+        "peso": 300,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Regular.woff2",
+        "peso": 400,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-RegularItalic.woff2",
+        "peso": 400,
+        "estilo": "italic"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-SemiBold.woff2",
+        "peso": 600,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Bold.woff2",
+        "peso": 700,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-BoldItalic.woff2",
+        "peso": 700,
+        "estilo": "italic"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-ExtraBold.woff2",
+        "peso": 800,
+        "estilo": "normal"
+      },
+      {
+        "familia": "Unimed Sans",
+        "arquivo": "assets/fonts/UnimedSans-Black.woff2",
+        "peso": 900,
+        "estilo": "normal"
+      }
+    ],
+    "_arquivos": "Arquivos da fonte Unimed Sans em assets/fonts/ (ex.: {\"familia\":\"Unimed Sans\",\"arquivo\":\"assets/fonts/UnimedSans-Bold.woff2\",\"peso\":700}). Com a lista preenchida, a prévia, a imagem, o PDF e o PowerPoint usam a fonte da marca; o e-mail usa onde o leitor permite e cai no Arial no resto.",
+    "_exportacao": "PowerPoint e Word usam 'Unimed Sans' (instale a fonte no computador para editar com ela; sem a fonte o Office troca por uma parecida)."
   },
   "forma": {
     "_regra": "O box Unimed tem três cantos arredondados e o inferior direito reto (MS.139 p.6).",
@@ -83,7 +133,7 @@
     "externo": {
       "nome": "Unimed Uberlândia",
       "claro": "assets/logos/unimed-box.png",
-      "escuro": "assets/logos/unimed-box.png",
+      "escuro": "assets/logos/unimed-box-branco.png",
       "svg": "assets/logos/unimed-box.svg",
       "proporcao": 2.715,
       "larguraEmail": 130
@@ -238,6 +288,7 @@
     "mosaico": "assets/mosaico-2027.png",
     "mosaicoLargura": 120,
     "mosaicoAltura": 30,
-    "grade": "assets/grade-12.png"
+    "grade": "assets/grade-12.png",
+    "textura": "assets/textura-papel.png"
   }
 }

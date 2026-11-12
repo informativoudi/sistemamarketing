@@ -67,15 +67,48 @@ As regras seguem os manuais oficiais: Aplicação da Marca Unimed (MS.139), Ling
 | Destaque | Verde cítrico | Data, números, barra curta acima do chapéu, detalhe dos ícones |
 | Fundo | Cores de apoio | Bloco da área (muda com o tema) e caixa da data |
 
-## Cartilhas e documentos
+## Formatos e downloads
 
-Seguem o padrão **Cartilha Padrão Unimed**, não o visual 2027 das peças internas. As regras já estão em `config/formatos/cartilha-documento.json` (cabeçalho em todas as páginas, capa, seções, sem alterar o texto, entrega em Word). O formato aparece como "em breve" até ser liberado.
+| Formato | Tamanho | Margem | Downloads |
+|---|---|---|---|
+| E-mail marketing | 600 px de largura, responsivo | — | HTML, PNG, PDF, PowerPoint |
+| Newsletter | 600 px de largura, responsivo | — | HTML, PNG, PDF, PowerPoint |
+| Peça quadrada | 1080 × 1080 px | 100 px | PNG, JPG, PDF, PowerPoint |
+| Banner Portal Unimed | 1500 × 500 px | 50 px | PNG, JPG, PDF, PowerPoint |
+| Imagem Notificação Portal | 2400 × 600 px | 80 px | JPG, PNG |
+| Imagem Notificação App | 914 × 1600 px | 80 px | JPG, PNG |
+| Topo de e-mail | 800 × 300 px | 40 px | PNG, JPG |
+| Painel SMU | 720 × 360 px, 150 dpi | 36 px | PowerPoint, PDF |
+| Cartilha padrão Unimed | A4 | 16 mm | Word, PDF |
 
-## Baixar a peça
+- **HTML só no e-mail e na newsletter**: é o que vai para a ferramenta de disparo. O HTML é responsivo: em telas até 620 px o respiro diminui, o título encolhe e as imagens empilham.
+- **Peças de tamanho fixo** usam um só desenho (`src/modelos/peca-fixa.js`) que se adapta à proporção: horizontal (texto à esquerda, foto sangrando à direita), quadrado e vertical (foto em cima). Tudo fica dentro da margem de segurança, e o texto encolhe sozinho se passar do espaço. A imagem sai no tamanho exato em pixels.
+- **Painel SMU**: PowerPoint e PDF no tamanho físico de 150 dpi (4,8 × 2,4 polegadas).
+- **Newsletter**: abertura + até 4 notícias; a primeira em destaque com foto grande, as outras em lista com foto pequena.
+- **Cartilha padrão Unimed**: envie o Word original (ou cole o texto) e o conteúdo entra sem nenhuma mudança; o sistema só aplica o padrão: capa, tabela de cabeçalho em todas as páginas, seções numeradas no quadro verde, listas e conceitos em caixa areia. O Word é nativo (a tabela fica no cabeçalho da página do Word).
+- Os downloads de cada formato ficam em `"exportar"` no arquivo do formato.
 
-Depois de gerar, a peça sai em **HTML** (para disparo), **Imagem (PNG)**, **PDF** (botão continua clicável) e **PowerPoint** com os textos editáveis, nas mesmas posições do e-mail. As ferramentas de exportação ficam em `src/vendor/` (html2canvas, jsPDF e PptxGenJS, todas com licença MIT).
+As ferramentas de exportação ficam em `src/vendor/` (html2canvas, jsPDF e PptxGenJS, todas com licença MIT).
 
-Os números ficam em `config/formatos/email-marketing.json`. Mude ali e todas as peças novas seguem.
+## Campanhas (Tendências 2027)
+
+Nas peças de imagem, o campo "Para quem vai" tem quatro opções: Interno, Externo, **Campanha interna** e **Campanha externa**. O e-mail marketing e a newsletter seguem só Interno e Externo.
+
+- As campanhas usam o visual do ciclo principal do Radar (2027, "Humano por natureza"):
+  - foto sangrando com o canto box;
+  - fundo verde petróleo, logo branco e faixa de formas;
+  - título em contraste (Black, caixa alta) com o ponto laranja;
+  - textura real e prova de processo.
+- Cada tendência só entra se estiver **ativa** em `config/tendencias.json`. Cores e mote ficam no bloco `campanha`.
+- A campanha interna usa a marca do Grupo; a campanha externa usa Unimed + ANS.
+
+## Fotos com cantos fixos
+
+Os cantos arredondados (moldura box) ficam **gravados na própria foto** no momento do recorte, com a cor do fundo atrás. Por isso a foto sai igual no e-mail (inclusive no Outlook), no PNG, no PDF e no PowerPoint.
+
+## Assistente com IA (Núcleo e Radar)
+
+Só na área restrita. Você pede em palavras, revisa o antes e depois, testa na prévia e publica no GitHub. Configuração em `docs/assistente-ia.md`.
 
 ## Edição rápida
 
@@ -87,7 +120,7 @@ O realce vira uma forma arredondada atrás do texto (o marca-texto do PowerPoint
 
 ## Fonte Unimed Sans
 
-Coloque os arquivos em `assets/fonts/` e liste em `config/marca.json` → `tipografia.arquivos`. A prévia, a imagem, o PDF e o PowerPoint passam a usar a fonte da marca; no e-mail, ela aparece onde o leitor permite (Apple Mail, iOS) e cai no Arial no resto.
+Os arquivos ficam em `assets/fonts/` (WOFF2, pesos Book, Regular, SemiBold, Bold, ExtraBold e Black, com itálicos) e estão listados em `config/marca.json` → `tipografia.arquivos`. O site, a prévia, a imagem e o PDF usam a fonte da marca. No e-mail ela aparece onde o leitor permite (Apple Mail, iOS) e cai no Arial no resto. **PowerPoint e Word** usam "Unimed Sans": para editar com a fonte certa, ela precisa estar instalada no computador.
 
 ## Rastreabilidade
 

@@ -8,5 +8,15 @@
     "supabaseChaveAnonima": "sb_publishable_-44vdnwi8juxsv7_OodD0w_n13MCex1",
     "tabela": "pedidos",
     "bucketImagens": "pecas"
+  },
+  "repositorio": {
+    "dono": "informativoudi",
+    "nome": "sistemamarketing",
+    "ramo": "main",
+    "escopoGithub": "public_repo"
+  },
+  "assistente": {
+    "_sobre": "Inteligência artificial só no Núcleo da Marca e no Radar. A chave da IA fica guardada no Supabase (função \"assistente\"), nunca aqui.",
+    "funcao": "assistente"
   }
 }
