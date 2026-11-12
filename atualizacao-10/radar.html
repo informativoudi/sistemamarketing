@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Radar de Tendências · Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Área restrita" id="menu-restrito"></nav>
+</header>
+
+<main class="casca">
+  <section id="portao" class="portao" hidden></section>
+  <div id="conteudo-restrito" hidden>
+    <section class="busca compacta" style="padding-top:8px">
+      <h1>Radar <span>de Tendências</span></h1>
+    </section>
+    <p id="origem" class="alerta aviso" hidden></p>
+    <p class="intro">O que está valendo neste ciclo. Só as tendências <b>ativas</b> chegam às peças; as <b>em teste</b> ficam guardadas até a decisão.</p>
+    <div id="radar"></div>
+  </div>
+</main>
+
+<script src="src/acesso.js"></script>
+<script src="src/assistente.js"></script>
+<script src="src/radar.js"></script>
+</body>
+</html>

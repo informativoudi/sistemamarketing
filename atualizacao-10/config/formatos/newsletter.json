@@ -1,0 +1,358 @@
+{
+  "_sobre": "Newsletter: e-mail com abertura e até 4 notícias. Usa o mesmo desenho, as mesmas regras de marca e o mesmo fechamento do e-mail marketing.",
+  "id": "newsletter",
+  "nome": "Newsletter",
+  "sigla": "NL",
+  "modelo": "email-marketing",
+  "largura": 600,
+  "exportar": [
+    "html",
+    "png",
+    "pdf",
+    "pptx"
+  ],
+  "previaPede": [
+    "titulo"
+  ],
+  "campos": [
+    {
+      "id": "publico",
+      "rotulo": "Para quem vai",
+      "tipo": "escolha",
+      "obrigatorio": true,
+      "opcoes": [
+        "Interno",
+        "Externo"
+      ],
+      "descricoes": {
+        "Interno": "Colaboradores · marca do Grupo",
+        "Externo": "Clientes e cooperados · marca Unimed + ANS (evento: marca do Grupo)"
+      }
+    },
+    {
+      "id": "tema",
+      "rotulo": "Tema",
+      "tipo": "escolha",
+      "obrigatorio": true,
+      "opcoes": [
+        "Institucional",
+        "Saúde",
+        "Evento",
+        "Aviso"
+      ]
+    },
+    {
+      "id": "titulo",
+      "rotulo": "Título da edição",
+      "tipo": "texto",
+      "obrigatorio": true,
+      "max": 90,
+      "ajuda": "Ex.: \"Novidades de abril\". Curto e direto.",
+      "ideal": 60
+    },
+    {
+      "id": "subtitulo",
+      "rotulo": "Subtítulo",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 140,
+      "formatacao": "simples"
+    },
+    {
+      "id": "texto",
+      "rotulo": "Abertura",
+      "tipo": "texto-longo",
+      "obrigatorio": false,
+      "max": 600,
+      "ajuda": "Um parágrafo curto de boas-vindas (opcional). Aceita negrito, itálico, realce e box.",
+      "formatacao": true
+    },
+    {
+      "id": "noticias",
+      "rotulo": "Notícias",
+      "tipo": "noticias",
+      "obrigatorio": true,
+      "limite": 4,
+      "maxTexto": 280,
+      "ajuda": "Até 4. A primeira entra em destaque, com foto grande; as outras em lista, com foto pequena."
+    },
+    {
+      "id": "cabecalho",
+      "rotulo": "Nome no cabeçalho",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 40,
+      "ajuda": "Em branco, entra o nome da sua área (ex.: Gestão de Pessoas). Use para um programa ou comitê."
+    }
+  ],
+  "secoes": [
+    {
+      "id": "essencial",
+      "nome": "Conteúdo",
+      "fixa": true,
+      "campos": [
+        "publico",
+        "tema",
+        "titulo",
+        "subtitulo",
+        "texto"
+      ]
+    },
+    {
+      "id": "noticias",
+      "nome": "Notícias",
+      "fixa": true,
+      "campos": [
+        "noticias"
+      ]
+    },
+    {
+      "id": "visual",
+      "nome": "Cabeçalho e ordem dos blocos",
+      "campos": [
+        "cabecalho",
+        "ordem"
+      ],
+      "vazio": "Nome da sua área e ordem padrão"
+    }
+  ],
+  "publicos": {
+    "_regra": "Manual de Marca do Grupo (p.5-8): a marca do Grupo Unimed Uberlândia vale para conteúdos internos, eventos internos e externos e publicação de vagas. Comunicação externa (clientes, planos, campanhas) usa só a marca Unimed Uberlândia, com o registro ANS.",
+    "Interno": {
+      "logo": "interno",
+      "assinatura": "Grupo Unimed Uberlândia",
+      "ans": false,
+      "layout": "interno-2027",
+      "selo": "Comunicado interno"
+    },
+    "Externo": {
+      "logo": "externo",
+      "assinatura": "Unimed Uberlândia",
+      "ans": true,
+      "porTema": {
+        "Evento": {
+          "logo": "interno",
+          "assinatura": "Grupo Unimed Uberlândia",
+          "ans": false,
+          "motivo": "evento externo usa a marca do Grupo (Manual do Grupo, p.5)",
+          "layout": "interno-2027",
+          "selo": "Evento"
+        }
+      },
+      "layout": "externo"
+    }
+  },
+  "temas": {
+    "_regra": "Papéis fixos de cor: botão sempre laranja, data sempre cítrico. No externo, a faixa do cabeçalho leva a cor do tema (logo nunca sobre o laranja). No interno 2027, o tema muda só o fundo suave do bloco da área (cores de apoio).",
+    "Institucional": {
+      "faixa": "verdeEscuro",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioAreia",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Institucional"
+    },
+    "Saúde": {
+      "faixa": "institucional",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioVerde",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Saúde"
+    },
+    "Evento": {
+      "faixa": "citrico",
+      "textoFaixa": "verdeEscuro",
+      "fundoInterno": "apoioAzul",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Evento"
+    },
+    "Aviso": {
+      "faixa": "laranja",
+      "textoFaixa": "branco",
+      "fundoInterno": "apoioAmarelo",
+      "destaque": "citrico",
+      "textoDestaque": "verdeEscuro",
+      "rotulo": "Aviso"
+    }
+  },
+  "botao": {
+    "cor": "laranja",
+    "texto": "branco"
+  },
+  "formatacao": {
+    "_regra": "Negrito, itálico e realce arredondado no texto (o título não tem formatação; o subtítulo só negrito e itálico). O realce usa as cores de apoio e o cítrico, sempre com texto verde petróleo. Um parágrafo inteiro em destaque vira um box com a forma da marca. Laranja fica reservado para o botão.",
+    "marcas": {
+      "negrito": "**texto**",
+      "italico": "*texto*",
+      "realce": "==(cor)texto==",
+      "box": ">>(cor) parágrafo inteiro"
+    },
+    "realces": [
+      {
+        "id": "citrico",
+        "nome": "Cítrico",
+        "cor": "citrico",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "amarelo",
+        "nome": "Amarelo",
+        "cor": "apoioAmarelo",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "verde",
+        "nome": "Verde claro",
+        "cor": "apoioVerde",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "azul",
+        "nome": "Azul claro",
+        "cor": "apoioAzul",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "rosa",
+        "nome": "Rosa",
+        "cor": "apoioRosa",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "areia",
+        "nome": "Areia",
+        "cor": "apoioAreia",
+        "texto": "verdeEscuro"
+      }
+    ]
+  },
+  "validacoes": {
+    "tituloAvisoAcima": 60,
+    "maxParagrafos": 12,
+    "linkPrecisaHttps": true
+  },
+  "arvore": {
+    "variante": {
+      "_regra": "Conta os caracteres do texto (sem espaços extras).",
+      "curto": {
+        "ate": 300
+      },
+      "medio": {
+        "ate": 900
+      },
+      "longo": {
+        "acima": 900
+      }
+    },
+    "titulo": {
+      "_regra": "Tamanho da fonte do título em px, por quantidade de caracteres.",
+      "degraus": [
+        {
+          "ate": 40,
+          "curto": 40,
+          "medio": 34,
+          "longo": 30
+        },
+        {
+          "ate": 60,
+          "curto": 34,
+          "medio": 30,
+          "longo": 28
+        },
+        {
+          "ate": 90,
+          "curto": 28,
+          "medio": 26,
+          "longo": 24
+        }
+      ]
+    },
+    "intertitulo": {
+      "_regra": "Linha sozinha, com até 60 caracteres e sem ponto final, seguida de outro parágrafo, vira intertítulo (nos modelos médio e longo). Fica com 60% do tamanho do título (MS.138 p.111).",
+      "maxCaracteres": 60
+    },
+    "imagem": {
+      "_regra": "No curto a imagem não entra (o título é o destaque). No médio e longo entram até 3 imagens, sempre com tamanho fixo: a foto é recortada para caber no quadro, mesmo se for vertical.",
+      "curto": false,
+      "medio": true,
+      "longo": true,
+      "maximo": 3,
+      "layouts": {
+        "_regra": "Largura útil de 536 px. 1 imagem: horizontal 16:9. 2 imagens: lado a lado. 3 imagens: uma grande e duas menores empilhadas (mosaico), com 8 px de respiro.",
+        "1": [
+          {
+            "w": 536,
+            "h": 300
+          }
+        ],
+        "2": [
+          {
+            "w": 264,
+            "h": 220
+          },
+          {
+            "w": 264,
+            "h": 220
+          }
+        ],
+        "3": [
+          {
+            "w": 352,
+            "h": 300
+          },
+          {
+            "w": 176,
+            "h": 146
+          },
+          {
+            "w": 176,
+            "h": 146
+          }
+        ]
+      },
+      "respiro": 8
+    },
+    "data": {
+      "_regra": "Se houver data, entra o bloco padrão com a data em destaque (cítrico ou laranja, MS.138 p.168-171)."
+    },
+    "botao": {
+      "_regra": "Botão exige texto e link juntos. No longo, o botão aparece depois do primeiro parágrafo e se repete no fim junto com a data, reforçando o período (MS.138 p.171).",
+      "repetirNoLongo": false,
+      "_repeticao": "Desligado a pedido: cada bloco aparece uma vez só, na posição escolhida em 'Ordem dos blocos'."
+    },
+    "lista": {
+      "_regra": "Linhas começando com \"- \" viram lista. Até 5 itens para o texto não ficar cansativo (MS.138 p.171)."
+    },
+    "noticias": {
+      "maximo": 4,
+      "destaque": {
+        "w": 536,
+        "h": 268
+      },
+      "demais": {
+        "w": 176,
+        "h": 132
+      }
+    }
+  },
+  "blocos": {
+    "_regra": "Cabeçalho e fechamento fixos. Título, abertura e notícias podem mudar de ordem.",
+    "padrao": [
+      "titulo",
+      "texto",
+      "noticias"
+    ],
+    "nomes": {
+      "titulo": "Título e subtítulo",
+      "texto": "Abertura",
+      "noticias": "Notícias"
+    },
+    "preenchidoPor": {
+      "titulo": "titulo",
+      "texto": "texto",
+      "noticias": "noticias"
+    }
+  }
+}

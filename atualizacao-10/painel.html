@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Painel de Peças · Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Área restrita" id="menu-restrito"></nav>
+</header>
+
+<main class="casca">
+  <section id="portao" class="portao" hidden></section>
+  <div id="conteudo-restrito" hidden>
+  <section class="busca compacta" style="padding-top:8px">
+    <h1>Painel <span>de peças</span></h1>
+  </section>
+  <p id="origem" class="alerta aviso" hidden></p>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="graficos">
+    <div class="cartao"><h2>Pedidos por área</h2><p class="sub">Quem mais está pedindo peças.</p><div class="barras" id="g-area"></div></div>
+    <div class="cartao"><h2>Pedidos por formato e modelo</h2><p class="sub">O que mais sai, e em qual tamanho de texto.</p><div class="barras" id="g-formato"></div></div>
+  </div>
+  <div class="cartao linha-tempo" style="margin-bottom:16px"><h2>Últimos 30 dias</h2><p class="sub">Peças geradas por dia.</p><div id="g-tempo"></div></div>
+
+  <div class="cartao" style="margin-bottom:16px">
+    <h2>Conferir peça</h2>
+    <p class="sub">Cole o código da peça e, se quiser, o HTML que foi disparado. O sistema diz se é idêntico à versão oficial.</p>
+    <form id="conferir" class="campos" novalidate>
+      <div class="campo"><label for="c-codigo">Código</label><input id="c-codigo" type="text" placeholder="UNI-EM-2027-…" autocomplete="off"></div>
+      <div class="campo largo"><label for="c-html">HTML enviado <span class="opc">(opcional)</span></label><textarea id="c-html" rows="4" placeholder="Cole aqui o código do e-mail que foi disparado"></textarea></div>
+      <div class="campo largo"><div class="acoes" style="margin-top:0"><button class="btn primario" type="submit">Conferir</button></div><div id="c-resultado" role="status"></div></div>
+    </form>
+  </div>
+
+  <div class="cartao">
+    <h2>Todos os pedidos</h2>
+    <div class="filtros">
+      <label class="sr" for="filtro-texto" style="position:absolute;left:-9999px">Buscar</label>
+      <input id="filtro-texto" type="search" placeholder="Buscar por nome, título ou código">
+      <label for="filtro-area" style="position:absolute;left:-9999px">Área</label>
+      <select id="filtro-area"><option value="">Todas as áreas</option></select>
+    </div>
+    <div class="tabela-caixa">
+      <table class="lista">
+        <thead><tr><th>Código</th><th>Quando</th><th>Quem</th><th>Área</th><th>Formato</th><th>Título</th><th></th></tr></thead>
+        <tbody id="linhas"></tbody>
+      </table>
+    </div>
+    <p id="sem-dados" class="vazio" hidden>Nenhuma peça registrada ainda. Gere a primeira em "Criar peça".</p>
+  </div>
+  </div>
+</main>
+
+<dialog id="dialogo">
+  <div class="dentro">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px">
+      <div><strong id="d-codigo" style="color:#004e4c"></strong><div id="d-info" style="font-size:13px;color:#6f6f6e"></div></div>
+      <button class="btn secundario" type="button" id="d-fechar">Fechar</button>
+    </div>
+    <iframe id="d-quadro" title="Peça oficial"></iframe>
+  </div>
+</dialog>
+
+<script src="src/acesso.js"></script>
+<script src="src/registro.js"></script>
+<script src="src/painel.js"></script>
+</body>
+</html>
