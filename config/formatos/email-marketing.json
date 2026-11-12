@@ -45,8 +45,7 @@
       "tipo": "texto",
       "obrigatorio": true,
       "max": 90,
-      "ajuda": "Curto, direto, em letras maiúsculas e minúsculas. Até 60 caracteres fica no tamanho cheio. O título já é forte: aqui só entra o realce.",
-      "formatacao": "realce",
+      "ajuda": "Curto, direto, em letras maiúsculas e minúsculas. Até 60 caracteres fica no tamanho cheio.",
       "ideal": 60
     },
     {
@@ -55,7 +54,7 @@
       "tipo": "texto",
       "obrigatorio": false,
       "max": 140,
-      "formatacao": true
+      "formatacao": "simples"
     },
     {
       "id": "texto",
@@ -63,7 +62,7 @@
       "tipo": "texto-longo",
       "obrigatorio": true,
       "max": 2400,
-      "ajuda": "Separe os parágrafos com uma linha em branco. Uma linha curta sozinha vira intertítulo. Comece linhas com \"- \" para fazer uma lista (até 5 itens). Use a barra para negrito, itálico e realce.",
+      "ajuda": "Separe os parágrafos com uma linha em branco. Uma linha curta sozinha vira intertítulo. Comece linhas com \"- \" para fazer uma lista (até 5 itens). Na barra: realce colore um trecho; selecione o parágrafo inteiro (ou use \"Box\") para ele virar um box de destaque.",
       "formatacao": true
     },
     {
@@ -309,7 +308,8 @@
     },
     "botao": {
       "_regra": "Botão exige texto e link juntos. No longo, o botão aparece depois do primeiro parágrafo e se repete no fim junto com a data, reforçando o período (MS.138 p.171).",
-      "repetirNoLongo": true
+      "repetirNoLongo": false,
+      "_repeticao": "Desligado a pedido: cada bloco aparece uma vez só, na posição escolhida em 'Ordem dos blocos'."
     },
     "lista": {
       "_regra": "Linhas começando com \"- \" viram lista. Até 5 itens para o texto não ficar cansativo (MS.138 p.171)."
@@ -321,11 +321,12 @@
     "linkPrecisaHttps": true
   },
   "formatacao": {
-    "_regra": "Negrito, itálico e realce arredondado. O realce usa as cores de apoio e o cítrico, sempre com texto verde petróleo. Laranja fica reservado para o botão.",
+    "_regra": "Negrito, itálico e realce arredondado no texto (o título não tem formatação; o subtítulo só negrito e itálico). O realce usa as cores de apoio e o cítrico, sempre com texto verde petróleo. Um parágrafo inteiro em destaque vira um box com a forma da marca. Laranja fica reservado para o botão.",
     "marcas": {
       "negrito": "**texto**",
       "italico": "*texto*",
-      "realce": "==(cor)texto=="
+      "realce": "==(cor)texto==",
+      "box": ">>(cor) parágrafo inteiro"
     },
     "realces": [
       {
@@ -367,7 +368,7 @@
     ]
   },
   "blocos": {
-    "_regra": "Cabeçalho e rodapé são fixos. Os blocos do meio podem mudar de ordem. No longo, se o botão estiver por último, ele também aparece depois do primeiro parágrafo; se estiver em outra posição, ele se repete no fim junto com a data (MS.138 p.171).",
+    "_regra": "Cabeçalho e fechamento são fixos. Os blocos do meio podem mudar de ordem, e cada um aparece uma vez só, na posição escolhida.",
     "padrao": [
       "imagens",
       "titulo",

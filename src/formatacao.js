@@ -31,10 +31,61 @@
     avisar(campo);
   }
 
+  /* ---------- Parágrafo em box: >>(cor) no começo do parágrafo ---------- */
+  var BOX = /^>>(?:\(([a-z0-9-]+)\))?[ \t]*/i;
+  function paragrafos(v, ini, fim) {
+    // devolve [{a, b}] dos parágrafos (separados por linha em branco) tocados pela seleção
+    var lista = [], re = /\n[ \t]*\n/g, a = 0, m;
+    var cortes = [];
+    while ((m = re.exec(v))) cortes.push([m.index, re.lastIndex]);
+    cortes.push([v.length, v.length]);
+    cortes.forEach(function (c) {
+      var b = c[0];
+      if (b >= ini && a <= Math.max(fim, ini) && v.slice(a, b).trim()) lista.push({ a: a, b: b });
+      a = c[1];
+    });
+    return lista;
+  }
+  /* cor: id do realce; null alterna (tira se já for box, senão usa a cor padrão). */
+  function aplicarBox(campo, cor, padrao) {
+    var v = campo.value, ini = campo.selectionStart, fim = campo.selectionEnd;
+    var ps = paragrafos(v, ini, fim);
+    if (!ps.length) return false;
+    var todosBox = ps.every(function (p) { return BOX.test(v.slice(p.a, p.b).replace(/^\s+/, '')); });
+    for (var i = ps.length - 1; i >= 0; i--) {
+      var p = ps[i];
+      var trecho = v.slice(p.a, p.b);
+      var esp = trecho.match(/^\s*/)[0];
+      var miolo = trecho.slice(esp.length).replace(BOX, '');
+      var novo = (cor == null && todosBox) ? miolo : '>>(' + (cor || padrao) + ') ' + miolo;
+      v = v.slice(0, p.a) + esp + novo + v.slice(p.b);
+    }
+    campo.value = v;
+    var fimSel = paragrafos(v, ps[0].a, ps[0].a)[0];
+    campo.focus();
+    if (fimSel) campo.setSelectionRange(fimSel.a, ps.length > 1 ? paragrafos(v, ps[0].a, v.length).slice(0, ps.length).pop().b : fimSel.b);
+    avisar(campo);
+    return true;
+  }
+  /* A seleção cobre um parágrafo inteiro (ou mais)? Então o realce vira box. */
+  function cobreParagrafo(campo) {
+    var v = campo.value, ini = campo.selectionStart, fim = campo.selectionEnd;
+    if (fim - ini < 2) return false;
+    var ps = paragrafos(v, ini, fim);
+    if (!ps.length) return false;
+    var primeiro = ps[0], ultimo = ps[ps.length - 1];
+    var inicioTexto = primeiro.a + v.slice(primeiro.a, primeiro.b).search(/\S/);
+    var semMarca = v.slice(inicioTexto, primeiro.b).match(BOX);
+    if (semMarca) inicioTexto += semMarca[0].length;
+    var fimTexto = ultimo.a + v.slice(ultimo.a, ultimo.b).replace(/\s+$/, '').length;
+    return ini <= inicioTexto && fim >= fimTexto;
+  }
+
   function limpar(campo) {
     var ini = campo.selectionStart, fim = campo.selectionEnd;
     if (ini === fim) { ini = 0; fim = campo.value.length; }
     var trecho = campo.value.slice(ini, fim)
+      .replace(/(^|\n)[ \t]*>>(?:\([a-z0-9-]+\))?[ \t]*/gi, '$1')
       .replace(/==\([a-z0-9-]+\)([\s\S]+?)==/gi, '$1').replace(/==([\s\S]+?)==/g, '$1')
       .replace(/\*\*([\s\S]+?)\*\*/g, '$1').replace(/(^|[^*\w])\*(?=\S)([^*\n]+?)\*(?!\*)/g, '$1$2');
     campo.value = campo.value.slice(0, ini) + trecho + campo.value.slice(fim);
@@ -56,9 +107,14 @@
   }
 
   /* realces: [{ id, nome, fundo, texto }] já com as cores resolvidas.
-     modo 'realce': só o realce (ex.: título, que já é forte). */
+     modo 'completo': negrito, itálico, realce e box (texto corrido)
+     modo 'simples': só negrito e itálico (ex.: subtítulo)
+     modo 'realce': só o realce */
   function barra(campo, realces, modo) {
     var completo = modo !== 'realce';
+    var comRealce = modo !== 'simples';
+    var comBox = modo === 'completo' && campo.tagName === 'TEXTAREA';
+    var padrao = (realces.filter(function (r) { return r.id === 'verde'; })[0] || realces[0] || {}).id;
     var caixa = document.createElement('div');
     caixa.className = 'fmt-barra';
     caixa.setAttribute('role', 'toolbar');
@@ -69,14 +125,22 @@
       caixa.appendChild(botao('<i>I</i>', 'Itálico (Ctrl+I)', '', function () { envolver(campo, '*', '*', 'texto em itálico'); }));
       caixa.appendChild(sep);
     }
-    var rot = document.createElement('span'); rot.className = 'fmt-rot'; rot.textContent = 'Realce';
-    caixa.appendChild(rot);
-    realces.forEach(function (r) {
-      var b = botao('<span>Aa</span>', 'Realce ' + r.nome, 'fmt-realce', function () { envolver(campo, '==(' + r.id + ')', '==', 'destaque'); });
-      b.style.background = r.fundo;
-      b.style.color = r.texto;
-      caixa.appendChild(b);
-    });
+    if (comRealce) {
+      var rot = document.createElement('span'); rot.className = 'fmt-rot'; rot.textContent = 'Realce';
+      caixa.appendChild(rot);
+      realces.forEach(function (r) {
+        var b = botao('<span>Aa</span>', 'Realce ' + r.nome + (comBox ? ' (parágrafo inteiro selecionado vira box)' : ''), 'fmt-realce', function () {
+          if (comBox && cobreParagrafo(campo)) aplicarBox(campo, r.id, padrao);
+          else envolver(campo, '==(' + r.id + ')', '==', 'destaque');
+        });
+        b.style.background = r.fundo;
+        b.style.color = r.texto;
+        caixa.appendChild(b);
+      });
+    }
+    if (comBox) {
+      caixa.appendChild(botao('<span class="fmt-box-ico" aria-hidden="true"></span>Box', 'Parágrafo em box: põe ou tira o box do parágrafo onde está o cursor', 'fmt-box', function () { aplicarBox(campo, null, padrao); }));
+    }
     var sep2 = sep.cloneNode(); caixa.appendChild(sep2);
     caixa.appendChild(botao('Limpar', 'Tirar a formatação do trecho selecionado', 'fmt-limpar', function () { limpar(campo); }));
 

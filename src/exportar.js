@@ -43,6 +43,8 @@
           if (img.complete) return Promise.resolve();
           return new Promise(function (r) { img.onload = img.onerror = r; });
         })).then(function () {
+          return doc.fonts && doc.fonts.ready ? doc.fonts.ready : null;
+        }).then(function () {
           quadro.style.height = Math.ceil(doc.documentElement.scrollHeight) + 'px';
           setTimeout(function () {
             clearTimeout(limite);
@@ -121,18 +123,50 @@
           if (!t.trim() && !lista.length) return;
           var st = win.getComputedStyle(f.parentNode);
           if (st.textTransform === 'uppercase') t = t.toUpperCase();
+          // Realce: compensa o respiro lateral do realce (padding) com espaços fixos, para o texto
+          // do PowerPoint ficar dentro da forma arredondada.
+          var sp = f.parentNode.closest ? f.parentNode.closest('span') : null;
+          if (sp && sp !== el && el.contains(sp) && hex(win.getComputedStyle(sp).backgroundColor)) {
+            var pad = parseFloat(win.getComputedStyle(sp).paddingLeft) || 0;
+            var n = Math.max(1, Math.round(pad / (0.278 * (parseFloat(st.fontSize) || 16))));
+            var esp = new Array(n + 1).join('\u00A0');
+            var nos = []; (function junta(x) { Array.prototype.forEach.call(x.childNodes, function (k) { if (k.nodeType === 3) nos.push(k); else junta(k); }); })(sp);
+            if (nos[0] === f) t = esp + t.replace(/^\s+/, '');
+            if (nos[nos.length - 1] === f) t = t.replace(/\s+$/, '') + esp;
+          }
           var op = { color: hex(st.color) || '3C3C3B', transparency: transparencia(st.color) || undefined, bold: Number(st.fontWeight) >= 600 || st.fontWeight === 'bold', italic: st.fontStyle === 'italic' };
-          // Realce: trecho em <span> com fundo próprio dentro do texto.
-          if (f.parentNode !== el && f.parentNode.tagName === 'SPAN') { var fundo = hex(st.backgroundColor); if (fundo) op.highlight = fundo; }
           lista.push({ text: t, options: op });
         } else if (f.nodeName === 'BR') {
           if (lista.length) lista[lista.length - 1].options.breakLine = true;
         } else if (f.nodeType === 1) andar(f);
       });
     })(el);
-    if (lista.length) lista[lista.length - 1].text = lista[lista.length - 1].text.replace(/\s+$/, '');
-    if (lista.length) lista[0].text = lista[0].text.replace(/^\s+/, '');
+    if (lista.length) lista[lista.length - 1].text = lista[lista.length - 1].text.replace(/[ \t\n]+$/, '');
+    if (lista.length) lista[0].text = lista[0].text.replace(/^[ \t\n]+/, '');
     return lista;
+  }
+
+  /* Realce no PowerPoint: o marca-texto do PowerPoint é reto e alguns leitores nem mostram.
+     Por isso cada linha do realce vira uma forma arredondada atrás do texto, com a mesma cor. */
+  function realcesDoTexto(el, win, base, s, P) {
+    Array.prototype.forEach.call(el.querySelectorAll('span'), function (sp) {
+      var st = win.getComputedStyle(sp);
+      var cor = hex(st.backgroundColor);
+      if (!cor) return;
+      Array.prototype.forEach.call(sp.getClientRects(), function (q) {
+        if (q.width < 2 || q.height < 2) return;
+        s.addShape(P.ShapeType.roundRect, {
+          x: (q.left - base.left) * PX, y: (q.top - base.top) * PX, w: q.width * PX, h: q.height * PX,
+          fill: { color: cor }, line: { color: cor, width: 0 }, rectRadius: (q.height / 2) * PX
+        });
+      });
+    });
+  }
+  /* Fundo com imagem (ex.: as linhas leves da grade na faixa do cabeçalho). */
+  async function fundoImagem(el, st, s, x, y, w, h) {
+    var m = /url\(["']?([^"')]+)["']?\)/.exec(st.backgroundImage || '');
+    if (!m) return;
+    try { s.addImage({ data: await paraDataUrl(m[1]), x: x, y: y, w: w, h: h }); } catch (e) { /* segue sem */ }
   }
 
   async function paraDataUrl(src) {
@@ -182,6 +216,7 @@
           } else {
             s.addShape(P.ShapeType.rect, { x: x, y: y, w: w, h: h, fill: { color: cor }, line: { color: cor, width: 0 } });
           }
+          await fundoImagem(el, st, s, x, y, w, h);
         } else if (tipo === 'img') {
           try {
             var dado = await paraDataUrl(el.currentSrc || el.src);
@@ -190,6 +225,7 @@
         } else if (tipo === 'texto') {
           var partes = trechos(el, win);
           if (!partes.length) continue;
+          realcesDoTexto(el, win, base, s, P);
           var pl = parseFloat(st.paddingLeft) || 0, pt = parseFloat(st.paddingTop) || 0, pr = parseFloat(st.paddingRight) || 0, pb = parseFloat(st.paddingBottom) || 0;
           var tam = parseFloat(st.fontSize) || 16;
           var alt = st.lineHeight === 'normal' ? tam * 1.2 : parseFloat(st.lineHeight);

@@ -367,3 +367,5 @@ details.secao > .campos { padding: 4px 16px 18px; border-top: 1px solid var(--bo
 .barra-acoes .btn { flex: none; }
 @media (max-width: 560px) { .barra-acoes .btn { padding: 12px 18px; font-size: 15px; } .pendencias { font-size: 12.5px; line-height: 1.35; } }
 .versao-de { display: block; font-weight: 500; font-size: 12px; color: var(--suave); }
+.fmt-box { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.fmt-box-ico { width: 14px; height: 10px; background: var(--apoio-verde, #cde3bb); border: 1.5px solid var(--petroleo); border-radius: 4px 4px 0 4px; }

@@ -17,8 +17,10 @@
   }
 
   /* Tira as marcas de formatação (**negrito**, *itálico*, ==(cor)realce==) para contar e decidir. */
+  var MARCA_BOX = /^>>(?:\(([a-z0-9-]+)\))?\s*/i;
   function semMarcas(texto) {
     return String(texto == null ? '' : texto)
+      .replace(/(^|\n)[ \t]*>>(?:\([a-z0-9-]+\))?[ \t]*/gi, '$1')
       .replace(/==\([a-z0-9-]+\)([\s\S]+?)==/gi, '$1')
       .replace(/==([\s\S]+?)==/g, '$1')
       .replace(/\*\*([\s\S]+?)\*\*/g, '$1')
@@ -46,6 +48,14 @@
     var partes = limpar(texto).split(/\n\s*\n/).filter(function (p) { return p.trim(); });
     partes.forEach(function (parte) {
       var linhas = parte.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+      // Parágrafo inteiro em destaque: começa com >>(cor). Vira um box.
+      var mb = linhas.length && MARCA_BOX.exec(linhas[0]);
+      if (mb) {
+        linhas[0] = linhas[0].replace(MARCA_BOX, '');
+        var txt = linhas.join(' ').trim();
+        if (txt) blocos.push({ tipo: 'box', cor: mb[1] || null, texto: txt });
+        return;
+      }
       var prosa = [];
       var itens = [];
       function fecharProsa() { if (prosa.length) { blocos.push({ tipo: 'paragrafo', texto: prosa.join(' ') }); prosa = []; } }

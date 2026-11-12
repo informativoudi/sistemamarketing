@@ -54,7 +54,8 @@ Ao mudar algo do manual, suba o número de `"versao"` (ex.: `2027.1` → `2027.2
 - Sem `secoes`, o formulário vira uma seção única.
 
 Outras opções dos campos:
-- `"formatacao": true` mostra negrito, itálico e realce; `"formatacao": "realce"` mostra só o realce (bom para títulos).
+- `"formatacao": true` mostra negrito, itálico, realce e box (no texto longo); `"simples"` só negrito e itálico; `"realce"` só o realce. Sem a chave, o campo não tem formatação.
+- Box de parágrafo: no texto fica como `>>(cor) parágrafo`. Selecionar o parágrafo inteiro e clicar numa cor de realce cria o box; o botão "Box" põe ou tira o box do parágrafo onde está o cursor.
 - `"ideal": 60` deixa o contador amarelo quando passa do tamanho ideal, antes do máximo.
 - Em `blocos.preenchidoPor`, diga qual campo enche cada bloco; blocos vazios ficam apagados na lista de ordem.
 

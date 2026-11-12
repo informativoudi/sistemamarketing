@@ -61,7 +61,9 @@
       "subtitulo": "Sans, caixa alta e baixa, book itálico",
       "tituloSecundario": "Sans bold, 60% do título principal",
       "texto": "Sans (digital) ou Slab/Serif, book"
-    }
+    },
+    "arquivos": [],
+    "_arquivos": "Arquivos da fonte Unimed Sans em assets/fonts/ (ex.: {\"familia\":\"Unimed Sans\",\"arquivo\":\"assets/fonts/UnimedSans-Bold.woff2\",\"peso\":700}). Com a lista preenchida, a prévia, a imagem, o PDF e o PowerPoint usam a fonte da marca; o e-mail usa onde o leitor permite e cai no Arial no resto."
   },
   "forma": {
     "_regra": "O box Unimed tem três cantos arredondados e o inferior direito reto (MS.139 p.6).",
@@ -167,7 +169,9 @@
   ],
   "rodape": {
     "site": "unimeduberlandia.coop.br",
-    "coordenadas": "18°55′S 48°16′W"
+    "coordenadas": "18°55′S 48°16′W",
+    "mote": "Presença que transforma",
+    "_regra": "Fechamento do e-mail: mote da marca e site. O registro ANS continua nas peças externas (obrigatório). O código da peça fica só dentro do HTML, para rastrear sem aparecer."
   },
   "areas": [
     "Comunicação e Marketing",

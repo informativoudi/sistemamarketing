@@ -40,13 +40,14 @@ docs/                   Guia de atualização, área restrita e script do banco
 |---|---|
 | Texto até 300 caracteres | Modelo **curto**: título grande, sem imagem, data em destaque |
 | Texto de 301 a 900 | Modelo **médio**: imagem, título, intertítulos, texto, data e botão |
-| Texto acima de 900 | Modelo **longo**: botão depois do 1º parágrafo e repetido no fim com a data |
+| Texto acima de 900 | Modelo **longo**: intertítulos e imagens; cada bloco aparece uma vez só |
 | Público interno / externo | Interno: marca do Grupo Unimed Uberlândia. Externo: marca Unimed Uberlândia + registro ANS. Evento (mesmo externo): marca do Grupo |
 | Área de quem pede | Vira o cabeçalho e a assinatura do e-mail (dá para trocar por um programa ou comitê) |
 | Interno | Visual 2027 sutil (inspirado na Atualização CERVELLO): ícone da área no quadro box, nome da área em dois tons, grade de 12 colunas quase invisível e faixa curta do mosaico |
 | Imagens (até 3) | Tamanho fixo, mesmo se a foto for vertical: 1 = horizontal 536 × 300; 2 = lado a lado 264 × 220; 3 = mosaico (352 × 300 + duas de 176 × 146). A pessoa arrasta a foto no quadro e ajusta o zoom |
-| Formatação | Barra no título, subtítulo e texto: **negrito**, *itálico* e realce arredondado nas cores de apoio e cítrico (laranja fica para o botão) |
-| Ordem dos blocos | Imagens, título, data, texto e botão mudam de ordem; cabeçalho e rodapé são fixos. No longo o botão se repete no fim com a data |
+| Formatação | Título sem formatação. Subtítulo: **negrito** e *itálico*. Texto: negrito, itálico, realce arredondado (cores de apoio e cítrico; laranja fica para o botão) e **box**: um parágrafo inteiro selecionado vira um box de destaque com a forma da marca |
+| Ordem dos blocos | Imagens, título, data, texto e botão mudam de ordem e aparecem uma vez só; cabeçalho e fechamento são fixos |
+| Fechamento | Mote "Presença que transforma" + site (em `config/marca.json` → `rodape`). ANS só nas peças externas |
 | Linhas com "- " | Viram lista; aviso acima de 5 itens |
 | Linguagem | Avisa: título só em maiúsculas, excesso de "!", frases longas, botão genérico, estrangeirismos |
 | Título com até 40 / 60 / 90 caracteres | Fonte cai um degrau a cada faixa; acima de 90 é bloqueado |
@@ -80,9 +81,17 @@ Os números ficam em `config/formatos/email-marketing.json`. Mude ali e todas as
 
 O formulário é organizado em seções: o essencial fica aberto e o resto (imagens, data, botão, cabeçalho e ordem) abre só quando precisa, com um resumo do que já foi preenchido. Uma barra fixa mostra o que falta e o botão Gerar. Nome e área ficam guardados, o rascunho é salvo sozinho e, depois de gerar, **Editar esta peça** cria uma nova versão (`-V2`, `-V3`…) sem redigitar nada. No celular, as abas Editar | Prévia trocam de tela. Detalhes em `docs/como-atualizar.md`.
 
+## PowerPoint
+
+O realce vira uma forma arredondada atrás do texto (o marca-texto do PowerPoint é reto), o box e os botões mantêm o canto reto da marca, e as linhas leves da faixa do cabeçalho entram como imagem. Os textos continuam editáveis.
+
+## Fonte Unimed Sans
+
+Coloque os arquivos em `assets/fonts/` e liste em `config/marca.json` → `tipografia.arquivos`. A prévia, a imagem, o PDF e o PowerPoint passam a usar a fonte da marca; no e-mail, ela aparece onde o leitor permite (Apple Mail, iOS) e cai no Arial no resto.
+
 ## Rastreabilidade
 
-Cada peça recebe um código (`UNI-EM-2027-XXXXXX`) que aparece no rodapé. O registro guarda quem pediu, a área, a data, o conteúdo, o HTML final e a "impressão digital" (hash SHA-256) desse HTML. No painel, **Conferir peça** compara um HTML disparado com a versão oficial e mostra se houve alteração.
+Cada peça recebe um código (`UNI-EM-2027-XXXXXX`), guardado dentro do HTML (não aparece na peça) e nas anotações do PowerPoint. O registro guarda quem pediu, a área, a data, o conteúdo, o HTML final e a "impressão digital" (hash SHA-256) desse HTML. No painel, **Conferir peça** compara um HTML disparado com a versão oficial e mostra se houve alteração.
 
 ## Área restrita
 

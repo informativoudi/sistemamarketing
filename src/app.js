@@ -156,7 +156,7 @@
     caixa.appendChild(rotulo);
     if (c.formatacao && window.UnimedFormatacao) {
       caixa.classList.add('com-formatacao');
-      caixa.appendChild(window.UnimedFormatacao.barra(entrada, realcesResolvidos(), c.formatacao === 'realce' ? 'realce' : 'completo'));
+      caixa.appendChild(window.UnimedFormatacao.barra(entrada, realcesResolvidos(), c.formatacao === true ? 'completo' : c.formatacao));
     }
     caixa.appendChild(entrada);
     if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
@@ -236,7 +236,7 @@
     if (!b) return null;
     if (!estado.ordem) estado.ordem = b.padrao.slice();
     var caixa = el('div', { 'class': 'campo largo', 'data-campo': 'ordem' });
-    caixa.appendChild(el('span', { id: 'ordem-r', 'class': 'rot' }, ['Ordem dos blocos ', el('span', { 'class': 'opc', texto: '(cabeçalho e rodapé são fixos)' })]));
+    caixa.appendChild(el('span', { id: 'ordem-r', 'class': 'rot' }, ['Ordem dos blocos ', el('span', { 'class': 'opc', texto: '(cabeçalho e fechamento são fixos)' })]));
     var lista = el('ol', { 'class': 'ordem-blocos', 'aria-labelledby': 'ordem-r' });
     var anuncio = el('span', { 'class': 'sr-only', 'aria-live': 'polite' });
     function mover(i, d) {
@@ -279,7 +279,7 @@
     estado.marcarVazios = marcarVazios;
     var restaurar = el('button', { type: 'button', 'class': 'btn-mini', onclick: function () { estado.ordem = b.padrao.slice(); desenhar(); agendarPrevia(); } }, ['Voltar ao padrão']);
     caixa.appendChild(lista); caixa.appendChild(restaurar); caixa.appendChild(anuncio);
-    caixa.appendChild(el('span', { 'class': 'ajuda', texto: 'Blocos apagados estão vazios e não entram na peça. No modelo longo o botão se repete no fim, junto com a data.' }));
+    caixa.appendChild(el('span', { 'class': 'ajuda', texto: 'Blocos apagados estão vazios e não entram na peça. Cada bloco aparece uma vez só, na posição escolhida.' }));
     // desenha depois de entrar na página (lerDados precisa dos campos)
     setTimeout(function () { desenhar(); }, 0);
     return caixa;

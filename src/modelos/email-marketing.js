@@ -61,7 +61,7 @@
         .replace(/(^|[^*\w])\*(?=\S)([^*\n]+?)\*(?!\*)/g, '$1<em style="font-style:italic;">$2</em>');
     }
 
-    var titulo = rico(String(dados.titulo || '').trim().replace(/[.!]\s*$/, ''));
+    var titulo = esc(puro(String(dados.titulo || '').trim().replace(/[.!]\s*$/, '')));
     var quadrado = plano.flags.quadradoLaranja ? '<span style="color:' + c.laranja + ';">&#9632;</span>' : '';
 
     /* ---------- Botão (CTA laranja, MS.138 p.168) ---------- */
@@ -101,6 +101,17 @@
     function paragrafo(t) {
       return '<p ' + TX + ' style="margin:0 0 16px;font-family:' + F + ';font-size:16px;line-height:1.6;color:' + c.texto + ';">' + rico(t) + '</p>';
     }
+    /* Parágrafo inteiro em destaque: box com a forma da marca e a cor de apoio escolhida. */
+    function boxDestaque(b) {
+      var r = realces[b.cor] || primeiroRealce;
+      var fundo = r ? (c[r.cor] || r.cor) : c.apoioVerde;
+      var cor = r ? (c[r.texto] || r.texto) : c.verdeEscuro;
+      var miolo = rico(b.texto).replace(/<span style="background-color:[^"]*">([\s\S]*?)<\/span>/g, '$1'); // dentro do box não há realce
+      return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:4px 0 20px;"><tr>' +
+        '<td ' + CX + ' bgcolor="' + fundo + '" style="background:' + fundo + ';border-radius:' + raioCard + ';padding:20px 24px;">' +
+        '<p ' + TX + ' style="margin:0;font-family:' + F + ';font-size:17px;font-weight:500;line-height:1.55;color:' + cor + ';">' + miolo + '</p>' +
+        '</td></tr></table>';
+    }
     function lista(itens) {
       return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;">' +
         itens.map(function (it) {
@@ -116,6 +127,8 @@
         corpo += '<h2 ' + TX + ' style="margin:28px 0 8px;font-family:' + F + ';font-size:' + plano.intertituloPx + 'px;line-height:1.25;font-weight:bold;color:' + c.verdeEscuro + ';">' + rico(b.texto) + '</h2>';
       } else if (b.tipo === 'lista') {
         corpo += lista(b.itens);
+      } else if (b.tipo === 'box') {
+        corpo += boxDestaque(b);
       } else {
         corpo += paragrafo(b.texto);
       }
@@ -161,7 +174,7 @@
     var barra = '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;"><tr><td ' + CX + ' width="28" height="4" bgcolor="' + c.citrico + '" style="width:28px;height:4px;line-height:4px;font-size:0;background:' + c.citrico + ';">&nbsp;</td></tr></table>';
     var chapeu = barra + '<p ' + TX + ' style="margin:0 0 10px;font-family:' + F + ';font-size:12px;font-weight:bold;letter-spacing:2px;line-height:16px;text-transform:uppercase;color:' + c.institucional + ';">' + esc(plano.tema.rotulo) + '</p>';
     var h1 = '<h1 ' + TX + ' style="margin:0 0 ' + (dados.subtitulo ? '10px' : '20px') + ';font-family:' + F + ';font-size:' + plano.tituloPx + 'px;line-height:1.1;font-weight:bold;letter-spacing:-0.5px;color:' + c.verdeEscuro + ';">' + titulo + quadrado + '</h1>';
-    var subtitulo = dados.subtitulo ? '<p ' + TX + ' style="margin:0 0 22px;font-family:' + F + ';font-size:18px;font-style:italic;line-height:1.45;color:' + c.textoSuave + ';">' + rico(dados.subtitulo) + '</p>' : '';
+    var subtitulo = dados.subtitulo ? '<p ' + TX + ' style="margin:0 0 22px;font-family:' + F + ';font-size:18px;font-style:italic;line-height:1.45;color:' + c.textoSuave + ';">' + rico(String(dados.subtitulo).replace(/==\(([a-z0-9-]+)\)([\s\S]+?)==/gi, '$2').replace(/==([\s\S]+?)==/g, '$1')) + '</p>' : '';
 
     /* ---------- Blocos na ordem escolhida (cabeçalho e rodapé fixos) ---------- */
     var pecas = {
@@ -190,9 +203,10 @@
       var altAns = 22;
       ans = '<tr><td style="padding:14px 32px 0;"><img data-x="img" src="' + esc(url(base, marca.ans.selo)) + '" height="' + altAns + '" width="' + Math.round(altAns * marca.ans.proporcao) + '" alt="ANS - nº ' + esc(marca.ans.numero) + '" style="display:block;border:0;"></td></tr>';
     }
-    var prova = plano.flags.provaDeProcesso
-      ? '<tr><td ' + TX + ' style="padding:16px 32px 0;font-family:' + F + ';font-size:10px;font-weight:bold;letter-spacing:2px;line-height:14px;text-transform:uppercase;color:' + c.citrico + ';">' + esc(codigo) + ' &middot; ' + esc(marca.rodape.coordenadas) + '</td></tr>'
-      : '<tr><td ' + TX + ' style="padding:16px 32px 0;font-family:' + F + ';font-size:10px;line-height:14px;color:rgba(255,255,255,0.6);">' + esc(codigo) + '</td></tr>';
+    /* Fonte da marca: quem tem suporte (Apple Mail, iOS, exportações) usa Unimed Sans; o resto cai no Arial. */
+    var fontes = (marca.tipografia.arquivos || []).length ? '<style>' + marca.tipografia.arquivos.map(function (a) {
+      return '@font-face{font-family:"' + a.familia + '";src:url(' + url(base, a.arquivo) + ') format("' + (/\.woff2$/.test(a.arquivo) ? 'woff2' : /\.woff$/.test(a.arquivo) ? 'woff' : 'opentype') + '");font-weight:' + a.peso + ';font-style:normal;}';
+    }).join('') + '</style>\n' : '';
 
     var corFaixaTexto = plano.tema.textoFaixa;
     // O quadrado laranja (assinatura 2027) aparece uma vez por peça: no fim do título.
@@ -224,7 +238,7 @@
     }
 
     return '' +
-'<!doctype html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="x-apple-disable-message-reformatting">\n<title>' + esc(puro(dados.titulo)) + '</title>\n</head>\n' +
+'<!doctype html>\n<!-- Peça ' + esc(codigo) + ' · Gerador de Peças Unimed Uberlândia -->\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="x-unimed-codigo" content="' + esc(codigo) + '">\n' + fontes + '<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="x-apple-disable-message-reformatting">\n<title>' + esc(puro(dados.titulo)) + '</title>\n</head>\n' +
 '<body style="margin:0;padding:0;background:' + c.fundoPagina + ';">\n' +
 '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">' + preheader + '</div>\n' +
 '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + c.fundoPagina + '" style="background:' + c.fundoPagina + ';"><tr><td align="center" style="padding:24px 12px;">\n' +
@@ -232,12 +246,13 @@
 topo +
 
 '<tr><td style="padding:30px 32px 6px;">' + conteudo + '</td></tr>\n' +
-/* Rodapé: área que assina + marca. */
-'<tr><td ' + CX + ' bgcolor="' + c.verdeEscuro + '" style="background:' + c.verdeEscuro + ';padding:24px 0 24px;">' +
+/* Fechamento: mote da marca + site (ANS só no externo). O código da peça fica só no HTML. */
+'<tr><td ' + CX + ' bgcolor="' + c.verdeEscuro + '" style="background:' + c.verdeEscuro + ';padding:28px 0 28px;">' +
 '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">' +
-'<tr><td ' + TX + ' style="padding:0 32px;font-family:' + F + ';font-size:16px;font-weight:bold;line-height:1.35;color:#ffffff;">' + esc(plano.cabecalho) + '</td></tr>' +
-'<tr><td ' + TX + ' style="padding:2px 32px 0;font-family:' + F + ';font-size:13px;line-height:1.5;color:rgba(255,255,255,0.82);">' + esc(plano.publico.assinatura) + ' &middot; ' + esc(marca.rodape.site) + '</td></tr>' +
-ans + prova +
+'<tr><td style="padding:0 32px 12px;"><table role="presentation" cellpadding="0" cellspacing="0" border="0"><tr><td ' + CX + ' width="28" height="4" bgcolor="' + c.citrico + '" style="width:28px;height:4px;line-height:4px;font-size:0;background:' + c.citrico + ';">&nbsp;</td></tr></table></td></tr>' +
+'<tr><td ' + TX + ' style="padding:0 32px;font-family:' + F + ';font-size:22px;font-weight:bold;line-height:1.2;letter-spacing:-0.3px;color:#ffffff;">' + esc(marca.rodape.mote || '') + '</td></tr>' +
+'<tr><td style="padding:6px 32px 0;font-family:' + F + ';font-size:14px;line-height:1.5;"><a ' + TX + ' href="https://' + esc(marca.rodape.site) + '" target="_blank" style="color:' + c.citrico + ';text-decoration:none;font-weight:bold;">' + esc(marca.rodape.site) + '</a></td></tr>' +
+ans +
 '</table></td></tr>\n' +
 '</table>\n</td></tr></table>\n</body>\n</html>\n';
   }
