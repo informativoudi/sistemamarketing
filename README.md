@@ -44,6 +44,9 @@ docs/                   Guia de atualização, área restrita e script do banco
 | Público interno / externo | Interno: marca do Grupo Unimed Uberlândia. Externo: marca Unimed Uberlândia + registro ANS. Evento (mesmo externo): marca do Grupo |
 | Área de quem pede | Vira o cabeçalho e a assinatura do e-mail (dá para trocar por um programa ou comitê) |
 | Interno | Visual 2027 sutil (inspirado na Atualização CERVELLO): ícone da área no quadro box, nome da área em dois tons, grade de 12 colunas quase invisível e faixa curta do mosaico |
+| Imagens (até 3) | Tamanho fixo, mesmo se a foto for vertical: 1 = horizontal 536 × 300; 2 = lado a lado 264 × 220; 3 = mosaico (352 × 300 + duas de 176 × 146). A pessoa arrasta a foto no quadro e ajusta o zoom |
+| Formatação | Barra no título, subtítulo e texto: **negrito**, *itálico* e realce arredondado nas cores de apoio e cítrico (laranja fica para o botão) |
+| Ordem dos blocos | Imagens, título, data, texto e botão mudam de ordem; cabeçalho e rodapé são fixos. No longo o botão se repete no fim com a data |
 | Linhas com "- " | Viram lista; aviso acima de 5 itens |
 | Linguagem | Avisa: título só em maiúsculas, excesso de "!", frases longas, botão genérico, estrangeirismos |
 | Título com até 40 / 60 / 90 caracteres | Fonte cai um degrau a cada faixa; acima de 90 é bloqueado |

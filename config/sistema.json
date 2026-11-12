@@ -6,6 +6,7 @@
     "modo": "supabase",
     "supabaseUrl": "https://flsggwtuoukuhamqhaam.supabase.co",
     "supabaseChaveAnonima": "sb_publishable_-44vdnwi8juxsv7_OodD0w_n13MCex1",
-    "tabela": "pedidos"
+    "tabela": "pedidos",
+    "bucketImagens": "pecas"
   }
 }

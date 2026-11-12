@@ -57,6 +57,19 @@
     return lerLocal();
   }
 
-  var api = { salvar: salvar, listar: listar, hash: hash };
+  /* Envia uma imagem recortada ao banco de imagens (Supabase Storage, pasta pública) e devolve o endereço. */
+  async function enviarImagem(cfg, caminho, blob) {
+    var base = String(cfg.supabaseUrl || '').replace(/\/$/, '');
+    var balde = cfg.bucketImagens || 'pecas';
+    var r = await fetch(base + '/storage/v1/object/' + balde + '/' + caminho, {
+      method: 'POST',
+      headers: { 'apikey': cfg.supabaseChaveAnonima, 'Content-Type': blob.type || 'image/jpeg', 'x-upsert': 'true', 'cache-control': '31536000' },
+      body: blob
+    });
+    if (!r.ok) throw new Error('O banco de imagens recusou o envio (' + r.status + ').');
+    return base + '/storage/v1/object/public/' + balde + '/' + caminho;
+  }
+
+  var api = { salvar: salvar, listar: listar, hash: hash, enviarImagem: enviarImagem };
   raiz.UnimedRegistro = api;
 })(window);

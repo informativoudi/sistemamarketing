@@ -45,14 +45,16 @@
       "tipo": "texto",
       "obrigatorio": true,
       "max": 90,
-      "ajuda": "Curto, direto, em letras maiúsculas e minúsculas. Até 60 caracteres fica no tamanho cheio."
+      "ajuda": "Curto, direto, em letras maiúsculas e minúsculas. Até 60 caracteres fica no tamanho cheio.",
+      "formatacao": true
     },
     {
       "id": "subtitulo",
       "rotulo": "Subtítulo",
       "tipo": "texto",
       "obrigatorio": false,
-      "max": 140
+      "max": 140,
+      "formatacao": true
     },
     {
       "id": "texto",
@@ -60,13 +62,16 @@
       "tipo": "texto-longo",
       "obrigatorio": true,
       "max": 2400,
-      "ajuda": "Separe os parágrafos com uma linha em branco. Uma linha curta sozinha vira intertítulo. Comece linhas com \"- \" para fazer uma lista (até 5 itens)."
+      "ajuda": "Separe os parágrafos com uma linha em branco. Uma linha curta sozinha vira intertítulo. Comece linhas com \"- \" para fazer uma lista (até 5 itens). Use a barra para negrito, itálico e realce.",
+      "formatacao": true
     },
     {
-      "id": "imagem",
-      "rotulo": "Imagem",
-      "tipo": "imagem-aprovada",
-      "obrigatorio": false
+      "id": "imagens",
+      "rotulo": "Imagens",
+      "tipo": "imagens-aprovadas",
+      "obrigatorio": false,
+      "limite": 3,
+      "ajuda": "Escolha até 3 da biblioteca aprovada. O tamanho é fixo; arraste a foto no quadro para ajustar o enquadramento."
     },
     {
       "id": "data",
@@ -208,10 +213,45 @@
       "maxCaracteres": 60
     },
     "imagem": {
-      "_regra": "No curto a imagem não entra (o título é o destaque). No médio e longo entra abaixo do cabeçalho.",
+      "_regra": "No curto a imagem não entra (o título é o destaque). No médio e longo entram até 3 imagens, sempre com tamanho fixo: a foto é recortada para caber no quadro, mesmo se for vertical.",
       "curto": false,
       "medio": true,
-      "longo": true
+      "longo": true,
+      "maximo": 3,
+      "layouts": {
+        "_regra": "Largura útil de 536 px. 1 imagem: horizontal 16:9. 2 imagens: lado a lado. 3 imagens: uma grande e duas menores empilhadas (mosaico), com 8 px de respiro.",
+        "1": [
+          {
+            "w": 536,
+            "h": 300
+          }
+        ],
+        "2": [
+          {
+            "w": 264,
+            "h": 220
+          },
+          {
+            "w": 264,
+            "h": 220
+          }
+        ],
+        "3": [
+          {
+            "w": 352,
+            "h": 300
+          },
+          {
+            "w": 176,
+            "h": 146
+          },
+          {
+            "w": 176,
+            "h": 146
+          }
+        ]
+      },
+      "respiro": 8
     },
     "data": {
       "_regra": "Se houver data, entra o bloco padrão com a data em destaque (cítrico ou laranja, MS.138 p.168-171)."
@@ -228,5 +268,68 @@
     "tituloAvisoAcima": 60,
     "maxParagrafos": 12,
     "linkPrecisaHttps": true
+  },
+  "formatacao": {
+    "_regra": "Negrito, itálico e realce arredondado. O realce usa as cores de apoio e o cítrico, sempre com texto verde petróleo. Laranja fica reservado para o botão.",
+    "marcas": {
+      "negrito": "**texto**",
+      "italico": "*texto*",
+      "realce": "==(cor)texto=="
+    },
+    "realces": [
+      {
+        "id": "citrico",
+        "nome": "Cítrico",
+        "cor": "citrico",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "amarelo",
+        "nome": "Amarelo",
+        "cor": "apoioAmarelo",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "verde",
+        "nome": "Verde claro",
+        "cor": "apoioVerde",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "azul",
+        "nome": "Azul claro",
+        "cor": "apoioAzul",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "rosa",
+        "nome": "Rosa",
+        "cor": "apoioRosa",
+        "texto": "verdeEscuro"
+      },
+      {
+        "id": "areia",
+        "nome": "Areia",
+        "cor": "apoioAreia",
+        "texto": "verdeEscuro"
+      }
+    ]
+  },
+  "blocos": {
+    "_regra": "Cabeçalho e rodapé são fixos. Os blocos do meio podem mudar de ordem. No longo, se o botão estiver por último, ele também aparece depois do primeiro parágrafo; se estiver em outra posição, ele se repete no fim junto com a data (MS.138 p.171).",
+    "padrao": [
+      "imagens",
+      "titulo",
+      "data",
+      "texto",
+      "botao"
+    ],
+    "nomes": {
+      "imagens": "Imagens",
+      "titulo": "Título e subtítulo",
+      "data": "Data",
+      "texto": "Texto",
+      "botao": "Botão"
+    }
   }
 }

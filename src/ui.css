@@ -225,3 +225,46 @@ dialog iframe { width: 100%; height: 70vh; border: 1px solid var(--borda); borde
 .icone-quadro { width: 52px; height: 52px; border-radius: 14px 14px 0 14px; display: grid; place-items: center; }
 .icone-quadro img { width: 30px; height: 30px; }
 .icones-area figcaption { font-size: 13px; color: var(--suave); line-height: 1.3; }
+
+/* Imagens múltiplas e enquadramento */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.imagens.multi label.escolhida img { border-color: var(--institucional); }
+.imagens.multi input:disabled + img { opacity: .4; cursor: not-allowed; }
+.imagens .ordem-n { position: absolute; top: 6px; left: 6px; min-width: 22px; height: 22px; border-radius: 8px 8px 0 8px; background: var(--institucional); color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+.imagens .ordem-n:empty { display: none; }
+.ajustes-imagem { margin-top: 12px; }
+.ajustes-titulo { margin: 0 0 10px; font-size: 13px; color: var(--suave); }
+.ajustes-titulo b { color: var(--petroleo); }
+.ajustes-lista { display: grid; gap: 12px; }
+.ajustes-lista.q2 { grid-template-columns: 1fr 1fr; }
+.ajustes-lista.q3 { grid-template-columns: 2fr 1fr; grid-template-rows: auto auto; }
+.ajustes-lista.q3 > :first-child { grid-row: span 2; }
+.recorte-quadro { position: relative; overflow: hidden; width: 100%; background: var(--fundo); border-radius: 12px 12px 0 12px; cursor: grab; touch-action: none; user-select: none; outline-offset: 3px; }
+.recorte-quadro.arrastando { cursor: grabbing; }
+.recorte-quadro:focus-visible { outline: 3px solid var(--institucional); }
+.recorte-quadro img { position: absolute; top: 0; left: 0; max-width: none; pointer-events: none; transform-origin: 0 0; }
+.recorte-etiqueta { position: absolute; left: 8px; bottom: 8px; background: rgba(0,78,76,.85); color: #fff; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 8px 8px 8px 0; }
+.recorte-controles { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin-top: 6px; font-size: 13px; }
+.recorte-controles input[type=range] { flex: 1 1 90px; min-width: 90px; min-height: 0; padding: 0; border: 0; accent-color: var(--institucional); }
+.btn-mini { border: 1.5px solid var(--borda-forte); background: #fff; border-radius: 8px; padding: 5px 10px; font: inherit; font-size: 13px; font-weight: 700; color: var(--petroleo); cursor: pointer; }
+.btn-mini:hover:not(:disabled) { border-color: var(--institucional); }
+.btn-mini:disabled { opacity: .35; cursor: default; }
+
+/* Barra de formatação */
+.fmt-barra { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 6px; border: 1.5px solid var(--borda-forte); border-bottom: 0; border-radius: 10px 10px 0 0; background: var(--fundo); }
+.fmt-barra + input, .fmt-barra + textarea { border-top-left-radius: 0; border-top-right-radius: 0; }
+.fmt-btn { min-width: 32px; height: 30px; border: 1px solid transparent; border-radius: 8px; background: #fff; font: inherit; font-size: 14px; color: var(--petroleo); cursor: pointer; padding: 0 8px; }
+.fmt-btn:hover { border-color: var(--institucional); }
+.fmt-btn:focus-visible { outline: 2px solid var(--institucional); outline-offset: 1px; }
+.fmt-realce { border-radius: 999px; font-weight: 700; font-size: 12px; }
+.fmt-limpar { font-size: 12px; color: var(--suave); }
+.fmt-sep { width: 1px; height: 20px; background: var(--borda-forte); margin: 0 4px; }
+.fmt-rot { font-size: 12px; font-weight: 700; color: var(--suave); margin-right: 2px; }
+
+/* Ordem dos blocos */
+.ordem-blocos { list-style: none; counter-reset: bloco; margin: 8px 0 8px; padding: 0; display: grid; gap: 6px; }
+.ordem-blocos li { counter-increment: bloco; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 10px; border: 1.5px solid var(--borda); border-radius: 12px 12px 0 12px; background: #fff; }
+.ordem-nome::before { content: counter(bloco); display: inline-grid; place-items: center; width: 22px; height: 22px; margin-right: 10px; border-radius: 8px 8px 0 8px; background: var(--petroleo); color: #fff; font-size: 12px; font-weight: 800; }
+.ordem-nome { font-weight: 700; font-size: 14px; color: var(--petroleo); }
+.ordem-acoes { display: flex; gap: 4px; }
+@media (max-width: 560px) { .ajustes-lista.q2, .ajustes-lista.q3 { grid-template-columns: 1fr; } .ajustes-lista.q3 > :first-child { grid-row: auto; } }

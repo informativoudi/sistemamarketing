@@ -113,3 +113,17 @@ create trigger antes_de_cadastrar
 
 -- ============ 5. Seu acesso (rode separado, com o SEU usuário do GitHub) ============
 -- insert into public.acessos (github, nome, papel) values ('seu-usuario', 'Seu nome', 'dono');
+
+-- ============ 6. Banco de imagens das peças (Supabase Storage) ============
+-- As imagens recortadas de cada e-mail ficam numa pasta pública "pecas/<código>/".
+-- Público só para leitura (o e-mail precisa mostrar a imagem); envio só JPEG/PNG até 1 MB.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('pecas', 'pecas', true, 1048576, array['image/jpeg', 'image/png'])
+on conflict (id) do update set public = true, file_size_limit = excluded.file_size_limit, allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "enviar imagens das pecas" on storage.objects;
+create policy "enviar imagens das pecas" on storage.objects
+  for insert to anon, authenticated with check (bucket_id = 'pecas');
+drop policy if exists "substituir imagens das pecas" on storage.objects;
+create policy "substituir imagens das pecas" on storage.objects
+  for update to anon, authenticated using (bucket_id = 'pecas') with check (bucket_id = 'pecas');

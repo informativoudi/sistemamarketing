@@ -9,8 +9,9 @@
   var R = window.UnimedRegistro;
   var $ = function (id) { return document.getElementById(id); };
 
-  var estado = { marca: null, tendencias: null, sistema: null, indice: null, formato: null, ultimoHtml: '', ultimoCodigo: '', ultimoTitulo: '' };
-  var LARGOS = { publico: 1, cabecalho: 1, tema: 1, titulo: 1, subtitulo: 1, texto: 1, imagem: 1, local: 1 };
+  var Rc = window.UnimedRecorte;
+  var estado = { marca: null, tendencias: null, sistema: null, indice: null, formato: null, ultimoHtml: '', ultimoCodigo: '', ultimoTitulo: '', imagens: [], ordem: null };
+  var LARGOS = { publico: 1, cabecalho: 1, tema: 1, titulo: 1, subtitulo: 1, texto: 1, imagens: 1, local: 1, ordem: 1 };
 
   async function json(caminho) {
     var r = await fetch(caminho, { cache: 'no-store' });
@@ -104,38 +105,135 @@
       caixa.appendChild(rotulo); caixa.appendChild(grupo);
       return caixa;
     }
-    if (c.tipo === 'imagem-aprovada') {
-      var grade = el('div', { 'class': 'imagens', role: 'radiogroup', 'aria-labelledby': id + '-r' });
-      rotulo = el('span', { id: id + '-r', style: 'font-weight:700;font-size:14px;color:#1d1d1b' }, [c.rotulo + ' ', el('span', { 'class': 'opc', texto: '(da biblioteca aprovada)' })]);
-      grade.appendChild(el('label', {}, [el('input', { type: 'radio', name: c.id, value: '', checked: true, 'aria-label': 'Sem imagem' }), el('span', { 'class': 'nenhuma', texto: 'Sem imagem' })]));
-      estado.marca.imagensAprovadas.forEach(function (img) {
-        grade.appendChild(el('label', {}, [el('input', { type: 'radio', name: c.id, value: img.id, 'aria-label': img.descricao }), el('img', { src: img.arquivo, alt: '' })]));
-      });
-      caixa.appendChild(rotulo); caixa.appendChild(grade);
-      caixa.appendChild(el('span', { 'class': 'ajuda', texto: 'Só imagens aprovadas pela Comunicação. No modelo curto a imagem não entra.' }));
-      return caixa;
-    }
+    if (c.tipo === 'imagens-aprovadas') return campoImagens(c, caixa, id);
     if (c.tipo === 'texto-longo') entrada = el('textarea', { id: id, name: c.id, rows: 8 });
     else entrada = el('input', { id: id, name: c.id, type: c.tipo === 'data' ? 'date' : c.tipo === 'hora' ? 'time' : c.tipo === 'link' ? 'url' : 'text', placeholder: c.tipo === 'link' ? 'https://' : '' });
     var cont = contador(c, entrada);
     if (cont) rotulo.appendChild(cont);
     caixa.appendChild(rotulo);
+    if (c.formatacao && window.UnimedFormatacao) caixa.appendChild(window.UnimedFormatacao.barra(entrada, realcesResolvidos()));
     caixa.appendChild(entrada);
     if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
+    return caixa;
+  }
+
+  function realcesResolvidos() {
+    var cores = estado.marca.cores;
+    return ((estado.formato.formatacao && estado.formato.formatacao.realces) || []).map(function (r) {
+      return { id: r.id, nome: r.nome, fundo: cores[r.cor] || r.cor, texto: cores[r.texto] || r.texto };
+    });
+  }
+
+  /* ---------- Imagens: até 3, escolha na biblioteca e ajuste do enquadramento ---------- */
+  function slotsPara(qtd) {
+    var lay = estado.formato.arvore.imagem.layouts || {};
+    return lay[String(qtd)] || [];
+  }
+
+  function campoImagens(c, caixa, id) {
+    var limite = c.limite || 3;
+    var rotulo = el('span', { id: id + '-r', style: 'font-weight:700;font-size:14px;color:#1d1d1b' }, [c.rotulo + ' ', el('span', { 'class': 'opc', texto: '(até ' + limite + ', da biblioteca aprovada)' })]);
+    var grade = el('div', { 'class': 'imagens multi', role: 'group', 'aria-labelledby': id + '-r' });
+    var ajustes = el('div', { 'class': 'ajustes-imagem', 'aria-live': 'polite' });
+
+    function redesenhar() {
+      var sel = estado.imagens.map(function (i) { return i.id; });
+      grade.querySelectorAll('label').forEach(function (lb) {
+        var cb = lb.querySelector('input');
+        var pos = sel.indexOf(cb.value);
+        cb.checked = pos >= 0;
+        cb.disabled = pos < 0 && sel.length >= limite;
+        var n = lb.querySelector('.ordem-n');
+        n.textContent = pos >= 0 ? String(pos + 1) : '';
+        lb.classList.toggle('escolhida', pos >= 0);
+      });
+      ajustes.textContent = '';
+      if (!estado.imagens.length) return;
+      var slots = slotsPara(estado.imagens.length);
+      var layoutNome = { 1: 'Uma imagem horizontal', 2: 'Duas imagens lado a lado', 3: 'Mosaico: uma grande e duas menores' }[estado.imagens.length];
+      ajustes.appendChild(el('p', { 'class': 'ajustes-titulo' }, [el('b', { texto: layoutNome }), ' · arraste cada foto para ajustar o enquadramento.']));
+      var lista = el('div', { 'class': 'ajustes-lista q' + estado.imagens.length });
+      estado.imagens.forEach(function (im, i) {
+        var ap = estado.marca.imagensAprovadas.filter(function (a) { return a.id === im.id; })[0];
+        if (!ap || !slots[i]) return;
+        lista.appendChild(Rc.editor({
+          id: im.id, numero: i + 1, src: ap.arquivo, w: slots[i].w, h: slots[i].h,
+          rotulo: 'Imagem ' + (i + 1) + ': ' + ap.descricao,
+          ajuste: im,
+          aoMudar: function (aj) { im.x = aj.x; im.y = aj.y; im.zoom = aj.zoom; agendarPrevia(); }
+        }));
+      });
+      ajustes.appendChild(lista);
+    }
+
+    estado.marca.imagensAprovadas.forEach(function (img) {
+      var cb = el('input', { type: 'checkbox', name: c.id, value: img.id, 'aria-label': img.descricao });
+      cb.addEventListener('change', function () {
+        if (cb.checked) estado.imagens.push({ id: img.id, x: 0.5, y: 0.5, zoom: 1 });
+        else estado.imagens = estado.imagens.filter(function (i) { return i.id !== img.id; });
+        redesenhar(); agendarPrevia();
+      });
+      grade.appendChild(el('label', {}, [cb, el('img', { src: img.arquivo, alt: '' }), el('span', { 'class': 'ordem-n', 'aria-hidden': 'true' })]));
+    });
+    caixa.appendChild(rotulo); caixa.appendChild(grade);
+    if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda + ' No modelo curto as imagens não entram.' }));
+    caixa.appendChild(ajustes);
+    redesenhar();
+    return caixa;
+  }
+
+  /* ---------- Ordem dos blocos (modular) ---------- */
+  function campoOrdem() {
+    var b = estado.formato.blocos;
+    if (!b) return null;
+    if (!estado.ordem) estado.ordem = b.padrao.slice();
+    var caixa = el('div', { 'class': 'campo largo', 'data-campo': 'ordem' });
+    caixa.appendChild(el('span', { id: 'ordem-r', style: 'font-weight:700;font-size:14px;color:#1d1d1b' }, ['Ordem dos blocos ', el('span', { 'class': 'opc', texto: '(cabeçalho e rodapé são fixos)' })]));
+    var lista = el('ol', { 'class': 'ordem-blocos', 'aria-labelledby': 'ordem-r' });
+    var anuncio = el('span', { 'class': 'sr-only', 'aria-live': 'polite' });
+    function mover(i, d) {
+      var j = i + d;
+      if (j < 0 || j >= estado.ordem.length) return;
+      var t = estado.ordem[i]; estado.ordem[i] = estado.ordem[j]; estado.ordem[j] = t;
+      desenhar(j, d);
+      anuncio.textContent = b.nomes[t] + ' agora na posição ' + (j + 1) + '.';
+      agendarPrevia();
+    }
+    function desenhar(foco, dir) {
+      lista.textContent = '';
+      estado.ordem.forEach(function (k, i) {
+        var sobe = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Subir ' + b.nomes[k], disabled: i === 0, onclick: function () { mover(i, -1); } }, ['↑']);
+        var desce = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Descer ' + b.nomes[k], disabled: i === estado.ordem.length - 1, onclick: function () { mover(i, 1); } }, ['↓']);
+        lista.appendChild(el('li', {}, [el('span', { 'class': 'ordem-nome', texto: b.nomes[k] }), el('span', { 'class': 'ordem-acoes' }, [sobe, desce])]));
+      });
+      if (foco != null) {
+        var alvo = lista.children[foco] && lista.children[foco].querySelectorAll('button')[dir < 0 ? 0 : 1];
+        if (alvo && !alvo.disabled) alvo.focus(); else if (lista.children[foco]) lista.children[foco].querySelector('button:not([disabled])').focus();
+      }
+    }
+    var restaurar = el('button', { type: 'button', 'class': 'btn-mini', onclick: function () { estado.ordem = b.padrao.slice(); desenhar(); agendarPrevia(); } }, ['Voltar ao padrão']);
+    desenhar();
+    caixa.appendChild(lista); caixa.appendChild(restaurar); caixa.appendChild(anuncio);
+    caixa.appendChild(el('span', { 'class': 'ajuda', texto: 'No modelo longo o botão se repete no fim, junto com a data.' }));
     return caixa;
   }
 
   function montarFormulario() {
     var caixa = $('campos');
     caixa.textContent = '';
+    estado.imagens = [];
+    estado.ordem = null;
     estado.formato.campos.forEach(function (c) { caixa.appendChild(montarCampo(c)); });
+    var ordem = campoOrdem();
+    if (ordem) caixa.appendChild(ordem);
   }
 
   function lerDados() {
     var f = $('formulario');
     var dados = {};
     estado.formato.campos.forEach(function (c) {
-      if (c.tipo === 'escolha' || c.tipo === 'imagem-aprovada') {
+      if (c.tipo === 'imagens-aprovadas') { dados[c.id] = estado.imagens.map(function (i) { return { id: i.id, x: i.x, y: i.y, zoom: i.zoom }; }); return; }
+      if (c.tipo === 'escolha') {
         var marcado = f.querySelector('input[name="' + c.id + '"]:checked');
         dados[c.id] = marcado ? marcado.value : '';
       } else {
@@ -144,6 +242,7 @@
       }
     });
     dados.area = $('f-area') ? $('f-area').value : '';
+    if (estado.ordem) dados.ordem = estado.ordem.slice();
     dados._imagensAprovadas = estado.marca.imagensAprovadas;
     dados._linguagem = estado.marca.linguagem;
     return dados;
@@ -153,7 +252,17 @@
   var espera;
   function agendarPrevia() { clearTimeout(espera); espera = setTimeout(atualizarPrevia, 220); }
 
-  function atualizarPrevia(codigo) {
+  var rodada = 0;
+  /* Recorta as imagens no tamanho fixo de cada quadro (JPEG 2x). */
+  async function recortar(plano) {
+    if (!plano.imagens) return;
+    await Promise.all(plano.imagens.itens.map(async function (it) {
+      it.src = await Rc.cortar(it.arquivo, it.w, it.h, it, 2);
+    }));
+  }
+
+  async function atualizarPrevia(codigo, srcs) {
+    var minha = ++rodada;
     var dados = lerDados();
     var quadro = $('quadro');
     if (!M.limpar(dados.titulo) || !M.limpar(dados.texto)) {
@@ -161,6 +270,9 @@
       return null;
     }
     var plano = M.decidir(estado.formato, estado.marca, estado.tendencias, dados);
+    try { await recortar(plano); } catch (e) { /* segue com a imagem original */ }
+    if (srcs && plano.imagens) plano.imagens.itens.forEach(function (it, i) { if (srcs[i]) it.src = srcs[i]; });
+    if (minha !== rodada && !codigo) return null;
     var modelo = window.UnimedModelos[estado.formato.id];
     var html = modelo.render(plano, dados, estado.marca, { codigo: codigo || 'UNI-' + estado.formato.sigla + '-PRÉVIA', baseUrl: estado.sistema.baseUrlPublica || location.href.replace(/[^/]*$/, '') });
     quadro.srcdoc = html;
@@ -173,10 +285,29 @@
     chips.appendChild(el('span', { texto: 'Tema ' + plano.tema.rotulo }));
     if (plano.data) chips.appendChild(el('span', { texto: 'Data' }));
     if (plano.botao) chips.appendChild(el('span', { texto: 'Botão' }));
-    if (plano.imagem) chips.appendChild(el('span', { texto: 'Imagem' }));
+    if (plano.imagens) chips.appendChild(el('span', { texto: plano.imagens.quantidade + (plano.imagens.quantidade > 1 ? ' imagens' : ' imagem') }));
     var lista = $('porque'); lista.textContent = '';
     plano.porque.forEach(function (p) { lista.appendChild(el('li', { texto: p })); });
     return { plano: plano, html: html, dados: dados };
+  }
+
+  /* Na hora de gerar: envia os recortes ao banco de imagens (Supabase Storage) para o e-mail
+     ter endereços públicos. Sem banco, as imagens ficam embutidas (serve para baixar, não para disparo). */
+  async function publicarImagens(codigo) {
+    var dados = lerDados();
+    var plano = M.decidir(estado.formato, estado.marca, estado.tendencias, dados);
+    if (!plano.imagens) return { srcs: null, embutidas: false };
+    await recortar(plano);
+    var cfg = estado.sistema.registro || {};
+    if (cfg.modo !== 'supabase' || !R.enviarImagem) return { srcs: null, embutidas: true };
+    try {
+      var srcs = await Promise.all(plano.imagens.itens.map(function (it, i) {
+        return R.enviarImagem(cfg, codigo + '/imagem-' + (i + 1) + '.jpg', Rc.paraBlob(it.src));
+      }));
+      return { srcs: srcs, embutidas: false };
+    } catch (e) {
+      return { srcs: null, embutidas: true, erro: e.message };
+    }
   }
 
   /* ---------- Gerar e registrar ---------- */
@@ -209,9 +340,11 @@
     var botao = $('gerar'); botao.disabled = true;
     try {
       var codigo = M.gerarCodigo(estado.formato.sigla);
-      var r = atualizarPrevia(codigo);
+      var pub = await publicarImagens(codigo);
+      var r = await atualizarPrevia(codigo, pub.srcs);
       var impressao = await R.hash(r.html);
       var conteudo = Object.assign({}, dados); delete conteudo._imagensAprovadas; delete conteudo._linguagem;
+      estado.imagensEmbutidas = pub.embutidas;
       await R.salvar(estado.sistema.registro, {
         codigo: codigo,
         criado_em: new Date().toISOString(),
@@ -222,7 +355,7 @@
         variante: r.plano.variante,
         titulo: M.limpar(dados.titulo),
         caracteres: r.plano.caracteres,
-        imagem: dados.imagem || null,
+        imagem: (dados.imagens || []).map(function (i) { return i.id; }).join(', ') || null,
         tem_data: !!r.plano.data,
         tem_botao: !!r.plano.botao,
         conteudo: conteudo,
@@ -235,7 +368,10 @@
       $('codigo').textContent = codigo;
       $('formulario').hidden = true;
       $('feito').hidden = false;
-      $('copiado').textContent = '';
+      var local = (estado.sistema.registro || {}).modo !== 'supabase';
+      $('copiado').textContent = !estado.imagensEmbutidas ? '' : local
+        ? 'Modo de teste: as imagens ficaram embutidas no arquivo. Servem para baixar e ajustar; para disparo, use o site publicado.'
+        : 'Atenção: o banco de imagens não respondeu e as imagens ficaram embutidas no arquivo. Servem para baixar e ajustar, mas podem não aparecer no disparo do e-mail.';
       $('baixar').focus();
     } catch (e) {
       $('mensagens').appendChild(el('div', { 'class': 'alerta erro', role: 'alert', texto: 'Não foi possível registrar a peça: ' + e.message }));
@@ -273,6 +409,7 @@
     $('f-solicitante').value = nome; $('f-area').value = area; $('formulario').hidden = false; $('feito').hidden = true; $('mensagens').textContent = '';
     montarFormulario(); atualizarPrevia();
   }
+
 
   /* ---------- Início ---------- */
   async function iniciar() {

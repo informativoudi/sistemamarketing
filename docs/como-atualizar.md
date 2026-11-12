@@ -46,3 +46,11 @@ Ao mudar algo do manual, suba o número de `"versao"` (ex.: `2027.1` → `2027.2
 ## Regras de linguagem
 
 `config/marca.json → linguagem`: limite de palavras por frase, itens por lista, exclamações e a lista de estrangeirismos com a sugestão em português. São avisos: não impedem gerar a peça.
+
+## Imagens, formatação e blocos do e-mail
+
+`config/formatos/email-marketing.json`:
+
+- `arvore.imagem.layouts`: tamanho de cada quadro para 1, 2 ou 3 imagens. As fotos são recortadas no navegador e, no site publicado, enviadas para a pasta pública `pecas/<código>/` do Supabase (parte 6 de `docs/banco-supabase.sql`).
+- `formatacao.realces`: cores do realce (use só cores de apoio e cítrico; laranja é do botão).
+- `blocos.padrao`: ordem inicial dos blocos do meio do e-mail.

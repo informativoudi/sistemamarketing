@@ -16,8 +16,17 @@
     return String(v == null ? '' : v).replace(/\r\n?/g, '\n').replace(/[ \t]+/g, ' ').trim();
   }
 
+  /* Tira as marcas de formatação (**negrito**, *itálico*, ==(cor)realce==) para contar e decidir. */
+  function semMarcas(texto) {
+    return String(texto == null ? '' : texto)
+      .replace(/==\([a-z0-9-]+\)([\s\S]+?)==/gi, '$1')
+      .replace(/==([\s\S]+?)==/g, '$1')
+      .replace(/\*\*([\s\S]+?)\*\*/g, '$1')
+      .replace(/(^|[^*\w])\*(?=\S)([^*\n]+?)\*(?!\*)/g, '$1$2');
+  }
+
   function contar(texto) {
-    return limpar(texto).replace(/\s+/g, ' ').length;
+    return semMarcas(limpar(texto)).replace(/\s+/g, ' ').length;
   }
 
   /* Ativa = status "ativa" no Radar de Tendências. */
@@ -49,7 +58,8 @@
     });
     return blocos.map(function (b, i) {
       if (b.tipo !== 'paragrafo') return b;
-      var curta = b.texto.length <= maxIntertitulo && !/[.!?:;,…]$/.test(b.texto);
+      var puro = semMarcas(b.texto);
+      var curta = puro.length <= maxIntertitulo && !/[.!?:;,…]$/.test(puro);
       var temSeguinte = i < blocos.length - 1;
       if (permitirIntertitulo && curta && temSeguinte) return { tipo: 'intertitulo', texto: b.texto };
       return b;
@@ -60,17 +70,17 @@
   function revisarLinguagem(dados, ling) {
     var avisos = [];
     if (!ling) return avisos;
-    var titulo = limpar(dados.titulo);
+    var titulo = semMarcas(limpar(dados.titulo));
     var letras = titulo.replace(/[^A-Za-zÀ-ÿ]/g, '');
     if (letras.length >= 4 && letras === letras.toUpperCase()) {
       avisos.push({ campo: 'titulo', msg: 'Título todo em maiúsculas. O manual pede maiúsculas e minúsculas, que leem melhor.' });
     }
-    var tudo = [titulo, limpar(dados.subtitulo), limpar(dados.texto), limpar(dados.ctaTexto)].join('\n');
+    var tudo = semMarcas([titulo, limpar(dados.subtitulo), limpar(dados.texto), limpar(dados.ctaTexto)].join('\n'));
     var exclam = (tudo.match(/!/g) || []).length;
     if (ling.maxExclamacoes != null && exclam > ling.maxExclamacoes) {
       avisos.push({ campo: 'texto', msg: 'São ' + exclam + ' pontos de exclamação. Use no máximo ' + ling.maxExclamacoes + '; o tom é próximo, sem exagero.' });
     }
-    var frases = limpar(dados.texto).replace(/\n+/g, ' ').split(/(?<=[.!?…])\s+/);
+    var frases = semMarcas(limpar(dados.texto)).replace(/\n+/g, ' ').split(/(?<=[.!?…])\s+/);
     var longas = frases.filter(function (f) { return f.split(/\s+/).filter(Boolean).length > ling.frasesLongasPalavras; }).length;
     if (longas) avisos.push({ campo: 'texto', msg: longas + (longas > 1 ? ' frases têm' : ' frase tem') + ' mais de ' + ling.frasesLongasPalavras + ' palavras. Frases curtas, em ordem direta, ficam mais claras.' });
 
@@ -114,6 +124,7 @@
     var erros = [];
     var avisos = [];
     (formato.campos || []).forEach(function (c) {
+      if (c.tipo === 'imagens-aprovadas') return;
       var v = limpar(dados[c.id]);
       if (c.obrigatorio && !v) erros.push({ campo: c.id, msg: 'Preencha o campo "' + c.rotulo + '".' });
       if (v && c.max && contar(v) > c.max) erros.push({ campo: c.id, msg: '"' + c.rotulo + '" tem ' + contar(v) + ' caracteres; o máximo é ' + c.max + '.' });
@@ -152,9 +163,17 @@
       erros.push({ campo: 'texto', msg: 'São ' + paragrafos + ' parágrafos; o máximo é ' + val.maxParagrafos + '. Para conteúdo assim, considere uma página ou cartilha.' });
     }
 
-    if (limpar(dados.imagem)) {
-      var ok = (dados._imagensAprovadas || []).some(function (i) { return i.id === dados.imagem; });
-      if (!ok) erros.push({ campo: 'imagem', msg: 'Use uma imagem da biblioteca aprovada.' });
+    var imgs = Array.isArray(dados.imagens) ? dados.imagens : [];
+    var maxImg = (formato.arvore && formato.arvore.imagem && formato.arvore.imagem.maximo) || 3;
+    if (imgs.length > maxImg) erros.push({ campo: 'imagens', msg: 'Use no máximo ' + maxImg + ' imagens.' });
+    imgs.forEach(function (im) {
+      var ok = (dados._imagensAprovadas || []).some(function (i) { return i.id === im.id; });
+      if (!ok) erros.push({ campo: 'imagens', msg: 'Use só imagens da biblioteca aprovada.' });
+    });
+
+    if (dados.ordem && formato.blocos) {
+      var validos = formato.blocos.padrao.slice().sort().join(',');
+      if (dados.ordem.slice().sort().join(',') !== validos) erros.push({ campo: 'ordem', msg: 'Ordem dos blocos inválida.' });
     }
 
     return { erros: erros, avisos: avisos, ok: erros.length === 0 };
@@ -183,10 +202,23 @@
     var ativas = tendenciasAtivas(tendencias);
     var data = lerData(dados.data);
     var temBotao = !!(limpar(dados.ctaTexto) && limpar(dados.ctaLink));
-    var imagem = null;
-    if (arv.imagem[variante] && limpar(dados.imagem)) {
-      imagem = (marca.imagensAprovadas || []).filter(function (i) { return i.id === dados.imagem; })[0] || null;
+    var escolhidas = Array.isArray(dados.imagens) ? dados.imagens.slice(0, arv.imagem.maximo || 3) : [];
+    var imagens = null;
+    if (arv.imagem[variante] && escolhidas.length) {
+      var slots = arv.imagem.layouts[String(escolhidas.length)];
+      imagens = {
+        quantidade: escolhidas.length,
+        respiro: arv.imagem.respiro || 8,
+        itens: escolhidas.map(function (e, i) {
+          var ap = (marca.imagensAprovadas || []).filter(function (a) { return a.id === e.id; })[0];
+          return ap ? { id: ap.id, arquivo: ap.arquivo, descricao: ap.descricao, w: slots[i].w, h: slots[i].h, x: e.x == null ? 0.5 : e.x, y: e.y == null ? 0.5 : e.y, zoom: e.zoom || 1, src: e.src || null } : null;
+        }).filter(Boolean)
+      };
+      if (!imagens.itens.length) imagens = null;
     }
+
+    var padraoOrdem = (formato.blocos && formato.blocos.padrao) || ['imagens', 'titulo', 'data', 'texto', 'botao'];
+    var ordem = (Array.isArray(dados.ordem) && dados.ordem.slice().sort().join(',') === padraoOrdem.slice().sort().join(',')) ? dados.ordem.slice() : padraoOrdem.slice();
 
     var blocos = dividirTexto(dados.texto, arv.intertitulo.maxCaracteres, variante !== 'curto');
 
@@ -220,9 +252,11 @@
         fundoInterno: cores[tema.fundoInterno] || cores.apoioAreia,
         destaque: cores[tema.destaque], textoDestaque: cores[tema.textoDestaque] || '#ffffff'
       },
-      imagem: imagem,
+      imagens: imagens,
+      ordem: ordem,
+      realces: formato.formatacao ? formato.formatacao.realces : [],
       data: data ? { info: data, hora: limpar(dados.hora), local: limpar(dados.local), grande: variante === 'curto' } : null,
-      botao: temBotao ? { texto: limpar(dados.ctaTexto), link: limpar(dados.ctaLink), cor: corBotao, corTexto: textoBotao, repetir: variante === 'longo' && arv.botao.repetirNoLongo && blocos.length > 2 } : null,
+      botao: temBotao ? { texto: limpar(dados.ctaTexto), link: limpar(dados.ctaLink), cor: corBotao, corTexto: textoBotao, repetir: variante === 'longo' && arv.botao.repetirNoLongo && blocos.length > 2, ultimo: ordem[ordem.length - 1] === 'botao' } : null,
       blocos: blocos,
       flags: {
         quadradoLaranja: !!ativas['quadrado-laranja'],
@@ -239,7 +273,8 @@
         'Título com ' + tamTitulo + ' caracteres → fonte ' + degrau[variante] + ' px.',
         data ? 'Tem data → bloco de data em destaque.' : 'Sem data.',
         temBotao ? ('Tem botão → CTA laranja' + (variante === 'longo' && arv.botao.repetirNoLongo && blocos.length > 2 ? ', repetido no fim com a data.' : '.')) : 'Sem botão.',
-        imagem ? 'Imagem aprovada incluída.' : (limpar(dados.imagem) && !arv.imagem[variante] ? 'No modelo curto a imagem não entra.' : 'Sem imagem.')
+        imagens ? (imagens.quantidade === 1 ? '1 imagem → horizontal 536 × 300.' : imagens.quantidade === 2 ? '2 imagens → lado a lado.' : '3 imagens → mosaico (uma grande e duas menores).') : (escolhidas.length && !arv.imagem[variante] ? 'No modelo curto a imagem não entra.' : 'Sem imagem.'),
+        ordem.join(',') === padraoOrdem.join(',') ? 'Blocos na ordem padrão.' : 'Ordem dos blocos personalizada.'
       ]
     };
   }
@@ -253,7 +288,7 @@
     return 'UNI-' + sigla + '-' + ano + '-' + base + sorte;
   }
 
-  var api = { limpar: limpar, contar: contar, dividirTexto: dividirTexto, revisarLinguagem: revisarLinguagem, lerData: lerData, validar: validar, decidir: decidir, gerarCodigo: gerarCodigo, tendenciasAtivas: tendenciasAtivas };
+  var api = { limpar: limpar, semMarcas: semMarcas, contar: contar, dividirTexto: dividirTexto, revisarLinguagem: revisarLinguagem, lerData: lerData, validar: validar, decidir: decidir, gerarCodigo: gerarCodigo, tendenciasAtivas: tendenciasAtivas };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else raiz.UnimedMotor = api;
 })(typeof window !== 'undefined' ? window : this);

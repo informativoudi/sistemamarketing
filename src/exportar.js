@@ -121,7 +121,10 @@
           if (!t.trim() && !lista.length) return;
           var st = win.getComputedStyle(f.parentNode);
           if (st.textTransform === 'uppercase') t = t.toUpperCase();
-          lista.push({ text: t, options: { color: hex(st.color) || '3C3C3B', transparency: transparencia(st.color) || undefined, bold: Number(st.fontWeight) >= 600 || st.fontWeight === 'bold', italic: st.fontStyle === 'italic' } });
+          var op = { color: hex(st.color) || '3C3C3B', transparency: transparencia(st.color) || undefined, bold: Number(st.fontWeight) >= 600 || st.fontWeight === 'bold', italic: st.fontStyle === 'italic' };
+          // Realce: trecho em <span> com fundo próprio dentro do texto.
+          if (f.parentNode !== el && f.parentNode.tagName === 'SPAN') { var fundo = hex(st.backgroundColor); if (fundo) op.highlight = fundo; }
+          lista.push({ text: t, options: op });
         } else if (f.nodeName === 'BR') {
           if (lista.length) lista[lista.length - 1].options.breakLine = true;
         } else if (f.nodeType === 1) andar(f);

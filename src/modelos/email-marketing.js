@@ -25,6 +25,12 @@
     return (base || '').replace(/\/?$/, '/') + caminho.replace(/^\//, '');
   }
 
+  function puro(t) {
+    return String(t == null ? '' : t)
+      .replace(/==\([a-z0-9-]+\)([\s\S]+?)==/gi, '$1').replace(/==([\s\S]+?)==/g, '$1')
+      .replace(/\*\*([\s\S]+?)\*\*/g, '$1').replace(/(^|[^*\w])\*(?=\S)([^*\n]+?)\*(?!\*)/g, '$1$2');
+  }
+
   function render(plano, dados, marca, opcoes) {
     opcoes = opcoes || {};
     var c = marca.cores;
@@ -37,7 +43,25 @@
     var TX = 'data-x="texto"';
     var CX = 'data-x="caixa"';
 
-    var titulo = esc(dados.titulo).replace(/[.!]\s*$/, '');
+    /* Formatação: **negrito**, *itálico* e ==(cor)realce== arredondado com as cores de apoio. */
+    var realces = {};
+    (plano.realces || []).forEach(function (r) { realces[r.id] = r; });
+    var primeiroRealce = (plano.realces || [])[0];
+    function realce(id, miolo) {
+      var r = realces[id] || primeiroRealce;
+      if (!r) return miolo;
+      var fundo = c[r.cor] || r.cor, cor = c[r.texto] || r.texto;
+      return '<span style="background-color:' + fundo + ';color:' + cor + ';border-radius:999px;padding:1px 8px;-webkit-box-decoration-break:clone;box-decoration-break:clone;">' + miolo + '</span>';
+    }
+    function rico(t) {
+      return esc(t)
+        .replace(/==\(([a-z0-9-]+)\)([\s\S]+?)==/gi, function (m, id, x) { return realce(id, x); })
+        .replace(/==([\s\S]+?)==/g, function (m, x) { return realce(null, x); })
+        .replace(/\*\*([\s\S]+?)\*\*/g, '<strong style="font-weight:bold;">$1</strong>')
+        .replace(/(^|[^*\w])\*(?=\S)([^*\n]+?)\*(?!\*)/g, '$1<em style="font-style:italic;">$2</em>');
+    }
+
+    var titulo = rico(String(dados.titulo || '').trim().replace(/[.!]\s*$/, ''));
     var quadrado = plano.flags.quadradoLaranja ? '<span style="color:' + c.laranja + ';">&#9632;</span>' : '';
 
     /* ---------- Botão (CTA laranja, MS.138 p.168) ---------- */
@@ -75,13 +99,13 @@
 
     /* ---------- Corpo ---------- */
     function paragrafo(t) {
-      return '<p ' + TX + ' style="margin:0 0 16px;font-family:' + F + ';font-size:16px;line-height:1.6;color:' + c.texto + ';">' + esc(t) + '</p>';
+      return '<p ' + TX + ' style="margin:0 0 16px;font-family:' + F + ';font-size:16px;line-height:1.6;color:' + c.texto + ';">' + rico(t) + '</p>';
     }
     function lista(itens) {
       return '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 18px;">' +
         itens.map(function (it) {
           return '<tr><td ' + TX + ' valign="top" width="20" style="width:20px;font-family:' + F + ';font-size:12px;line-height:25px;color:' + c.institucional + ';">&#9632;</td>' +
-            '<td ' + TX + ' valign="top" style="font-family:' + F + ';font-size:16px;line-height:1.55;color:' + c.texto + ';padding-bottom:6px;">' + esc(it) + '</td></tr>';
+            '<td ' + TX + ' valign="top" style="font-family:' + F + ';font-size:16px;line-height:1.55;color:' + c.texto + ';padding-bottom:6px;">' + rico(it) + '</td></tr>';
         }).join('') + '</table>';
     }
 
@@ -89,13 +113,14 @@
     var botaoColocado = false;
     plano.blocos.forEach(function (b, i) {
       if (b.tipo === 'intertitulo') {
-        corpo += '<h2 ' + TX + ' style="margin:28px 0 8px;font-family:' + F + ';font-size:' + plano.intertituloPx + 'px;line-height:1.25;font-weight:bold;color:' + c.verdeEscuro + ';">' + esc(b.texto) + '</h2>';
+        corpo += '<h2 ' + TX + ' style="margin:28px 0 8px;font-family:' + F + ';font-size:' + plano.intertituloPx + 'px;line-height:1.25;font-weight:bold;color:' + c.verdeEscuro + ';">' + rico(b.texto) + '</h2>';
       } else if (b.tipo === 'lista') {
         corpo += lista(b.itens);
       } else {
         corpo += paragrafo(b.texto);
       }
-      if (plano.botao && plano.botao.repetir && i === 0) { corpo += botao(); botaoColocado = true; }
+      // Longo com o botão por último: ele também entra depois do primeiro parágrafo.
+      if (plano.botao && plano.botao.repetir && plano.botao.ultimo && i === 0) { corpo += botao(); botaoColocado = true; }
     });
 
     /* No longo, fecha repetindo a data e o botão (MS.138 p.171). */
@@ -107,18 +132,53 @@
         botao('10px 0 28px') + '</td></tr></table>';
     }
 
-    var imagem = '';
-    if (plano.imagem) {
-      imagem = '<tr><td style="padding:28px 32px 0;"><img data-x="img" src="' + esc(url(base, plano.imagem.arquivo)) + '" width="536" alt="' + esc(plano.imagem.descricao) + '" style="display:block;width:100%;max-width:536px;height:auto;border:0;border-radius:' + (box ? '16px 16px 0 16px' : '0') + ';"></td></tr>';
+    /* ---------- Imagens: até 3, tamanho fixo (já recortadas no navegador) ---------- */
+    function foto(it, larguraPct) {
+      var src = it.src || url(base, it.arquivo);
+      var raio = box ? '12px 12px 0 12px' : '0';
+      var ajuste = it.src ? '' : 'object-fit:cover;object-position:' + Math.round(it.x * 100) + '% ' + Math.round(it.y * 100) + '%;height:' + it.h + 'px;';
+      return '<img data-x="img" src="' + esc(src) + '" width="' + it.w + '" height="' + it.h + '" alt="' + esc(it.descricao) + '" style="display:block;width:100%;max-width:' + it.w + 'px;' + (ajuste || 'height:auto;') + 'border:0;border-radius:' + raio + ';">';
+    }
+    function blocoImagens() {
+      var im = plano.imagens;
+      if (!im) return '';
+      var g = im.respiro, t = im.itens;
+      var abre = '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 26px;"><tr>';
+      if (t.length === 1) return abre + '<td>' + foto(t[0]) + '</td></tr></table>';
+      if (t.length === 2) {
+        return abre + '<td width="' + t[0].w + '" valign="top" style="width:49.25%;">' + foto(t[0]) + '</td>' +
+          '<td width="' + g + '" style="width:' + g + 'px;font-size:0;line-height:0;">&nbsp;</td>' +
+          '<td width="' + t[1].w + '" valign="top" style="width:49.25%;">' + foto(t[1]) + '</td></tr></table>';
+      }
+      return abre + '<td width="' + t[0].w + '" valign="top" style="width:65.67%;">' + foto(t[0]) + '</td>' +
+        '<td width="' + g + '" style="width:' + g + 'px;font-size:0;line-height:0;">&nbsp;</td>' +
+        '<td width="' + t[1].w + '" valign="top" style="width:32.84%;">' +
+        '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0"><tr><td>' + foto(t[1]) + '</td></tr>' +
+        '<tr><td height="' + g + '" style="height:' + g + 'px;font-size:0;line-height:0;">&nbsp;</td></tr>' +
+        '<tr><td>' + foto(t[2]) + '</td></tr></table></td></tr></table>';
     }
 
     var barra = '<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:0 0 10px;"><tr><td ' + CX + ' width="28" height="4" bgcolor="' + c.citrico + '" style="width:28px;height:4px;line-height:4px;font-size:0;background:' + c.citrico + ';">&nbsp;</td></tr></table>';
     var chapeu = barra + '<p ' + TX + ' style="margin:0 0 10px;font-family:' + F + ';font-size:12px;font-weight:bold;letter-spacing:2px;line-height:16px;text-transform:uppercase;color:' + c.institucional + ';">' + esc(plano.tema.rotulo) + '</p>';
     var h1 = '<h1 ' + TX + ' style="margin:0 0 ' + (dados.subtitulo ? '10px' : '20px') + ';font-family:' + F + ';font-size:' + plano.tituloPx + 'px;line-height:1.1;font-weight:bold;letter-spacing:-0.5px;color:' + c.verdeEscuro + ';">' + titulo + quadrado + '</h1>';
-    var subtitulo = dados.subtitulo ? '<p ' + TX + ' style="margin:0 0 22px;font-family:' + F + ';font-size:18px;font-style:italic;line-height:1.45;color:' + c.textoSuave + ';">' + esc(dados.subtitulo) + '</p>' : '';
-    var conteudo = chapeu + h1 + subtitulo + blocoData() + corpo + (botaoColocado ? '' : botao()) + fecho;
+    var subtitulo = dados.subtitulo ? '<p ' + TX + ' style="margin:0 0 22px;font-family:' + F + ';font-size:18px;font-style:italic;line-height:1.45;color:' + c.textoSuave + ';">' + rico(dados.subtitulo) + '</p>' : '';
 
-    var preheader = esc(dados.subtitulo || (plano.blocos[0] && plano.blocos[0].texto ? plano.blocos[0].texto.slice(0, 110) : ''));
+    /* ---------- Blocos na ordem escolhida (cabeçalho e rodapé fixos) ---------- */
+    var pecas = {
+      imagens: blocoImagens(),
+      titulo: chapeu + h1 + subtitulo,
+      data: blocoData(),
+      texto: corpo,
+      botao: ''
+    };
+    if (plano.botao) {
+      if (plano.botao.repetir && plano.botao.ultimo) pecas.botao = fecho;            // botão por último: vira o fecho com a data
+      else if (!botaoColocado) pecas.botao = botao();
+    }
+    var conteudo = plano.ordem.map(function (k) { return pecas[k] || ''; }).join('') +
+      (plano.botao && plano.botao.repetir && !plano.botao.ultimo ? fecho : '');     // botão em outra posição: repete no fim
+
+    var preheader = esc(puro(dados.subtitulo || (plano.blocos[0] && plano.blocos[0].texto ? plano.blocos[0].texto.slice(0, 110) : '')));
 
     /* ---------- Logo (Grupo no interno, Unimed no externo) ---------- */
     var logo = plano.publico.logo;
@@ -164,13 +224,13 @@
     }
 
     return '' +
-'<!doctype html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="x-apple-disable-message-reformatting">\n<title>' + titulo + '</title>\n</head>\n' +
+'<!doctype html>\n<html lang="pt-BR">\n<head>\n<meta charset="utf-8">\n<meta name="viewport" content="width=device-width, initial-scale=1">\n<meta name="x-apple-disable-message-reformatting">\n<title>' + esc(puro(dados.titulo)) + '</title>\n</head>\n' +
 '<body style="margin:0;padding:0;background:' + c.fundoPagina + ';">\n' +
 '<div style="display:none;max-height:0;overflow:hidden;opacity:0;">' + preheader + '</div>\n' +
 '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="' + c.fundoPagina + '" style="background:' + c.fundoPagina + ';"><tr><td align="center" style="padding:24px 12px;">\n' +
 '<table data-x="email" ' + CX + ' role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" bgcolor="#ffffff" style="width:100%;max-width:600px;background:#ffffff;">\n' +
 topo +
-imagem + '\n' +
+
 '<tr><td style="padding:30px 32px 6px;">' + conteudo + '</td></tr>\n' +
 /* Rodapé: área que assina + marca. */
 '<tr><td ' + CX + ' bgcolor="' + c.verdeEscuro + '" style="background:' + c.verdeEscuro + ';padding:24px 0 24px;">' +
