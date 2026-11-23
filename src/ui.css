@@ -1,4 +1,6 @@
 /* Interface do gerador e do painel · Unimed Uberlândia */
+@font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Light.woff2") format("woff2"); font-weight: 200; font-style: normal; font-display: swap; }
+@font-face { font-family: "Unimed Slab"; src: url("../assets/fonts/UnimedSlab-Bold.woff2") format("woff2"); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Book.woff2") format("woff2"); font-weight: 300; font-style: normal; font-display: swap; }
 @font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: "Unimed Sans"; src: url("../assets/fonts/UnimedSans-RegularItalic.woff2") format("woff2"); font-weight: 400; font-style: italic; font-display: swap; }
@@ -151,10 +153,52 @@ dialog .dentro { padding: 22px; }
 dialog iframe { width: 100%; height: 70vh; border: 1px solid var(--borda); border-radius: 12px 12px 0 12px; }
 
 /* Área restrita · login */
-.portao { display: grid; place-items: center; padding: clamp(24px, 8vh, 90px) 0; }
-.portao-cartao { width: min(460px, 100%); }
-.portao-titulo { margin: 0 0 6px; font-weight: 900; font-size: 30px; line-height: .95; letter-spacing: -0.03em; color: var(--petroleo); }
-.portao-titulo span { font-weight: 400; text-transform: none; color: var(--institucional); }
+.portao { display: grid; place-items: center; padding: clamp(16px, 6vh, 72px) 0; }
+.portao-moldura { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); width: min(940px, 100%); background: var(--superficie); border: 2px solid var(--petroleo); border-radius: 28px 28px 0 28px; box-shadow: 10px 10px 0 var(--petroleo); overflow: hidden; }
+.portao-marca { position: relative; display: flex; flex-direction: column; gap: 28px; padding: clamp(24px, 4vw, 44px); padding-bottom: 0; background-color: var(--petroleo); color: #fff;
+  background-image: linear-gradient(to right, rgba(255,255,255,.07) 1px, transparent 1px); background-size: calc(100% / 6) 100%; }
+.portao-meta { display: flex; justify-content: space-between; gap: 12px; margin: 0; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--citrico); }
+.portao-meta span:last-child { color: rgba(255,255,255,.6); text-align: right; }
+.portao-titulo { margin: 8px 0 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: .22em; font-size: clamp(44px, 6.4vw, 76px); line-height: .88; letter-spacing: -0.04em; color: #fff; }
+.portao-titulo .pt-black { font-weight: 900; text-transform: uppercase; }
+.portao-titulo .pt-light { font-weight: 200; letter-spacing: -0.03em; color: var(--citrico); }
+.portao-titulo .pt-light { white-space: nowrap; }
+.portao-titulo .pt-ponto { display: inline-block; width: .2em; height: .2em; margin-left: .12em; background: var(--laranja); }
+.portao-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.portao-lista li { display: grid; gap: 2px; padding-left: 16px; border-left: 3px solid var(--institucional); }
+.portao-lista b { font-size: 15px; }
+.portao-lista span { font-size: 13.5px; color: rgba(255,255,255,.72); }
+.portao-mosaico { display: block; width: calc(100% + 2 * clamp(24px, 4vw, 44px)); max-width: none; margin: auto calc(-1 * clamp(24px, 4vw, 44px)) 0; height: auto; }
+.portao-acesso { display: flex; flex-direction: column; justify-content: center; padding: clamp(24px, 4.5vw, 52px); }
+.portao-olho { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--institucional); }
+.portao-h2 { margin: 4px 0 24px; font-family: "Unimed Slab", var(--fonte); font-weight: 700; font-size: 36px; line-height: 1; color: var(--petroleo); }
+.portao-form { display: flex; flex-direction: column; gap: 8px; }
+.portao-form label { font-weight: 700; font-size: 14px; color: var(--forte); }
+.portao-campo { position: relative; }
+.portao-campo input { width: 100%; height: 54px; padding: 0 52px 0 16px; border: 2px solid var(--borda-forte); border-radius: 14px 14px 14px 0; background: var(--superficie); font-size: 17px; letter-spacing: .02em; }
+.portao-campo input:focus { border-color: var(--institucional); outline: none; box-shadow: 0 0 0 4px rgba(0,153,93,.18); }
+.portao-form.com-erro .portao-campo input { border-color: var(--erro); box-shadow: 0 0 0 4px rgba(179,38,30,.12); }
+.portao-ver { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 42px; height: 42px; display: grid; place-items: center; border: 0; border-radius: 10px; background: transparent; color: var(--suave); cursor: pointer; }
+.portao-ver:hover { background: var(--fundo); color: var(--petroleo); }
+.portao-dica { margin: 0 0 10px; font-size: 12.5px; color: var(--suave); min-height: 1.5em; }
+.portao-dica.caps { color: var(--aviso-texto); font-weight: 700; }
+.portao-entrar { width: 100%; justify-content: center; height: 54px; font-size: 17px; transition: transform .12s, box-shadow .12s, background .12s; box-shadow: 4px 4px 0 var(--citrico); }
+.portao-entrar:hover:not(:disabled) { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--citrico); }
+.portao-entrar:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0 0 0 var(--citrico); }
+.portao-entrar.carregando span { animation: portao-seta .8s ease-in-out infinite alternate; }
+@keyframes portao-seta { to { transform: translateX(6px); } }
+.portao-status { margin: 6px 0 0; min-height: 1.5em; font-size: 14px; font-weight: 700; color: var(--petroleo); }
+.portao-form.com-erro .portao-status { color: var(--erro); }
+.portao-rodape { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px 16px; margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--borda); font-size: 13px; color: var(--suave); }
+.portao-rodape a { font-weight: 700; text-decoration: none; color: var(--petroleo); }
+.portao-rodape a:hover { text-decoration: underline; text-underline-offset: 3px; }
+@media (max-width: 760px) {
+  .portao-moldura { grid-template-columns: minmax(0, 1fr); box-shadow: 6px 6px 0 var(--petroleo); }
+  .portao-marca { gap: 18px; }
+  .portao-lista { display: none; }
+  .portao-titulo { font-size: clamp(40px, 13vw, 60px); }
+}
+@media (prefers-reduced-motion: reduce) { .portao-entrar, .portao-entrar span { transition: none; animation: none !important; } }
 .portao-links { display: flex; gap: 18px; flex-wrap: wrap; margin: 16px 0 0; }
 .link { background: none; border: 0; padding: 0; cursor: pointer; color: var(--escuro); font-weight: 700; font-size: 14px; text-decoration: underline; text-underline-offset: 3px; }
 .alerta.ok { background: #e6f6ef; color: var(--escuro); }

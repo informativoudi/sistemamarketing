@@ -44,31 +44,84 @@
     return n;
   }
 
+  var OLHO = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var OLHO_FECHADO = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3l18 18M10.6 5.1A10.7 10.7 0 0 1 12 5c6.5 0 10 7 10 7a17 17 0 0 1-3.2 4.1M6.6 6.6A17 17 0 0 0 2 12s3.5 7 10 7a10 10 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg>';
+
+  function lado(titulo, texto) {
+    return el('li', null, [el('b', { texto: titulo }), el('span', { texto: texto })]);
+  }
+
   function telaPortao(mensagem, comFormulario, aoEntrar) {
     var caixa = document.getElementById('portao');
     caixa.textContent = '';
     caixa.hidden = false;
-    var cartao = el('div', { 'class': 'cartao portao-cartao' }, [
-      el('h1', { 'class': 'portao-titulo' }, ['ÁREA ', el('span', { texto: 'restrita' })]),
-      el('p', { 'class': 'sub', texto: 'Painel, Núcleo da Marca e Radar de Tendências. Só para o Marketing.' })
+
+    var marca = el('aside', { 'class': 'portao-marca', 'aria-hidden': 'false' }, [
+      el('p', { 'class': 'portao-meta' }, [el('span', { texto: 'KV 2027' }), el('span', { texto: 'Marketing · Unimed Uberlândia' })]),
+      el('h1', { 'class': 'portao-titulo' }, [
+        el('span', { 'class': 'pt-black', texto: 'Área' }),
+        el('span', { 'class': 'pt-light' }, ['restrita', el('span', { 'class': 'pt-ponto', 'aria-hidden': 'true' })])
+      ]),
+      el('ul', { 'class': 'portao-lista' }, [
+        lado('Painel', 'Todos os pedidos de peças, por área e data.'),
+        lado('Núcleo da Marca', 'Cores, fontes, logos e regras.'),
+        lado('Radar', 'As tendências e o Key Art do ano.')
+      ]),
+      el('img', { 'class': 'portao-mosaico', src: 'assets/mosaico-2027.svg', alt: '' })
     ]);
+
+    var lado2 = el('div', { 'class': 'portao-acesso' }, [
+      el('p', { 'class': 'portao-olho', texto: 'Só para o Marketing' }),
+      el('h2', { 'class': 'portao-h2', texto: 'Entrar' })
+    ]);
+
     if (comFormulario) {
-      var campo = el('input', { id: 'senha-painel', type: 'password', autocomplete: 'current-password' });
-      var status = el('p', { 'class': 'ajuda', role: 'status' });
-      var botao = el('button', { 'class': 'btn primario', type: 'submit' }, ['Entrar']);
-      var form = el('form', { 'class': 'portao-form' }, [el('label', { 'for': 'senha-painel', texto: 'Senha do Marketing' }), campo, botao, status]);
+      var campo = el('input', { id: 'senha-painel', type: 'password', autocomplete: 'current-password', placeholder: 'Digite a senha', 'aria-describedby': 'senha-dica' });
+      var ver = el('button', { type: 'button', 'class': 'portao-ver', 'aria-label': 'Mostrar senha', 'aria-pressed': 'false' });
+      ver.innerHTML = OLHO;
+      ver.addEventListener('click', function () {
+        var mostrar = campo.type === 'password';
+        campo.type = mostrar ? 'text' : 'password';
+        ver.innerHTML = mostrar ? OLHO_FECHADO : OLHO;
+        ver.setAttribute('aria-label', mostrar ? 'Esconder senha' : 'Mostrar senha');
+        ver.setAttribute('aria-pressed', String(mostrar));
+        campo.focus();
+      });
+      var dica = el('p', { id: 'senha-dica', 'class': 'portao-dica', texto: 'A senha fica salva só neste navegador.' });
+      var status = el('p', { 'class': 'portao-status', role: 'status', 'aria-live': 'polite' });
+      var botao = el('button', { 'class': 'btn primario portao-entrar', type: 'submit' }, ['Entrar', el('span', { 'aria-hidden': 'true', texto: '→' })]);
+      var form = el('form', { 'class': 'portao-form', novalidate: true }, [
+        el('label', { 'for': 'senha-painel', texto: 'Senha do Marketing' }),
+        el('div', { 'class': 'portao-campo' }, [campo, ver]),
+        dica, botao, status
+      ]);
+      campo.addEventListener('keyup', function (e) {
+        var caps = e.getModifierState && e.getModifierState('CapsLock');
+        dica.textContent = caps ? 'Atenção: o Caps Lock está ligado.' : 'A senha fica salva só neste navegador.';
+        dica.classList.toggle('caps', !!caps);
+      });
+      campo.addEventListener('input', function () { form.classList.remove('com-erro'); status.textContent = ''; });
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
-        if (!campo.value) { campo.focus(); return; }
-        botao.disabled = true; status.textContent = 'Conferindo…';
+        if (!campo.value) { form.classList.add('com-erro'); status.textContent = 'Digite a senha.'; campo.focus(); return; }
+        botao.disabled = true; botao.classList.add('carregando'); status.textContent = 'Conferindo…';
         try { gravar(await conferir(campo.value)); status.textContent = ''; aoEntrar(); }
-        catch (x) { status.textContent = x.message === 'Failed to fetch' ? 'Sem conexão com o registro.' : x.message; botao.disabled = false; campo.select(); }
+        catch (x) {
+          form.classList.add('com-erro');
+          status.textContent = /fetch|NetworkError/i.test(x.message) ? 'Sem conexão com o registro. Tente de novo em instantes.' : x.message;
+          botao.disabled = false; botao.classList.remove('carregando'); campo.select();
+        }
       });
-      cartao.appendChild(form);
+      lado2.appendChild(form);
       setTimeout(function () { campo.focus(); }, 50);
     }
-    if (mensagem) cartao.appendChild(el('p', { 'class': 'alerta ' + (mensagem.aviso ? 'aviso' : 'erro'), role: 'status', texto: mensagem.texto }));
-    caixa.appendChild(cartao);
+    if (mensagem) lado2.appendChild(el('p', { 'class': 'alerta ' + (mensagem.aviso ? 'aviso' : 'erro'), role: 'status', texto: mensagem.texto }));
+    lado2.appendChild(el('div', { 'class': 'portao-rodape' }, [
+      el('a', { href: 'index.html', texto: '← Voltar para Criar peça' }),
+      el('span', { texto: 'Esqueceu a senha? Fale com o Marketing.' })
+    ]));
+
+    caixa.appendChild(el('div', { 'class': 'portao-moldura' }, [marca, lado2]));
   }
 
   function montarMenu(atual) {
