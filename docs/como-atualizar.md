@@ -73,7 +73,7 @@ Outras opções dos campos:
 
 `config/formatos/email-marketing.json`:
 
-- `arvore.imagem.layouts`: tamanho de cada quadro para 1, 2 ou 3 imagens. As fotos são recortadas no navegador e, no site publicado, enviadas para a pasta pública `pecas/<código>/` do Supabase (parte 6 de `docs/banco-supabase.sql`).
+- `arvore.imagem.layouts`: tamanho de cada quadro para 1, 2 ou 3 imagens. As fotos são recortadas no navegador e, no site publicado, enviadas para o Cloudflare (`worker/unimed-pecas.js`), que dá a elas um endereço público.
 - `formatacao.realces`: cores do realce (use só cores de apoio e cítrico; laranja é do botão).
 - `blocos.padrao`: ordem inicial dos blocos do meio do e-mail.
 
@@ -82,7 +82,7 @@ Outras opções dos campos:
 - **Nome e área** ficam guardados no aparelho; nas próximas vezes aparecem numa linha só, com "Trocar".
 - **Rascunho automático**: o que foi digitado fica guardado no aparelho. Se a página fechar, ao voltar ao formato aparece "Recuperamos seu rascunho" com a opção "Começar do zero".
 - **Editar esta peça**: depois de gerar, volta ao formulário preenchido. A nova geração vira `UNI-EM-…-V2`, `-V3`… e o registro guarda `versao_de` (o código anterior) dentro do conteúdo. A versão anterior continua no painel.
-- **Se o banco não responder**, a peça fica pronta para copiar e baixar, com o botão "Tentar registrar de novo".
+- **Se o registro não responder**, a peça fica pronta para copiar e baixar, com o botão "Tentar registrar de novo".
 - **No celular**, as abas Editar | Prévia ficam fixas no topo, e a prévia encolhe para caber na tela.
 - **A prévia usa os arquivos do próprio site**; a peça final usa o endereço público (`baseUrlPublica`), que funciona dentro da caixa de entrada.
 

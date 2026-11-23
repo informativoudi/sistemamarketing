@@ -93,7 +93,7 @@
         el('td', { texto: p.area }),
         el('td', {}, [(nomesFormato[p.formato] || p.formato) + ' ', el('span', { 'class': 'selo', texto: nomeVariante(p.variante) })]),
         el('td', { texto: p.titulo }),
-        el('td', {}, [el('button', { type: 'button', texto: 'Ver peça', onclick: function () { abrir(p); } })])
+        el('td', {}, [p.html ? el('button', { type: 'button', texto: 'Ver peça', onclick: function () { abrir(p); } }) : el('span', { 'class': 'sub', texto: 'só no arquivo' })])
       ]));
     });
     $('sem-dados').hidden = pedidos.length > 0;
@@ -101,7 +101,7 @@
 
   function abrir(p) {
     $('d-codigo').textContent = p.codigo;
-    $('d-info').textContent = p.nome + ' · ' + p.area + ' · ' + quando(p.criado_em) + ' · marca ' + p.versao_marca + ' · tendências ' + p.ciclo_tendencias;
+    $('d-info').textContent = p.nome + ' · ' + p.area + ' · ' + quando(p.criado_em) + (p.versao_marca ? ' · marca ' + p.versao_marca : '') + (p.ciclo_tendencias ? ' · tendências ' + p.ciclo_tendencias : '');
     $('d-quadro').srcdoc = p.html;
     $('dialogo').showModal();
   }
@@ -119,7 +119,56 @@
       if (h === p.hash) saida.appendChild(el('span', { 'class': 'selo ok', texto: 'Idêntica à versão oficial' }));
       else saida.appendChild(el('span', { 'class': 'selo alerta-s', texto: 'Diferente da versão oficial: houve alteração depois de gerada' }));
     }
-    saida.appendChild(el('div', { 'class': 'acoes' }, [el('button', { 'class': 'btn secundario', type: 'button', texto: 'Ver versão oficial', onclick: function () { abrir(p); } })]));
+    if (p.html) saida.appendChild(el('div', { 'class': 'acoes' }, [el('button', { 'class': 'btn secundario', type: 'button', texto: 'Ver versão oficial', onclick: function () { abrir(p); } })]));
+  }
+
+  function redesenhar() {
+    var f = $('filtro-area'); while (f.options.length > 1) f.remove(1);
+    contarPor(pedidos, 'area').forEach(function (x) { f.appendChild(el('option', { value: x[0], texto: x[0] })); });
+    kpis();
+    barras('g-area', contarPor(pedidos, 'area'));
+    barras('g-formato', contarPor(pedidos, function (p) { return (nomesFormato[p.formato] || p.formato) + (p.variante ? ' · ' + nomeVariante(p.variante) : ''); }));
+    linhaTempo();
+    tabela();
+  }
+
+  /* Lista exportada do SharePoint/Excel em .csv: mostra todas as áreas no painel. */
+  function lerCsv(texto) {
+    var linhas = [], linha = [], campo = '', aspas = false;
+    var sep = (texto.split('\n')[0].match(/;/g) || []).length > (texto.split('\n')[0].match(/,/g) || []).length ? ';' : ',';
+    for (var i = 0; i < texto.length; i++) {
+      var c = texto[i];
+      if (aspas) { if (c === '"' && texto[i + 1] === '"') { campo += '"'; i++; } else if (c === '"') aspas = false; else campo += c; }
+      else if (c === '"') aspas = true;
+      else if (c === sep) { linha.push(campo); campo = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && texto[i + 1] === '\n') i++; linha.push(campo); linhas.push(linha); linha = []; campo = ''; }
+      else campo += c;
+    }
+    if (campo || linha.length) { linha.push(campo); linhas.push(linha); }
+    var cab = (linhas.shift() || []).map(function (h) { return h.replace(/^\uFEFF/, '').trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_'); });
+    var pega = function (o, nomes) { for (var k = 0; k < nomes.length; k++) if (o[nomes[k]]) return o[nomes[k]]; return ''; };
+    return linhas.filter(function (l) { return l.join('').trim(); }).map(function (l) {
+      var o = {}; cab.forEach(function (h, k) { o[h] = (l[k] || '').trim(); });
+      return {
+        codigo: pega(o, ['codigo', 'title', 'titulo_do_item']), criado_em: pega(o, ['criado_em', 'created', 'criado']) || new Date().toISOString(),
+        nome: pega(o, ['nome']), area: pega(o, ['area']), formato: pega(o, ['formato']), variante: pega(o, ['variante']),
+        titulo: pega(o, ['titulo']), hash: pega(o, ['hash']), versao_marca: pega(o, ['versao_marca']), ciclo_tendencias: pega(o, ['ciclo_tendencias']),
+        conteudo: { versao_de: pega(o, ['versao_de']) }, html: ''
+      };
+    });
+  }
+  function importar(ev) {
+    var arq = ev.target.files && ev.target.files[0];
+    if (!arq) return;
+    var leitor = new FileReader();
+    leitor.onload = function () {
+      var lista = lerCsv(String(leitor.result || ''));
+      var locais = {}; pedidos.forEach(function (p) { locais[p.codigo] = p; });
+      pedidos = lista.map(function (p) { return locais[p.codigo] || p; }).sort(function (a, b) { return new Date(b.criado_em) - new Date(a.criado_em); });
+      $('fonte-texto').textContent = 'Mostrando a lista exportada: ' + pedidos.length + ' peças de todas as áreas (' + arq.name + ').';
+      redesenhar();
+    };
+    leitor.readAsText(arq, 'utf-8');
   }
 
   async function iniciar(ctx) {
@@ -127,18 +176,14 @@
     try { indice = await fetch('config/formatos/indice.json').then(function (x) { return x.json(); }); }
     catch (e) { indice = { formatos: [] }; }
     indice.formatos.forEach(function (f) { nomesFormato[f.id] = f.nome; });
-    if (ctx.local) {
-      var aviso = $('origem'); aviso.hidden = false;
-      aviso.textContent = 'Modo de teste no seu computador: sem login e só com as peças geradas neste navegador. Depois de ligar o banco, a área restrita passa a pedir o login com GitHub.';
-    }
-    try { pedidos = await R.listar(sistema.registro, ctx.token); }
-    catch (e) { pedidos = []; var a2 = $('origem'); a2.hidden = false; a2.textContent = e.message; }
-    contarPor(pedidos, 'area').forEach(function (x) { $('filtro-area').appendChild(el('option', { value: x[0], texto: x[0] })); });
-    kpis();
-    barras('g-area', contarPor(pedidos, 'area'));
-    barras('g-formato', contarPor(pedidos, function (p) { return (nomesFormato[p.formato] || p.formato) + ' · ' + nomeVariante(p.variante); }));
-    linhaTempo();
-    tabela();
+    var reg = sistema.registro || {};
+    $('fonte-texto').textContent = R.central(reg)
+      ? 'Todas as peças geradas em qualquer computador, gravadas no registro central.'
+      : 'O registro central ainda não foi ligado: aqui aparecem só as peças geradas neste navegador.';
+    try { pedidos = await R.listar(reg, ctx.token); }
+    catch (e) { pedidos = []; var av = $('origem'); av.hidden = false; av.textContent = e.message; }
+    $('importar-csv').addEventListener('change', importar);
+    redesenhar();
     $('filtro-texto').addEventListener('input', tabela);
     $('filtro-area').addEventListener('change', tabela);
     $('conferir').addEventListener('submit', conferir);

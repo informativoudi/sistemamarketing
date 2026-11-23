@@ -65,21 +65,10 @@
       ]);
     })));
 
-    alvo.appendChild(el('p', { 'class': 'rodape-nota', texto: 'Para ligar, desligar ou criar tendências, peça ao assistente acima (ou troque o status em config/tendencias.json).' }));
-
-    if (window.UnimedAssistente) window.UnimedAssistente.montar(alvo, {
-      area: 'radar',
-      titulo: 'Pedir ao assistente de tendências',
-      descricao: 'Puxe tendências, ligue ou desligue, ou peça um branding novo ou ajustado para as campanhas internas e externas. O ' + (t.ciclo || '2027') + ' continua o principal até você dizer o contrário.',
-      placeholder: 'Ex.: crie um branding para a campanha de inverno usando o azul de apoio como destaque…',
-      exemplos: ['Coloque o "Bento assimétrico dark & neon" em ativa', 'Desligue a textura real nas campanhas', 'Crie um branding de campanha para o Outubro Rosa, mantendo o 2027 como base', 'Na campanha interna, troque o fundo para o verde de apoio'],
-      arquivos: async function () {
-        return {
-          'config/tendencias.json': await fetch('config/tendencias.json', { cache: 'no-store' }).then(function (r) { return r.json(); }),
-          'config/marca.json': await fetch('config/marca.json', { cache: 'no-store' }).then(function (r) { return r.json(); })
-        };
-      }
-    });
+    alvo.appendChild(el('section', { 'class': 'cartao bloco como-mudar' }, [
+      el('h2', { texto: 'Como mudar as tendências' }),
+      el('p', { 'class': 'sub', texto: 'Peça ao Claude em palavras (ex.: "coloque a tendência X em ativa", "crie o branding da campanha do Outubro Rosa"). Ele altera config/tendencias.json, mostra o que mudou e publica no GitHub. O ciclo ' + (t.ciclo || '2027') + ' continua o principal até você dizer o contrário.' })
+    ]));
   }
 
   A.proteger({ pagina: 'radar.html', aoLiberar: iniciar });

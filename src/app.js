@@ -794,7 +794,7 @@
     return { plano: plano, html: html, htmlLocal: htmlLocal, dados: dados };
   }
 
-  /* Na hora de gerar: envia os recortes ao banco de imagens (Supabase Storage) para o e-mail
+  /* Na hora de gerar: envia os recortes ao Cloudflare (worker/unimed-pecas.js) para o e-mail
      ter endereços públicos. Sem banco, as imagens ficam embutidas (serve para baixar, não para disparo). */
   async function publicarImagens(codigo) {
     var dados = lerDados();
@@ -805,7 +805,7 @@
     if (!exporta('html')) return { srcs: null, embutidas: false };
     await recortar(plano);
     var cfg = estado.sistema.registro || {};
-    if (cfg.modo !== 'supabase' || !R.enviarImagem) return { srcs: null, embutidas: true };
+    if (!R.central || !R.central(cfg)) return { srcs: null, embutidas: true };
     try {
       var srcs = await Promise.all(lista.map(function (it, i) {
         return R.enviarImagem(cfg, codigo + '/imagem-' + (i + 1) + '.jpg', Rc.paraBlob(it.src));
@@ -958,8 +958,8 @@
       ? 'Você já pode copiar e baixar. O código só vale como oficial depois do registro.'
       : versao ? 'A versão anterior continua guardada no painel. Use este código daqui pra frente.' : 'Guarde esse código. Ele identifica esta versão oficial da peça no painel.';
     $('pendente').hidden = !falha;
-    if (falha) $('pendente-texto').textContent = 'Não consegui registrar no banco agora (' + explicar(falha) + ').';
-    var local = (estado.sistema.registro || {}).modo !== 'supabase';
+    if (falha) $('pendente-texto').textContent = 'Não consegui registrar no painel agora (' + explicar(falha) + ').';
+    var local = !R.central(estado.sistema.registro || {});
     $('copiado').textContent = !estado.imagensEmbutidas ? '' : local
       ? 'Modo de teste: as imagens ficaram embutidas no arquivo. Servem para baixar e ajustar; para disparo, use o site publicado.'
       : 'Atenção: o banco de imagens não respondeu e as imagens ficaram embutidas no arquivo. Servem para baixar e ajustar, mas podem não aparecer no disparo do e-mail.';

@@ -112,28 +112,12 @@
       el('ul', { 'class': 'pilulas' }, m.areas.map(function (a) { return el('li', { texto: a }); }))
     ]));
 
-    alvo.appendChild(el('p', { 'class': 'rodape-nota', texto: 'Para mudar uma regra, peça ao assistente acima (ou altere config/marca.json e suba o número da versão).' }));
-
-    // Assistente com IA: mudanças na marca e nos formatos.
-    var indice = await fetch('config/formatos/indice.json', { cache: 'no-store' }).then(function (r) { return r.json(); }).catch(function () { return { formatos: [] }; });
-    var escolhaFormato;
-    if (window.UnimedAssistente) window.UnimedAssistente.montar(alvo, {
-      area: 'nucleo',
-      titulo: 'Pedir mudança na marca',
-      descricao: 'Peça em palavras o que mudar nas regras da marca ou de um formato. O assistente mostra o antes e o depois; você testa na prévia e só publica se aprovar.',
-      placeholder: 'Ex.: inclua a área "Ouvidoria" com o ícone de atendimento; limite o título da peça quadrada a 60 caracteres…',
-      exemplos: ['Inclua a área "Ouvidoria" na lista de áreas', 'Na peça quadrada, limite o título a 60 caracteres', 'Tire o PDF dos downloads do Banner Portal', 'Mude o mote do fechamento para "Cuidar é o que nos move"'],
-      extra: function () {
-        escolhaFormato = el('select', { id: 'assistente-formato' }, [el('option', { value: '', texto: 'Só as regras da marca' })].concat(indice.formatos.filter(function (f) { return f.ativo; }).map(function (f) { return el('option', { value: f.id, texto: 'Marca + formato ' + f.nome }); })));
-        return el('div', { 'class': 'campo assistente-escopo' }, [el('label', { 'for': 'assistente-formato', texto: 'O que o assistente pode mexer' }), escolhaFormato]);
-      },
-      arquivos: async function () {
-        var arq = { 'config/marca.json': await fetch('config/marca.json', { cache: 'no-store' }).then(function (r) { return r.json(); }) };
-        var f = escolhaFormato && escolhaFormato.value;
-        if (f) arq['config/formatos/' + f + '.json'] = await fetch('config/formatos/' + f + '.json', { cache: 'no-store' }).then(function (r) { return r.json(); });
-        return arq;
-      }
-    });
+    // Mudanças nas regras: feitas com o Claude (licença do Marketing), que altera os arquivos e publica no GitHub.
+    alvo.appendChild(el('section', { 'class': 'cartao bloco como-mudar' }, [
+      el('h2', { texto: 'Como mudar uma regra' }),
+      el('p', { 'class': 'sub', texto: 'Peça ao Claude em palavras (ex.: "inclua a área Ouvidoria", "na peça quadrada, limite o título a 60 caracteres"). Ele altera os arquivos de regras, mostra o que mudou e publica no GitHub. O site atualiza em 1 a 2 minutos.' }),
+      el('p', { 'class': 'ajuda', texto: 'As regras ficam em config/marca.json (marca) e config/formatos/ (cada formato). Também dá para editar direto no GitHub.' })
+    ]));
   }
 
   A.proteger({ pagina: 'nucleo.html', aoLiberar: iniciar });

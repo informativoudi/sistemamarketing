@@ -18,7 +18,7 @@ src/
   motor.js              Valida o que foi preenchido e aplica a árvore de decisão
   modelos/
     email-marketing.js  Desenha o e-mail (HTML em tabelas, compatível com Outlook e Gmail)
-  registro.js           Grava cada pedido (navegador ou banco Supabase)
+  registro.js           Grava cada pedido (navegador + registro no Cloudflare)
   app.js                Tela de uso
   acesso.js             Login da área restrita (Entrar com GitHub) e permissões
   painel.js             Painel de administração
@@ -31,7 +31,8 @@ painel.html             Área restrita · pedidos por área, formato, tempo e "C
 nucleo.html             Área restrita · regras fixas da marca
 radar.html              Área restrita · tendências do ciclo e status
 acessos.html            Área restrita · quem tem acesso (só "dono")
-docs/                   Guia de atualização, área restrita e script do banco
+docs/                   Guia de atualização, área restrita e registro no Cloudflare
+worker/                 Código do serviço no Cloudflare (registro, fotos, senha)
 ```
 
 ## Como a árvore decide (e-mail marketing)
@@ -127,7 +128,7 @@ A biblioteca de imagens é só de exemplo. Em todos os formatos dá para **envia
 - em cada notícia da newsletter, em "Enviar foto do computador";
 - na cartilha, em "Imagens do documento". A imagem entra no texto como `[[imagem 1]]`, onde estiver o cursor.
 
-A imagem é lida e reduzida no próprio navegador (máximo de 2400 px no lado maior). O enquadramento, os cantos da marca e todos os downloads funcionam igual. No HTML do e-mail, o recorte vai para o banco de imagens. As imagens enviadas valem na sessão: o rascunho guarda o texto, mas não as imagens.
+A imagem é lida e reduzida no próprio navegador (máximo de 2400 px no lado maior). O enquadramento, os cantos da marca e todos os downloads funcionam igual. No HTML do e-mail, o recorte vai para o Cloudflare e ganha endereço público. As imagens enviadas valem na sessão: o rascunho guarda o texto, mas não as imagens.
 
 ## Cartilha com ou sem tabela de cabeçalho
 
@@ -141,9 +142,9 @@ Vale para a prévia, o PDF e o Word.
 
 Os cantos arredondados (moldura box) ficam **gravados na própria foto** no momento do recorte, com a cor do fundo atrás. Por isso a foto sai igual no e-mail (inclusive no Outlook), no PNG, no PDF e no PowerPoint.
 
-## Assistente com IA (Núcleo e Radar)
+## Mudanças nas regras (com o Claude)
 
-Só na área restrita. Você pede em palavras, revisa o antes e depois, testa na prévia e publica no GitHub. Configuração em `docs/assistente-ia.md`.
+As regras da marca, dos formatos e das tendências ficam em `config/`. Para mudar, peça ao Claude em palavras: ele altera os arquivos, mostra o que mudou e publica no GitHub.
 
 ## Edição rápida
 
@@ -163,9 +164,11 @@ Cada peça recebe um código (`UNI-EM-2027-XXXXXX`), guardado dentro do HTML (n�
 
 ## Área restrita
 
-Painel, Núcleo da Marca, Radar de Tendências e Acessos pedem **Entrar com GitHub**. Só entra quem tem o usuário do GitHub na lista de acessos; o primeiro "dono" é cadastrado direto no banco e, depois, inclui outras pessoas pela tela **Acessos**. Passo a passo em `docs/acesso-restrito.md`.
+Painel, Núcleo da Marca e Radar de Tendências pedem a **senha do Marketing**, conferida pelo Cloudflare. Detalhes em `docs/acesso-restrito.md`.
 
-Sem banco ligado, a área restrita abre só no computador local (para testes) e fica fechada no site publicado.
+## Registro central (Cloudflare)
+
+Cada peça gerada é gravada no registro central (Worker `unimed-pecas` no Cloudflare, com banco D1), e o painel mostra todas as áreas. As fotos dos e-mails também ficam lá, com endereço público. Passo a passo em `docs/registro-cloudflare.md`.
 
 ## Testar no computador
 

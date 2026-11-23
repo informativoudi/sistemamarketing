@@ -65,11 +65,16 @@
     familia: { d: '<circle cx="8" cy="7" r="3"/><path d="M2 21v-1a6 6 0 0 1 12 0v1"/>', a: '<circle cx="17" cy="9.5" r="2.5"/><path d="M15.5 21v-1a3.8 3.8 0 0 1 6.5-2.6"/>', p: 'família familia filhos pais mãe mae pai crianças criancas pessoas equipe colaboradores time' },
     cuidado: { d: '<path d="M12 20s-8-5-8-11a4.5 4.5 0 0 1 8-2.8A4.5 4.5 0 0 1 20 9c0 6-8 11-8 11z"/>', a: '<path d="M12 8.5v5M9.5 11h5"/>', p: 'cuidado cuide saúde saude coração coracao amor bem-estar vida autoexame' }
   };
+  ICONES.caminhada = { d: '<path d="M8 3c-2 0-3 2-3 4.5S6 12 8 12s2.5-2 2.5-4.5S10 3 8 3z"/><path d="M6 15h4"/>', a: '<path d="M16 9c-2 0-2.5 2-2.5 4.5S14.5 18 16 18s3-2 3-4.5S18 9 16 9z"/><path d="M14 21h4"/>', p: 'caminhada caminhar passos passo corrida correr exercício exercicio movimento atividade esporte academia' };
+  ICONES.ranking = { d: '<path d="M3 21v-7h6v7M9 21V9h6v12M15 21v-4h6v4"/>', a: '<path d="M12 3v3"/>', p: 'ranking pódio podio classificação classificacao meta metas desempenho placar resultado' };
+  ICONES.premio = { d: '<path d="M8 4h8v5a4 4 0 0 1-8 0V4z"/><path d="M12 13v4M8 21h8M10 17h4"/>', a: '<path d="M16 6h3a2 2 0 0 1-2.5 4M8 6H5a2 2 0 0 0 2.5 4"/>', p: 'prêmio premio prêmios premios troféu trofeu recompensa sorteio vencedor brinde' };
+  ICONES.alimentacao = { d: '<path d="M12 7c-3-2-8-1-8 5 0 5 4 9 6 9 1 0 1.5-.5 2-.5s1 .5 2 .5c2 0 6-4 6-9 0-6-5-7-8-5z"/>', a: '<path d="M12 7c0-2 1-4 3-4"/>', p: 'alimentação alimentacao comida nutrição nutricao dieta fruta refeição refeicao' };
   var ORDEM_ICONES = ['consulta', 'telemedicina', 'carteirinha', 'cuidado', 'familia', 'agenda', 'exame', 'rede', 'receita', 'reembolso', 'alerta'];
+  var BUSCA_ICONES = ['caminhada', 'ranking', 'premio', 'alimentacao', 'exame', 'telemedicina', 'agenda', 'familia', 'consulta', 'carteirinha', 'rede', 'receita', 'reembolso', 'alerta', 'cuidado'];
   function iconePara(rotulo, usados) {
     var t = String(rotulo || '').toLowerCase();
     var achado = null;
-    ORDEM_ICONES.forEach(function (k) { if (!achado && !usados[k] && ICONES[k].p.split(' ').some(function (w) { return w && t.indexOf(w) >= 0; })) achado = k; });
+    BUSCA_ICONES.forEach(function (k) { if (!achado && !usados[k] && ICONES[k].p.split(' ').some(function (w) { return w && t.indexOf(w) >= 0; })) achado = k; });
     if (!achado) achado = ORDEM_ICONES.filter(function (k) { return !usados[k]; })[0] || 'cuidado';
     usados[achado] = true;
     return achado;

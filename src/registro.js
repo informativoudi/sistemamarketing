@@ -1,9 +1,11 @@
 /* ============================================================
    Registro de pedidos
    Cada peça gerada vira um registro: quem pediu, área, quando,
-   formato, o conteúdo enviado, o HTML final e a "impressão
-   digital" (hash) desse HTML, para conferir alterações depois.
-   Modo "local": guarda neste navegador. Modo "supabase": banco.
+   formato, o conteúdo, o HTML final e a "impressão digital"
+   (hash) desse HTML, para conferir alterações depois.
+   Modo "cloudflare": grava na API do Cloudflare (worker/unimed-pecas.js),
+   que o painel lê com a senha do Marketing. Sempre guarda também
+   uma cópia neste navegador.
    ============================================================ */
 (function (raiz) {
   'use strict';
@@ -24,55 +26,45 @@
     return Array.from(new Uint8Array(buf)).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
   }
 
-  /* A chave pública vai só no "apikey"; o "Authorization" leva o login da pessoa, quando houver.
-     (Chaves novas "sb_publishable_" não são aceitas no Authorization.) */
-  function cabecalhos(cfg, token) {
-    var h = { 'apikey': cfg.supabaseChaveAnonima, 'Content-Type': 'application/json' };
-    if (token) h.Authorization = 'Bearer ' + token;
-    return h;
-  }
+  function api(cfg) { return String((cfg && cfg.api) || '').replace(/\/$/, ''); }
+  function central(cfg) { return !!(cfg && cfg.modo === 'cloudflare' && api(cfg)); }
 
   /* opcoes.soBanco: nova tentativa de uma peça que já está na cópia local. */
   async function salvar(cfg, pedido, opcoes) {
     if (!(opcoes && opcoes.soBanco)) {
       var lista = lerLocal();
       lista.unshift(pedido);
-      gravarLocal(lista.slice(0, 500));
+      if (!gravarLocal(lista.slice(0, 300))) gravarLocal(lista.slice(0, 50));
     }
-    if (cfg && cfg.modo === 'supabase' && cfg.supabaseUrl) {
-      var r = await fetch(cfg.supabaseUrl.replace(/\/$/, '') + '/rest/v1/' + cfg.tabela, {
-        method: 'POST',
-        headers: Object.assign(cabecalhos(cfg), { 'Prefer': 'return=minimal' }),
-        body: JSON.stringify(pedido)
-      });
-      if (!r.ok) throw new Error('O banco recusou o registro (' + r.status + ').');
+    if (central(cfg)) {
+      var r = await fetch(api(cfg) + '/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pedido) });
+      if (!r.ok) throw new Error('O registro recusou o pedido (' + r.status + ').');
     }
     return pedido;
   }
 
-  /* Ler exige login: só quem está na tabela "acessos" enxerga os pedidos. */
-  async function listar(cfg, token) {
-    if (cfg && cfg.modo === 'supabase' && cfg.supabaseUrl) {
-      var r = await fetch(cfg.supabaseUrl.replace(/\/$/, '') + '/rest/v1/' + cfg.tabela + '?select=*&order=criado_em.desc&limit=1000', { headers: cabecalhos(cfg, token) });
-      if (!r.ok) throw new Error('Não foi possível ler o banco (' + r.status + ').');
+  /* Ler todos os pedidos exige a senha do Marketing. */
+  async function listar(cfg, senha) {
+    if (central(cfg)) {
+      var r = await fetch(api(cfg) + '/pedidos', { headers: { Authorization: 'Bearer ' + senha } });
+      if (r.status === 401) throw new Error('Senha do painel incorreta.');
+      if (!r.ok) throw new Error('Não foi possível ler os pedidos (' + r.status + ').');
       return r.json();
     }
     return lerLocal();
   }
 
-  /* Envia uma imagem recortada ao banco de imagens (Supabase Storage, pasta pública) e devolve o endereço. */
+  /* Envia uma foto recortada e devolve o endereço público dela (para o e-mail). */
   async function enviarImagem(cfg, caminho, blob) {
-    var base = String(cfg.supabaseUrl || '').replace(/\/$/, '');
-    var balde = cfg.bucketImagens || 'pecas';
-    var r = await fetch(base + '/storage/v1/object/' + balde + '/' + caminho, {
-      method: 'POST',
-      headers: { 'apikey': cfg.supabaseChaveAnonima, 'Content-Type': blob.type || 'image/jpeg', 'x-upsert': 'true', 'cache-control': '31536000' },
-      body: blob
-    });
-    if (!r.ok) throw new Error('O banco de imagens recusou o envio (' + r.status + ').');
-    return base + '/storage/v1/object/public/' + balde + '/' + caminho;
+    var r = await fetch(api(cfg) + '/img/' + caminho, { method: 'PUT', headers: { 'Content-Type': blob.type || 'image/jpeg' }, body: blob });
+    if (!r.ok) throw new Error('O envio da imagem foi recusado (' + r.status + ').');
+    return (await r.json()).url;
   }
 
-  var api = { salvar: salvar, listar: listar, hash: hash, enviarImagem: enviarImagem };
-  raiz.UnimedRegistro = api;
+  async function conferirSenha(cfg, senha) {
+    var r = await fetch(api(cfg) + '/entrar', { method: 'POST', headers: { Authorization: 'Bearer ' + senha } });
+    return r.ok;
+  }
+
+  raiz.UnimedRegistro = { salvar: salvar, listar: listar, hash: hash, enviarImagem: enviarImagem, central: central, conferirSenha: conferirSenha };
 })(window);
