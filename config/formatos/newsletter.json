@@ -274,8 +274,8 @@
       "maxCaracteres": 60
     },
     "imagem": {
-      "_regra": "No curto a imagem não entra (o título é o destaque). No médio e longo entram até 3 imagens, sempre com tamanho fixo: a foto é recortada para caber no quadro, mesmo se for vertical.",
-      "curto": false,
+      "_regra": "A imagem entra em qualquer modelo (curto, médio ou longo), até 3 imagens, sempre com tamanho fixo: a foto é recortada para caber no quadro, mesmo se for vertical.",
+      "curto": true,
       "medio": true,
       "longo": true,
       "maximo": 3,
