@@ -12,6 +12,13 @@
 // - Pedidos e fotos são gravados uma vez só: ninguém sobrescreve o que já existe.
 // - Limite de envios por IP (contra spam e para não estourar a cota gratuita).
 // - Não guardamos IP: os limites usam um código (hash) do IP que some em 2 h.
+//
+// Aprovação (etapa 3)
+// - Toda peça entra como "aguardando". O Marketing (com login) aprova ou reprova
+//   com uma observação. Quem pediu acompanha por um link com chave própria
+//   (?pedido=CÓDIGO&t=CHAVE): a chave é uma assinatura HMAC do código, não dá
+//   para adivinhar a de outra peça.
+// - Peça ajustada pelo Marketing (nova versão com login) já entra aprovada.
 // ============================================================
 const ORIGENS = ['https://informativoudi.github.io'];
 const TESTE = /^http:\/\/(localhost|127\.0\.0\.\d+)(:\d+)?$/; // computador local, para testes
@@ -53,10 +60,31 @@ async function garantirTabela(env) {
     env.DB.prepare('CREATE INDEX IF NOT EXISTS pedidos_data ON pedidos (criado_em DESC)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS usuarios (usuario TEXT PRIMARY KEY, nome TEXT, hash TEXT NOT NULL, sal TEXT NOT NULL, admin INTEGER NOT NULL DEFAULT 0, criado_em TEXT NOT NULL)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS sessoes (token TEXT PRIMARY KEY, usuario TEXT NOT NULL, nome TEXT, admin INTEGER NOT NULL DEFAULT 0, expira INTEGER NOT NULL)'),
-    env.DB.prepare('CREATE TABLE IF NOT EXISTS limites (chave TEXT PRIMARY KEY, n INTEGER NOT NULL, ate INTEGER NOT NULL)')
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS limites (chave TEXT PRIMARY KEY, n INTEGER NOT NULL, ate INTEGER NOT NULL)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS config (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)')
   ]);
+  // Colunas da aprovação: acrescenta só as que faltam (banco antigo continua valendo).
+  const { results } = await env.DB.prepare('PRAGMA table_info(pedidos)').all();
+  const tem = new Set(results.map((c) => c.name));
+  for (const col of ['status', 'email', 'observacao', 'decidido_por', 'decidido_em', 'versao_de']) {
+    if (!tem.has(col)) await env.DB.prepare('ALTER TABLE pedidos ADD COLUMN ' + col + ' TEXT').run();
+  }
   pronto = true;
 }
+
+// ---------- Chave dos links de acompanhamento (HMAC do código) ----------
+let chaveLink = null;
+async function assinar(env, codigo) {
+  if (!chaveLink) {
+    let r = await env.DB.prepare("SELECT valor FROM config WHERE chave = 'link'").first();
+    if (!r) { await env.DB.prepare("INSERT OR IGNORE INTO config (chave, valor) VALUES ('link', ?1)").bind(aleatorio(32)).run(); r = await env.DB.prepare("SELECT valor FROM config WHERE chave = 'link'").first(); }
+    chaveLink = await crypto.subtle.importKey('raw', new TextEncoder().encode(r.valor), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
+  }
+  return hex(await crypto.subtle.sign('HMAC', chaveLink, new TextEncoder().encode('pedido:' + codigo))).slice(0, 32);
+}
+const CODIGO = /^UNI-[A-Z0-9-]{4,60}$/;
+// Peças de antes da aprovação (sem status) contam como aprovadas: já estavam em uso.
+const situacao = (r) => ({ status: r.status || 'aprovada', observacao: r.observacao || '', decidido_por: r.decidido_por || '', decidido_em: r.decidido_em || '' });
 
 // ---------- Limites (tentativas de login e envios por IP) ----------
 async function ipCodigo(req) { return (await sha256('unimed:' + (req.headers.get('CF-Connecting-IP') || 'local'))).slice(0, 24); }
@@ -199,21 +227,83 @@ async function atender(req, env) {
     if (texto.length > 1900000) return json(req, { erro: 'Pedido grande demais.' }, 413);
     let d;
     try { d = JSON.parse(texto); } catch (e) { return json(req, { erro: 'Pedido inválido.' }, 400); }
-    if (!d.codigo || !/^UNI-[A-Z0-9-]{4,60}$/.test(d.codigo)) return json(req, { erro: 'Código inválido.' }, 400);
+    if (!d.codigo || !CODIGO.test(d.codigo)) return json(req, { erro: 'Código inválido.' }, 400);
+    // Ajuste do Marketing: com login e ?aprovar=1, a nova versão já entra aprovada.
+    const mk = url.searchParams.get('aprovar') === '1' ? await sessao(req, env) : null;
+    const agora = new Date().toISOString();
+    const email = /^[^\s@<>"',;]{1,80}@[^\s@<>"',;]{1,120}\.[a-z]{2,}$/i.test(String(d.email || '')) ? String(d.email).toLowerCase() : null;
+    const versaoDe = d.conteudo && CODIGO.test(String(d.conteudo.versao_de || '')) ? d.conteudo.versao_de : null;
     // Grava uma vez só: um código que já existe não pode ser sobrescrito.
-    const r = await env.DB.prepare('INSERT OR IGNORE INTO pedidos (codigo, criado_em, nome, area, formato, titulo, dados) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)')
-      .bind(d.codigo, String(d.criado_em || new Date().toISOString()).slice(0, 40), String(d.nome || '').slice(0, 120), String(d.area || '').slice(0, 120), String(d.formato || '').slice(0, 60), String(d.titulo || '').slice(0, 300), texto)
+    const r = await env.DB.prepare('INSERT OR IGNORE INTO pedidos (codigo, criado_em, nome, area, formato, titulo, dados, status, email, versao_de, decidido_por, decidido_em) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)')
+      .bind(d.codigo, String(d.criado_em || agora).slice(0, 40), String(d.nome || '').slice(0, 120), String(d.area || '').slice(0, 120), String(d.formato || '').slice(0, 60), String(d.titulo || '').slice(0, 300), texto,
+        mk ? 'aprovada' : 'aguardando', email, versaoDe, mk ? mk.nome || mk.usuario : null, mk ? agora : null)
       .run();
     await limpar(env);
-    if (r && r.meta && r.meta.changes === 0) return json(req, { erro: 'Esse código já está registrado.', jaExiste: true }, 409);
-    return json(req, { ok: true }, 201);
+    const t = await assinar(env, d.codigo);
+    if (r && r.meta && r.meta.changes === 0) {
+      const atual = await env.DB.prepare('SELECT status, observacao, decidido_por, decidido_em FROM pedidos WHERE codigo = ?1').bind(d.codigo).first();
+      return json(req, { erro: 'Esse código já está registrado.', jaExiste: true, t, ...situacao(atual || {}) }, 409);
+    }
+    // A versão nova substitui a anterior que ainda esperava análise ou tinha sido reprovada.
+    if (versaoDe) await env.DB.prepare("UPDATE pedidos SET status = 'substituida' WHERE codigo = ?1 AND (status = 'aguardando' OR status = 'reprovada')").bind(versaoDe).run();
+    return json(req, { ok: true, t, status: mk ? 'aprovada' : 'aguardando' }, 201);
+  }
+
+  // ----- Decisão do Marketing: aprovar ou reprovar (com observação) -----
+  const dec = /^\/pedidos\/(UNI-[A-Z0-9-]{4,60})\/decisao$/.exec(p);
+  if (dec && req.method === 'POST') {
+    const quem = await sessao(req, env);
+    if (!quem) return json(req, { erro: 'Sessão expirada. Entre de novo.' }, 401);
+    let d; try { d = await req.json(); } catch (e) { return json(req, { erro: 'Pedido inválido.' }, 400); }
+    const acao = d.acao === 'aprovar' ? 'aprovada' : d.acao === 'reprovar' ? 'reprovada' : null;
+    if (!acao) return json(req, { erro: 'Escolha aprovar ou reprovar.' }, 400);
+    const obs = String(d.observacao || '').trim().slice(0, 2000);
+    if (acao === 'reprovada' && obs.length < 3) return json(req, { erro: 'Escreva o que precisa ser ajustado.' }, 400);
+    const agora = new Date().toISOString();
+    const r = await env.DB.prepare('UPDATE pedidos SET status = ?2, observacao = ?3, decidido_por = ?4, decidido_em = ?5 WHERE codigo = ?1').bind(dec[1], acao, obs, quem.nome || quem.usuario, agora).run();
+    if (!r || !r.meta || r.meta.changes === 0) return json(req, { erro: 'Peça não encontrada.' }, 404);
+    return json(req, { ok: true, codigo: dec[1], t: await assinar(env, dec[1]), status: acao, observacao: obs, decidido_por: quem.nome || quem.usuario, decidido_em: agora });
+  }
+
+  // ----- Acompanhar uma peça pelo link (quem pediu): precisa da chave do link -----
+  const um = /^\/pedido\/(UNI-[A-Z0-9-]{4,60})$/.exec(p);
+  if (um && req.method === 'GET') {
+    if (!iguais(url.searchParams.get('t') || '', await assinar(env, um[1]))) return json(req, { erro: 'Link inválido ou incompleto.' }, 403);
+    const r = await env.DB.prepare('SELECT * FROM pedidos WHERE codigo = ?1').bind(um[1]).first();
+    if (!r) return json(req, { erro: 'Peça não encontrada.' }, 404);
+    const d = JSON.parse(r.dados);
+    const s = situacao(r);
+    const nova = await env.DB.prepare('SELECT codigo FROM pedidos WHERE versao_de = ?1 ORDER BY criado_em DESC LIMIT 1').bind(um[1]).first();
+    return json(req, {
+      codigo: r.codigo, criado_em: r.criado_em, nome: r.nome, area: r.area, email: r.email || d.email || '', formato: r.formato, titulo: r.titulo,
+      conteudo: d.conteudo || {}, ...s, versao_nova: nova ? nova.codigo : '',
+      // O arquivo oficial só sai depois de aprovado.
+      html: s.status === 'aprovada' ? d.html || '' : ''
+    });
+  }
+
+  // ----- Situação das peças de quem pediu (lista curta, cada uma com a sua chave) -----
+  if (p === '/situacao' && req.method === 'POST') {
+    let d; try { d = await req.json(); } catch (e) { return json(req, { erro: 'Pedido inválido.' }, 400); }
+    const saida = [];
+    for (const it of (Array.isArray(d.itens) ? d.itens : []).slice(0, 20)) {
+      if (!CODIGO.test(String(it.codigo || '')) || !iguais(String(it.t || ''), await assinar(env, it.codigo))) continue;
+      const r = await env.DB.prepare('SELECT status, observacao, decidido_por, decidido_em FROM pedidos WHERE codigo = ?1').bind(it.codigo).first();
+      if (r) saida.push({ codigo: it.codigo, ...situacao(r) });
+    }
+    return json(req, saida);
   }
 
   // ----- Ler os pedidos (só com login) -----
   if (p === '/pedidos' && req.method === 'GET') {
     if (!(await sessao(req, env))) return json(req, { erro: 'Sessão expirada. Entre de novo.' }, 401);
-    const { results } = await env.DB.prepare('SELECT dados FROM pedidos ORDER BY criado_em DESC LIMIT 1000').all();
-    return json(req, results.map((r) => JSON.parse(r.dados)));
+    const { results } = await env.DB.prepare('SELECT dados, status, email, observacao, decidido_por, decidido_em FROM pedidos ORDER BY criado_em DESC LIMIT 1000').all();
+    const lista = [];
+    for (const r of results) {
+      const d = JSON.parse(r.dados);
+      lista.push({ ...d, email: r.email || d.email || '', ...situacao(r), t: await assinar(env, d.codigo) });
+    }
+    return json(req, lista);
   }
 
   // ----- Gravar foto recortada de e-mail (uma vez só, com limite por IP) -----

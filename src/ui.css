@@ -544,3 +544,60 @@ details.secao > .campos { padding: 4px 16px 18px; border-top: 1px solid var(--bo
 .ajustes .segmento button { padding: 7px 14px; min-height: 38px; font-size: 14px; }
 .setas { display: flex; gap: 8px; }
 .setas .btn-mini { width: 44px; height: 40px; font-size: 18px; padding: 0; justify-content: center; }
+
+.inserir-blocos { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: 4px 0 8px; }
+.inserir-blocos .rot { font-size: 13px; font-weight: 700; color: var(--forte); margin-right: 2px; }
+.inserir-blocos .ajuda { flex-basis: 100%; }
+
+/* ---------- Etapa 3 · primeira tela (nome e setor) ---------- */
+.boasvindas { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; padding: clamp(40px, 9vh, 110px) 0 28px; }
+.boasvindas .etapa { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; color: var(--institucional); }
+.boasvindas h1 { margin: 0; font-weight: 900; font-size: clamp(34px, 6vw, 60px); line-height: .9; letter-spacing: -0.04em; text-transform: uppercase; color: var(--petroleo); text-wrap: balance; }
+.boasvindas h1 span { font-weight: 400; text-transform: none; color: var(--institucional); letter-spacing: -0.03em; }
+.boasvindas .lede { margin: 0; color: var(--suave); max-width: 52ch; }
+.quem-inicio { width: min(640px, 100%); text-align: left; margin-top: 8px; }
+.quem-inicio .acoes { justify-content: flex-end; margin-top: 18px; }
+.busca .ola { margin: 0; font-size: 14px; color: var(--suave); }
+.busca .ola b { color: var(--petroleo); }
+.busca.compacta .ola { display: none; }
+
+/* Suas peças (acompanhamento de quem pediu) */
+.minhas { width: min(640px, 100%); text-align: left; margin-top: 18px; }
+.busca.compacta .minhas { display: none; }
+.minhas h2 { margin: 0 0 8px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--institucional); }
+.minhas ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.minhas li { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--superficie); border: 1px solid var(--borda); border-radius: 12px 12px 0 12px; padding: 10px 14px; }
+.minhas li a { text-decoration: none; display: flex; flex-direction: column; min-width: 0; }
+.minha-titulo { font-weight: 700; color: var(--petroleo); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.minha-info { font-size: 12.5px; color: var(--suave); }
+
+/* Situação da aprovação */
+.selo.st-aguardando { background: var(--aviso-fundo); color: var(--aviso-texto); }
+.selo.st-aprovada { background: #e6f6ef; color: var(--escuro); }
+.selo.st-reprovada { background: var(--erro-fundo); color: var(--erro); }
+.selo.st-substituida { background: var(--fundo); color: var(--suave); }
+.situacao-linha { margin: 0 0 6px; font-size: 13px; color: var(--suave); }
+.aviso-pedido { border: 1.5px solid var(--borda-forte); border-radius: 14px 14px 0 14px; padding: 12px 14px; margin: 0 0 14px; background: var(--fundo); }
+.aviso-pedido p { margin: 4px 0 0; }
+.aviso-pedido.reprovada { border-color: var(--erro); background: var(--erro-fundo); }
+.aviso-pedido.ajuste { border-color: var(--institucional); background: #e6f6ef; }
+.status-pedido { margin-top: 14px; padding: 12px 14px; border-radius: 14px 14px 0 14px; background: var(--fundo); }
+.status-pedido .acoes { margin-top: 8px; }
+.email-campo { margin-top: 16px; }
+.email-campo input { width: 100%; }
+
+/* Painel · decisão */
+.btn.perigo { background: transparent; color: var(--erro); border: 2px solid var(--erro); }
+.btn.perigo:hover { background: var(--erro-fundo); }
+.decisao-caixa { margin-top: 14px; display: grid; gap: 10px; }
+.decisao-caixa textarea { width: 100%; border: 1.5px solid var(--borda-forte); border-radius: 10px; padding: 10px 12px; resize: vertical; }
+.decisao-caixa label { display: block; font-weight: 700; font-size: 14px; margin-bottom: 4px; color: var(--petroleo); }
+.decisao-botoes { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin: 0; }
+.decisao-botoes .btn { min-height: 44px; padding: 11px 18px; font-size: 15px; }
+.obs-dada { margin: 0; font-size: 14px; }
+dialog iframe { height: 56vh; }
+.kpi-acao { text-align: left; cursor: pointer; font: inherit; }
+.kpi-acao.tem { border-color: var(--laranja); background: var(--aviso-fundo); }
+.kpi-acao:hover { border-color: var(--institucional); }
+table.lista tr.espera td { background: #fffdf3; }
+.btn-mini.analisar { border-color: var(--laranja); color: var(--laranja-escuro); }

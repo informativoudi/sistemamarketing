@@ -6,6 +6,8 @@
 (function () {
   'use strict';
   var R = window.UnimedRegistro;
+  var A = window.UnimedAprovacao;
+  var ctxAtual = null, atual = null;
   var $ = function (id) { return document.getElementById(id); };
   var pedidos = [];
   var nomesFormato = {};
@@ -70,40 +72,123 @@
   function kpis() {
     var agora = new Date();
     var mes = pedidos.filter(function (p) { var d = new Date(p.criado_em); return d.getMonth() === agora.getMonth() && d.getFullYear() === agora.getFullYear(); }).length;
-    var areas = contarPor(pedidos, 'area').length;
     var top = contarPor(pedidos, function (p) { return nomesFormato[p.formato] || p.formato; })[0];
     var caixa = $('kpis'); caixa.textContent = '';
-    [[pedidos.length, 'peças registradas'], [mes, 'neste mês'], [areas, 'áreas que pediram'], [top ? top[0] : '—', 'formato mais pedido']].forEach(function (k) {
-      caixa.appendChild(el('div', { 'class': 'kpi' }, [el('b', { texto: String(k[0]), style: String(k[0]).length > 6 ? 'font-size:22px;line-height:1.15' : '' }), el('span', { texto: k[1] })]));
+    var espera = pedidos.filter(function (p) { return p.status === 'aguardando'; }).length;
+    [[espera, 'aguardando aprovação', true], [pedidos.length, 'peças registradas'], [mes, 'neste mês'], [top ? top[0] : '—', 'formato mais pedido']].forEach(function (k) {
+      caixa.appendChild(el(k[2] ? 'button' : 'div', k[2] ? { 'class': 'kpi kpi-acao' + (k[0] ? ' tem' : ''), type: 'button', title: 'Mostrar só as que aguardam', onclick: function () { $('filtro-status').value = 'aguardando'; tabela(); $('linhas').scrollIntoView({ behavior: 'smooth', block: 'start' }); } } : { 'class': 'kpi' }, [el('b', { texto: String(k[0]), style: String(k[0]).length > 6 ? 'font-size:22px;line-height:1.15' : '' }), el('span', { texto: k[1] })]));
     });
   }
 
   function tabela() {
     var t = $('filtro-texto').value.toLowerCase().trim();
     var a = $('filtro-area').value;
+    var st = $('filtro-status').value;
     var lista = pedidos.filter(function (p) {
-      return (!a || p.area === a) && (!t || (p.nome + ' ' + p.titulo + ' ' + p.codigo).toLowerCase().indexOf(t) >= 0);
+      return (!a || p.area === a) && (!st || (p.status || 'aprovada') === st) && (!t || (p.nome + ' ' + p.titulo + ' ' + p.codigo).toLowerCase().indexOf(t) >= 0);
     });
     var corpo = $('linhas'); corpo.textContent = '';
     lista.forEach(function (p) {
-      corpo.appendChild(el('tr', {}, [
+      var sit = A.status(p.status);
+      corpo.appendChild(el('tr', { 'class': p.status === 'aguardando' ? 'espera' : '' }, [
+        el('td', {}, [el('span', { 'class': 'selo ' + sit.classe, texto: sit.curto })]),
         el('td', { 'class': 'cod' }, [p.codigo, p.conteudo && p.conteudo.versao_de ? el('small', { 'class': 'versao-de', texto: 'nova versão de ' + p.conteudo.versao_de }) : null]),
         el('td', { texto: quando(p.criado_em) }),
         el('td', { texto: p.nome }),
         el('td', { texto: p.area }),
         el('td', {}, [(nomesFormato[p.formato] || p.formato) + ' ', el('span', { 'class': 'selo', texto: nomeVariante(p.variante) })]),
         el('td', { texto: p.titulo }),
-        el('td', {}, [p.html ? el('button', { type: 'button', texto: 'Ver peça', onclick: function () { abrir(p); } }) : el('span', { 'class': 'sub', texto: 'só no arquivo' })])
+        el('td', {}, [p.html ? el('button', { type: 'button', 'class': p.status === 'aguardando' ? 'btn-mini analisar' : 'btn-mini', texto: p.status === 'aguardando' ? 'Analisar' : 'Ver peça', onclick: function () { abrir(p); } }) : el('span', { 'class': 'sub', texto: 'só no arquivo' })])
       ]));
     });
     $('sem-dados').hidden = pedidos.length > 0;
+    if (pedidos.length && !lista.length) corpo.appendChild(el('tr', {}, [el('td', { colspan: '8', 'class': 'sub', texto: 'Nenhuma peça com esses filtros.' })]));
   }
 
   function abrir(p) {
+    atual = p;
     $('d-codigo').textContent = p.codigo;
-    $('d-info').textContent = p.nome + ' · ' + p.area + ' · ' + quando(p.criado_em) + (p.versao_marca ? ' · marca ' + p.versao_marca : '') + (p.ciclo_tendencias ? ' · tendências ' + p.ciclo_tendencias : '');
-    $('d-quadro').srcdoc = p.html;
+    $('d-info').textContent = p.nome + ' · ' + p.area + ' · ' + quando(p.criado_em) + (p.email ? ' · ' + p.email : '') + (p.versao_marca ? ' · marca ' + p.versao_marca : '') + (p.ciclo_tendencias ? ' · tendências ' + p.ciclo_tendencias : '');
+    mostrarPeca(p);
+    $('d-obs').value = p.status === 'reprovada' || p.status === 'aprovada' ? (p.observacao || '') : '';
+    $('d-aviso').textContent = '';
+    situacaoDialogo();
     $('dialogo').showModal();
+  }
+
+  /* A peça inteira dentro da janela: reduz as de tamanho fixo (1080 px, A4…) para caber. */
+  var larguras = {};
+  async function larguraDe(p) {
+    if (!(p.formato in larguras)) {
+      try { larguras[p.formato] = await fetch('config/formatos/' + p.formato + '.json').then(function (x) { return x.json(); }); }
+      catch (e) { larguras[p.formato] = {}; }
+    }
+    var f = larguras[p.formato] || {}, t = f.tamanhos && p.conteudo && f.tamanhos[p.conteudo.tamanho];
+    return (t && (t.quadro || t.largura)) || f.quadro || f.largura || 0;
+  }
+  async function mostrarPeca(p) {
+    var quadro = $('d-quadro'), html = p.html || '';
+    quadro.srcdoc = html;
+    var w = await larguraDe(p), cabe = quadro.clientWidth - 24;
+    if (atual !== p || !w || !cabe || w <= cabe) return;
+    var z = (cabe / w).toFixed(3);
+    var estilo = '<style>html{zoom:' + z + ';}</style>';
+    quadro.srcdoc = /<\/head>/i.test(html) ? html.replace(/<\/head>/i, estilo + '</head>') : estilo + html;
+  }
+
+  function situacaoDialogo() {
+    var p = atual, sit = A.status(p.status), caixa = $('d-situacao');
+    caixa.textContent = '';
+    var central = ctxAtual && R.central((ctxAtual.sistema || {}).registro || {});
+    var linha = [el('span', { 'class': 'selo ' + sit.classe, texto: sit.nome })];
+    if (p.decidido_por) linha.push(' por ' + p.decidido_por + (p.decidido_em ? ' em ' + quando(p.decidido_em) : ''));
+    caixa.appendChild(el('p', { 'class': 'situacao-linha' }, linha));
+    if (p.status === 'reprovada' && p.observacao) caixa.appendChild(el('p', { 'class': 'obs-dada', texto: 'Observação enviada: ' + p.observacao }));
+    if (p.status === 'substituida') caixa.appendChild(el('p', { 'class': 'sub', texto: 'Quem pediu já gerou uma versão nova. Analise a versão mais recente na lista.' }));
+    var decidivel = central && p.t && p.status !== 'substituida';
+    $('d-aprovar').hidden = !decidivel || p.status === 'aprovada';
+    $('d-reprovar').hidden = !decidivel || p.status === 'reprovada';
+    $('d-ajustar').hidden = !decidivel;
+    $('d-obs').closest('.campo').hidden = !decidivel;
+    $('d-obs-dica').textContent = p.status === 'aprovada' ? '(para reprovar, diga o que ajustar)' : '(obrigatória para reprovar; opcional ao aprovar)';
+    var podeAvisar = (p.status === 'aprovada' || p.status === 'reprovada') && p.t;
+    $('d-email').hidden = !podeAvisar;
+    if (podeAvisar) $('d-email').href = A.mailto(mensagemDe(p));
+    $('d-email').textContent = p.email ? 'Abrir e-mail para ' + p.email : 'Abrir e-mail no Outlook';
+    if (!central) caixa.appendChild(el('p', { 'class': 'sub', texto: 'A aprovação funciona com o registro central ligado.' }));
+  }
+
+  function mensagemDe(p) {
+    return A.mensagem({ nome: p.nome, email: p.email, titulo: p.titulo, codigo: p.codigo, formatoNome: nomesFormato[p.formato] || p.formato },
+      { status: p.status, observacao: p.observacao, link: A.link(ctxAtual.sistema, p.codigo, p.t), quem: ctxAtual.nome || p.decidido_por });
+  }
+
+  async function decidir(acao) {
+    var p = atual, obs = $('d-obs').value.trim(), aviso = $('d-aviso');
+    if (acao === 'reprovar' && obs.length < 3) { aviso.textContent = 'Escreva na observação o que precisa ser ajustado.'; $('d-obs').focus(); return; }
+    var botoes = [$('d-aprovar'), $('d-reprovar'), $('d-ajustar')];
+    botoes.forEach(function (b) { b.disabled = true; });
+    aviso.textContent = acao === 'aprovar' ? 'Aprovando…' : 'Registrando…';
+    try {
+      var r = await R.decidir(ctxAtual.sistema.registro, ctxAtual.token, p.codigo, acao, obs);
+      p.status = r.status; p.observacao = r.observacao; p.decidido_por = r.decidido_por; p.decidido_em = r.decidido_em; p.t = r.t || p.t;
+      situacaoDialogo();
+      redesenhar();
+      aviso.textContent = p.email
+        ? 'Pronto. Abrimos o e-mail no seu Outlook já escrito para ' + p.email + ': confira e clique em Enviar.'
+        : 'Pronto. Essa peça não tem e-mail de quem pediu: copie o link do e-mail e mande por outro canal.';
+      // O e-mail sai do Outlook de quem aprovou (endereço da Unimed).
+      if (p.email) location.href = A.mailto(mensagemDe(p));
+    } catch (e) {
+      aviso.textContent = e.message;
+    } finally { botoes.forEach(function (b) { b.disabled = false; }); }
+  }
+
+  function ajustar() {
+    var p = atual;
+    // Abre a peça no gerador no modo ajuste: o que for gerado já entra aprovado.
+    window.open(A.link(ctxAtual.sistema, p.codigo, p.t, '&ajuste=1'), '_blank', 'noopener');
+    $('d-aviso').textContent = 'Abrimos a peça no gerador em outra aba. Ajuste e gere: a nova versão já sai aprovada e o e-mail para quem pediu fica pronto lá.';
   }
 
   async function conferir(ev) {
@@ -153,7 +238,7 @@
         codigo: pega(o, ['codigo', 'title', 'titulo_do_item']), criado_em: pega(o, ['criado_em', 'created', 'criado']) || new Date().toISOString(),
         nome: pega(o, ['nome']), area: pega(o, ['area']), formato: pega(o, ['formato']), variante: pega(o, ['variante']),
         titulo: pega(o, ['titulo']), hash: pega(o, ['hash']), versao_marca: pega(o, ['versao_marca']), ciclo_tendencias: pega(o, ['ciclo_tendencias']),
-        conteudo: { versao_de: pega(o, ['versao_de']) }, html: ''
+        conteudo: { versao_de: pega(o, ['versao_de']) }, html: '', status: pega(o, ['status']) || 'aprovada'
       };
     });
   }
@@ -172,6 +257,7 @@
   }
 
   async function iniciar(ctx) {
+    ctxAtual = ctx;
     var sistema = ctx.sistema, indice;
     try { indice = await fetch('config/formatos/indice.json').then(function (x) { return x.json(); }); }
     catch (e) { indice = { formatos: [] }; }
@@ -186,6 +272,15 @@
     redesenhar();
     $('filtro-texto').addEventListener('input', tabela);
     $('filtro-area').addEventListener('change', tabela);
+    $('filtro-status').addEventListener('change', tabela);
+    $('d-aprovar').addEventListener('click', function () { decidir('aprovar'); });
+    $('d-reprovar').addEventListener('click', function () { decidir('reprovar'); });
+    $('d-ajustar').addEventListener('click', ajustar);
+    // Ao voltar para a aba (depois de ajustar), atualiza a lista.
+    document.addEventListener('visibilitychange', async function () {
+      if (document.visibilityState !== 'visible' || !R.central(reg)) return;
+      try { pedidos = await R.listar(reg, ctx.token); redesenhar(); } catch (e) { /* mantém a lista atual */ }
+    });
     $('conferir').addEventListener('submit', conferir);
     $('d-fechar').addEventListener('click', function () { $('dialogo').close(); });
   }

@@ -13,7 +13,27 @@
 </header>
 
 <main class="casca">
-  <section class="busca" id="busca">
+  <section class="boasvindas" id="boasvindas" hidden>
+    <p class="etapa">Antes de começar</p>
+    <h1>Olá! <span>Quem está pedindo?</span></h1>
+    <p class="lede">Seu nome e seu setor entram na peça e no registro. Ficam guardados neste aparelho: você só preenche uma vez.</p>
+    <form class="cartao quem-inicio" id="form-quem" novalidate>
+      <div class="campos">
+        <div class="campo" data-campo="solicitante">
+          <label for="f-solicitante">Seu nome</label>
+          <input id="f-solicitante" name="solicitante" type="text" autocomplete="name" maxlength="80" placeholder="Nome e sobrenome">
+        </div>
+        <div class="campo" data-campo="area">
+          <label for="f-area">Seu setor</label>
+          <select id="f-area" name="area"><option value="">Selecione seu setor…</option></select>
+        </div>
+      </div>
+      <div class="acoes"><button class="btn primario" type="submit">Continuar <span aria-hidden="true">→</span></button></div>
+    </form>
+  </section>
+
+  <section class="busca" id="busca" hidden>
+    <p class="ola" id="ola" hidden>Olá, <b id="ola-nome"></b> · <span id="ola-area"></span> · <button class="link" type="button" id="ola-trocar">Trocar</button></p>
     <h1>O que você <span>precisa criar?</span></h1>
     <p class="lede">Escolha o formato, cole o conteúdo e o sistema monta a peça no padrão da marca Unimed.</p>
     <div class="combo">
@@ -22,6 +42,10 @@
       <ul id="formato-lista" role="listbox" hidden></ul>
     </div>
     <div class="atalhos" id="atalhos"></div>
+    <div class="minhas" id="minhas" hidden>
+      <h2>Suas peças</h2>
+      <ul id="minhas-lista"></ul>
+    </div>
   </section>
 
   <section class="trabalho" id="trabalho" hidden>
@@ -31,24 +55,10 @@
     </div>
     <div id="painel-editar" class="painel-editar" role="tabpanel" aria-labelledby="aba-editar">
       <form id="formulario" novalidate>
-        <div class="cartao quem" id="quem">
-          <div class="quem-resumo" id="quem-resumo" hidden>
+        <div class="cartao quem compacto" id="quem">
+          <div class="quem-resumo" id="quem-resumo">
             <p>Pedido por <b id="quem-nome"></b> · <span id="quem-area"></span></p>
             <button class="link" type="button" id="quem-trocar">Trocar</button>
-          </div>
-          <div id="quem-campos">
-            <h2>Quem está pedindo</h2>
-            <p class="sub">Seu setor aparece no topo da peça e na assinatura do e-mail. Fica guardado neste aparelho para as próximas peças.</p>
-            <div class="campos">
-              <div class="campo" data-campo="solicitante">
-                <label for="f-solicitante">Seu nome</label>
-                <input id="f-solicitante" name="solicitante" type="text" autocomplete="name" maxlength="80">
-              </div>
-              <div class="campo" data-campo="area">
-                <label for="f-area">Seu setor</label>
-                <select id="f-area" name="area"><option value="">Selecione seu setor…</option></select>
-              </div>
-            </div>
           </div>
         </div>
         <div class="cartao conteudo">
@@ -56,9 +66,14 @@
             <h2 id="titulo-formato">Conteúdo</h2>
             <button class="link" type="button" id="trocar">Trocar formato</button>
           </div>
+          <div id="aviso-pedido" class="aviso-pedido" role="status" hidden></div>
           <div id="rascunho" class="alerta ok rascunho" role="status" hidden></div>
           <div id="campos"></div>
           <div id="mensagens"></div>
+          <div class="campo email-campo" data-campo="email" id="email-caixa">
+            <label for="f-email">Seu e-mail corporativo <span class="opc">· para receber a aprovação e o link de download</span></label>
+            <input id="f-email" name="email" type="email" autocomplete="email" maxlength="120" placeholder="nome@unimeduberlandia.coop.br">
+          </div>
           <div class="barra-acoes">
             <p class="pendencias" id="pendencias" aria-live="polite"></p>
             <button class="btn primario" type="submit" id="gerar"><span id="gerar-rotulo">Gerar peça</span> <span aria-hidden="true">→</span></button>
@@ -70,10 +85,12 @@
         <h2 id="feito-titulo">Peça registrada</h2>
         <div class="codigo" id="codigo"></div>
         <p id="feito-texto">Guarde esse código. Ele identifica esta versão oficial da peça no painel.</p>
+        <div class="status-pedido" id="status-pedido" hidden></div>
         <div class="alerta aviso" id="pendente" hidden>
           <p id="pendente-texto"></p>
           <button class="btn-mini" type="button" id="tentar">Tentar registrar de novo</button>
         </div>
+        <div id="baixar-area">
         <div class="acoes" id="acoes-html">
           <button class="btn primario" type="button" id="copiar">Copiar para o disparo</button>
           <button class="btn secundario" type="button" id="baixar">Baixar HTML <span aria-hidden="true">↓</span></button>
@@ -81,6 +98,7 @@
         <h3 class="feito-sub" id="exportar-titulo">Baixar para ajustes</h3>
         <p class="ajuda" id="exportar-ajuda"></p>
         <div class="acoes exportar" role="group" aria-labelledby="exportar-titulo" id="exportar-grupo"></div>
+        </div>
         <p class="ajuda" id="copiado" role="status"></p>
         <div class="acoes fim">
           <button class="btn secundario" type="button" id="editar">Editar esta peça</button>
@@ -106,6 +124,7 @@
 <script src="src/modelos/campanha-kit.js"></script>
 <script src="src/modelos/carrossel.js"></script>
 <script src="src/registro.js"></script>
+<script src="src/aprovacao.js"></script>
 <script src="src/exportar.js"></script>
 <script src="src/recorte.js"></script>
 <script src="src/formatacao.js"></script>

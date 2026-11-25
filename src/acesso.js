@@ -175,7 +175,7 @@
       document.getElementById('portao').hidden = true;
       montarMenu(opcoes.pagina);
       conteudo.hidden = false;
-      return opcoes.aoLiberar({ token: memoria && memoria.token, admin: !!(local || (memoria && memoria.admin)), usuario: memoria && memoria.usuario, local: !!local, sistema: sistema });
+      return opcoes.aoLiberar({ token: memoria && memoria.token, admin: !!(local || (memoria && memoria.admin)), usuario: memoria && memoria.usuario, nome: memoria && memoria.nome, local: !!local, sistema: sistema });
     };
     if (!api()) {
       if (ehLocal()) return liberar(true);

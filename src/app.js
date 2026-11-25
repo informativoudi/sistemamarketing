@@ -10,6 +10,7 @@
   var M = window.UnimedMotor;
   var R = window.UnimedRegistro;
   var Rc = window.UnimedRecorte;
+  var A = window.UnimedAprovacao;
   var $ = function (id) { return document.getElementById(id); };
 
   var estado = {
@@ -18,6 +19,9 @@
     edicao: null,          // { base, versao } depois da primeira geração
     editando: false,       // true quando "Editar esta peça" foi usado
     pendente: null,        // registro que não chegou ao banco
+    pedidoLink: null,      // peça aberta pelo link de acompanhamento { codigo, t, status, ajuste, p }
+    ajusteToken: '',       // Marketing ajustando: passe da sessão do painel (a versão sai aprovada)
+    ultimoStatus: '', ultimoT: '',
     redesenharImagens: null, desenharOrdem: null, marcarVazios: null
   };
   var LARGOS = { publico: 1, cabecalho: 1, tema: 1, titulo: 1, subtitulo: 1, texto: 1, imagens: 1, local: 1, ordem: 1 };
@@ -87,6 +91,8 @@
     fecharLista();
     estado.formato = await json('config/formatos/' + f.id + '.json');
     estado.edicao = null; estado.editando = false;
+    if (!estado.semRascunho || (estado.pedidoLink && estado.pedidoLink.p.formato !== f.id)) sairDoLink();
+    $('gerar-rotulo').textContent = 'Gerar peça';
     montarFormulario();
     $('busca').classList.add('compacta');
     $('trabalho').hidden = false;
@@ -128,15 +134,65 @@
   /* ---------- Quem está pedindo (fica guardado no aparelho) ---------- */
   function mostrarQuem(compacto) {
     var nome = M.limpar($('f-solicitante').value), area = $('f-area').value;
-    var pode = compacto && nome && area;
-    $('quem-resumo').hidden = !pode;
-    $('quem-campos').hidden = !!pode;
-    $('quem').classList.toggle('compacto', !!pode);
-    if (pode) { $('quem-nome').textContent = nome; $('quem-area').textContent = area; }
+    $('quem-nome').textContent = nome; $('quem-area').textContent = area;
+    $('ola-nome').textContent = nome.split(/\s+/)[0] || nome; $('ola-area').textContent = area;
+    $('ola').hidden = !(nome && area) || !!estado.ajusteToken;
+    $('quem').hidden = !(nome && area);
+    if (!compacto || !nome || !area) abrirBoasVindas();
   }
   function guardarQuem() {
-    var nome = M.limpar($('f-solicitante').value), area = $('f-area').value;
-    if (nome || area) gravar(CHAVE_QUEM, { nome: nome, area: area });
+    if (estado.ajusteToken) return; // Marketing ajustando a peça de outra pessoa: não troca o "quem" deste aparelho
+    var nome = M.limpar($('f-solicitante').value), area = $('f-area').value, email = M.limpar($('f-email').value);
+    if (nome || area || email) gravar(CHAVE_QUEM, { nome: nome, area: area, email: email });
+  }
+
+  /* Primeira tela: só nome e setor. Depois aparecem a busca e a criação. */
+  var vistaAntes = null;
+  function abrirBoasVindas() {
+    if (!$('boasvindas').hidden) return;
+    vistaAntes = { trabalho: !$('trabalho').hidden };
+    $('busca').hidden = true; $('trabalho').hidden = true;
+    $('boasvindas').hidden = false;
+    window.scrollTo(0, 0);
+    var alvo = !M.limpar($('f-solicitante').value) ? $('f-solicitante') : $('f-area');
+    alvo.focus({ preventScroll: true });
+  }
+  function continuarBoasVindas(ev) {
+    if (ev) ev.preventDefault();
+    var nome = M.limpar($('f-solicitante').value), area = $('f-area').value, erros = [];
+    if (nome.split(/\s+/).length < 1 || nome.length < 2) erros.push({ campo: 'solicitante', msg: 'Informe seu nome.' });
+    if (!area) erros.push({ campo: 'area', msg: 'Selecione seu setor.' });
+    document.querySelectorAll('#form-quem .campo').forEach(function (c) { c.classList.remove('com-erro'); var m = c.querySelector('.msg'); if (m) m.remove(); });
+    erros.forEach(function (e) { var c = document.querySelector('#form-quem .campo[data-campo="' + e.campo + '"]'); c.classList.add('com-erro'); c.appendChild(el('span', { 'class': 'msg', texto: e.msg })); });
+    if (erros.length) { $(erros[0].campo === 'area' ? 'f-area' : 'f-solicitante').focus(); return; }
+    guardarQuem();
+    $('boasvindas').hidden = true;
+    $('busca').hidden = false;
+    if (estado.formato && vistaAntes && vistaAntes.trabalho) { $('trabalho').hidden = false; atualizarPrevia(); }
+    else $('formato-busca').focus({ preventScroll: true });
+    mostrarQuem(true);
+    mostrarMinhas();
+  }
+
+  /* "Suas peças": as últimas que a pessoa pediu neste aparelho, com a situação de cada uma. */
+  async function mostrarMinhas() {
+    var lista = A.minhas().slice(0, 6), caixa = $('minhas'), ul = $('minhas-lista');
+    if (!lista.length || !R.central(estado.sistema.registro || {})) { caixa.hidden = true; return; }
+    var sit = {};
+    try { (await R.situacao(estado.sistema.registro, lista.map(function (x) { return { codigo: x.codigo, t: x.t }; }))).forEach(function (x) { sit[x.codigo] = x; }); }
+    catch (e) { /* sem resposta: mostra sem a situação */ }
+    ul.textContent = '';
+    lista.forEach(function (x) {
+      var s = sit[x.codigo], st = s ? A.status(s.status) : null;
+      ul.appendChild(el('li', {}, [
+        el('a', { href: A.link(estado.sistema, x.codigo, x.t) }, [
+          el('span', { 'class': 'minha-titulo', texto: x.titulo || x.codigo }),
+          el('span', { 'class': 'minha-info', texto: (x.formato ? x.formato + ' · ' : '') + x.codigo })
+        ]),
+        st ? el('span', { 'class': 'selo ' + st.classe, texto: st.curto }) : null
+      ]));
+    });
+    caixa.hidden = false;
   }
 
   /* ---------- Formulário a partir das regras ---------- */
@@ -192,6 +248,7 @@
       caixa.classList.add('com-formatacao');
       caixa.appendChild(window.UnimedFormatacao.barra(entrada, realcesResolvidos(), c.formatacao === true ? 'completo' : c.formatacao));
     }
+    if (c.blocos) caixa.appendChild(barraBlocos(entrada));
     caixa.appendChild(entrada);
     if (c.id === 'titulo' && (estado.formato.secoes || []).some(function (s) { return s.id === 'keyart'; })) caixa.appendChild(botaoDestacar(entrada));
     if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
@@ -237,6 +294,35 @@
     estado.sincronizarPublico = caixa.sincronizar;
     aplicar(false);
     return caixa;
+  }
+
+  /* Cartilha ilustrada: botões que inserem blocos prontos no texto, onde está o cursor. */
+  function barraBlocos(entrada) {
+    var modelos = [
+      ['Destaque', '!! Atenção: escreva aqui o aviso importante.'],
+      ['Número grande', '[[numero 85% | dos colaboradores já fizeram o check-up]]'],
+      ['Card com ícone', '[[icone exame | Faça seus exames | Agende pelo app em poucos minutos.]]'],
+      ['Passo a passo', '1) Primeiro passo\n2) Segundo passo\n3) Terceiro passo'],
+      ['Citação', '[[citacao Cuidar de gente é o que nos move. | Diretoria Executiva]]']
+    ];
+    var barra = el('div', { 'class': 'inserir-blocos', role: 'group', 'aria-label': 'Inserir bloco' }, [el('span', { 'class': 'rot', texto: 'Inserir bloco:' })]);
+    modelos.forEach(function (m) {
+      var b = el('button', { type: 'button', 'class': 'btn-mini' }, ['+ ' + m[0]]);
+      b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+      b.addEventListener('click', function () {
+        var v = entrada.value, i = entrada.selectionStart != null ? entrada.selectionStart : v.length;
+        var antes = v.slice(0, i), depois = v.slice(i);
+        var pre = antes && !/\n\n$/.test(antes) ? (/\n$/.test(antes) ? '\n' : '\n\n') : '';
+        var pos = depois && !/^\n\n/.test(depois) ? (/^\n/.test(depois) ? '\n' : '\n\n') : '';
+        entrada.value = antes + pre + m[1] + pos + depois;
+        var ini = (antes + pre).length;
+        entrada.focus(); entrada.setSelectionRange(ini, ini + m[1].length);
+        entrada.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      barra.appendChild(b);
+    });
+    barra.appendChild(el('span', { 'class': 'ajuda', texto: 'Cards com ícone seguidos ficam lado a lado (até 3). Ícones: consulta, exame, agenda, família, telemedicina, carteirinha, receita, rede, reembolso, alerta, caminhada, alimentação, prêmio…' }));
+    return barra;
   }
 
   /* Seções que só valem em campanha (ex.: Visual da campanha). */
@@ -838,6 +924,7 @@
     var faltam = [];
     if (!M.limpar($('f-solicitante').value)) faltam.push('seu nome');
     if (!$('f-area').value) faltam.push('seu setor');
+    if (precisaEmail() && !emailValido($('f-email').value)) faltam.push('seu e-mail');
     estado.formato.campos.forEach(function (c) {
       if (!c.obrigatorio || c.tipo === 'escolha') return;
       var v = dados[c.id];
@@ -851,7 +938,7 @@
 
   /* ---------- Rascunho automático (neste aparelho) ---------- */
   function salvarRascunho(dados) {
-    if (!estado.formato) return;
+    if (!estado.formato || estado.semRascunho) return;
     var tem = estado.formato.campos.some(function (c) {
       var v = dados[c.id];
       return c.tipo !== 'escolha' && c.tipo !== 'arquivo' && (Array.isArray(v) ? v.filter(function (n) { return n && (n.id || M.limpar(n.titulo)); }).length : M.limpar(v || ''));
@@ -862,7 +949,7 @@
     gravar(CHAVE_RASCUNHO + estado.formato.id, tem ? { quando: new Date().toISOString(), dados: limpo, edicao: estado.edicao } : null);
   }
   function recuperarRascunho() {
-    var r = ler(CHAVE_RASCUNHO + estado.formato.id);
+    var r = estado.semRascunho ? null : ler(CHAVE_RASCUNHO + estado.formato.id);
     var aviso = $('rascunho');
     aviso.hidden = true; aviso.textContent = '';
     if (!r || !r.dados) return false;
@@ -1006,12 +1093,15 @@
         var sec = campo.closest('details'); if (sec) sec.open = true;
       }
     });
-    if (erros.some(function (e) { return e.campo === 'solicitante' || e.campo === 'area'; })) mostrarQuem(false);
+    if (erros.some(function (e) { return e.campo === 'solicitante' || e.campo === 'area'; })) { mostrarQuem(false); return; }
     if (erros.length) caixa.appendChild(el('div', { 'class': 'alerta erro', role: 'alert' }, [el('strong', { texto: 'Falta ajustar ' + erros.length + (erros.length > 1 ? ' itens' : ' item') + ':' }), el('ul', {}, erros.map(function (e) { return el('li', { texto: e.msg }); }))]));
     if (res.avisos.length) caixa.appendChild(el('div', { 'class': 'alerta aviso' }, [el('ul', {}, res.avisos.map(function (a) { return el('li', { texto: a.msg }); }))]));
     var primeiro = document.querySelector('.campo.com-erro input, .campo.com-erro textarea, .campo.com-erro select');
     if (primeiro) { mudarAba('editar'); primeiro.focus(); }
   }
+
+  function precisaEmail() { return R.central(estado.sistema.registro || {}); }
+  function emailValido(v) { return /^[^\s@<>"',;]{1,80}@[^\s@<>"',;]{1,120}\.[a-z]{2,}$/i.test(M.limpar(v || '')); }
 
   function proximoCodigo() {
     if (estado.editando && estado.edicao) return estado.edicao.base + '-V' + (estado.edicao.versao + 1);
@@ -1027,12 +1117,14 @@
     var area = $('f-area').value;
     if (!nome) extras.push({ campo: 'solicitante', msg: 'Informe seu nome.' });
     if (!area) extras.push({ campo: 'area', msg: 'Selecione seu setor.' });
+    var email = M.limpar($('f-email').value).toLowerCase();
+    if (precisaEmail() && !emailValido(email)) extras.push({ campo: 'email', msg: email ? 'Confira o e-mail: ele recebe o aviso da aprovação.' : 'Informe seu e-mail corporativo para receber a aprovação.' });
     mostrarMensagens(res, extras);
     if (!res.ok || extras.length) return;
 
     var botao = $('gerar'); botao.disabled = true;
     var rotulo = $('gerar-rotulo'), rotuloAntes = rotulo.textContent;
-    rotulo.textContent = 'Gerando…';
+    rotulo.textContent = estado.ajusteToken ? 'Gerando…' : precisaEmail() ? 'Enviando…' : 'Gerando…';
     try {
       var codigo = proximoCodigo();
       var anterior = estado.editando && estado.edicao ? (estado.edicao.ultimo || estado.ultimoCodigo || null) : null;
@@ -1048,6 +1140,7 @@
         criado_em: new Date().toISOString(),
         nome: nome,
         area: area,
+        email: email || null,
         formato: estado.formato.id,
         tema: dados.tema,
         variante: r.plano.variante || null,
@@ -1062,9 +1155,11 @@
         versao_marca: estado.marca.versao,
         ciclo_tendencias: estado.tendencias.ciclo
       };
-      var falha = null;
-      try { await R.salvar(estado.sistema.registro, registro); }
+      var falha = null, resp = null;
+      try { resp = await R.salvar(estado.sistema.registro, registro, estado.ajusteToken ? { token: estado.ajusteToken } : null); }
       catch (e) { falha = e; }
+      estado.ultimoStatus = resp ? resp.status : ''; estado.ultimoT = resp ? resp.t : '';
+      if (resp && resp.t && !estado.ajusteToken) A.guardarMinha({ codigo: codigo, t: resp.t, titulo: M.limpar(dados.titulo), formato: estado.formato.nome, criado_em: registro.criado_em });
 
       // A peça existe mesmo se o banco não respondeu: dá para copiar e baixar.
       estado.ultimoHtml = r.html; estado.ultimoHtmlLocal = r.htmlLocal; estado.ultimoPlano = r.plano; estado.ultimoDados = dados; estado.ultimoCodigo = codigo; estado.ultimoTitulo = M.limpar(dados.titulo);
@@ -1075,6 +1170,7 @@
       guardarQuem();
       mostrarQuem(true);
       gravar(CHAVE_RASCUNHO + estado.formato.id, null);
+      $('aviso-pedido').hidden = true;
       mostrarFeito(falha, !!anterior);
     } catch (e) {
       $('mensagens').appendChild(el('div', { 'class': 'alerta erro', role: 'alert', texto: 'Não consegui montar a peça (' + explicar(e) + '). Seu conteúdo continua aqui; tente de novo.' }));
@@ -1092,6 +1188,11 @@
     var tudo = el('button', { type: 'button', 'class': 'btn primario', 'data-exportar': 'kit' }, [carro ? 'Baixar todos os cards (.zip)' : 'Baixar o kit completo (.zip)']);
     tudo.addEventListener('click', exportarKit);
     grupo.appendChild(tudo);
+    if (carro) {
+      var pdfTudo = el('button', { type: 'button', 'class': 'btn secundario', 'data-exportar': 'pdf-todas' }, ['PDF com todos os cards (LinkedIn)']);
+      pdfTudo.addEventListener('click', exportarKit);
+      grupo.appendChild(pdfTudo);
+    }
     var lista = el('ul', { 'class': 'kit-lista' });
     estado.ultimoPlano.pecas.forEach(function (p) {
       var botoes = p.exportar.map(function (t) {
@@ -1106,7 +1207,7 @@
     });
     grupo.appendChild(lista);
     $('exportar-titulo').textContent = carro ? 'Baixar o carrossel' : 'Baixar as peças da campanha';
-    $('exportar-ajuda').textContent = carro ? 'O .zip traz os cards numerados na ordem de publicação. Suba no Instagram ou no LinkedIn nessa ordem.' : 'O .zip traz todas as peças em PNG e o e-mail em HTML. As imagens saem no tamanho exato de cada canal. No HTML do e-mail baixado, a foto fica dentro do arquivo: para disparo, suba a foto na ferramenta de envio.';
+    $('exportar-ajuda').textContent = carro ? 'O .zip traz os cards numerados na ordem de publicação, para o Instagram. Para o LinkedIn, use o PDF: cada página é um card.' : 'O .zip traz todas as peças em PNG e o e-mail em HTML. As imagens saem no tamanho exato de cada canal. No HTML do e-mail baixado, a foto fica dentro do arquivo: para disparo, suba a foto na ferramenta de envio.';
     montarAltaDef(true);
   }
 
@@ -1145,13 +1246,26 @@
 
   function mostrarFeito(falha, versao) {
     montarDownloads();
+    var central = R.central(estado.sistema.registro || {});
+    // Com aprovação: os arquivos só saem depois que o Marketing aprova.
+    var bloqueado = central && (!!falha || estado.ultimoStatus === 'aguardando');
+    $('baixar-area').hidden = bloqueado;
+    montarStatus(falha);
     $('codigo').textContent = estado.ultimoCodigo;
-    $('feito-titulo').textContent = falha ? 'Peça pronta, ainda sem registro' : versao ? 'Nova versão registrada' : 'Peça registrada';
+    var st = estado.ultimoStatus;
+    $('feito-titulo').textContent = falha ? (central ? 'Peça ainda não foi enviada' : 'Peça pronta, ainda sem registro')
+      : st === 'aguardando' ? (versao ? 'Nova versão enviada para aprovação' : 'Peça enviada para aprovação')
+      : st === 'aprovada' ? (estado.ajusteToken ? 'Versão ajustada e aprovada' : 'Peça aprovada')
+      : versao ? 'Nova versão registrada' : 'Peça registrada';
     $('feito-texto').textContent = falha
-      ? 'Você já pode copiar e baixar. O código só vale como oficial depois do registro.'
+      ? (central ? 'Ela ainda não chegou ao Marketing. Tente enviar de novo; seu conteúdo continua aqui.' : 'Você já pode copiar e baixar. O código só vale como oficial depois do registro.')
+      : st === 'aguardando' ? 'O Marketing vai conferir. Quando aprovar, você recebe um e-mail' + (M.limpar($('f-email').value) ? ' em ' + M.limpar($('f-email').value) : '') + ' com o link para baixar a versão oficial.'
+      : st === 'aprovada' && estado.ajusteToken ? 'A versão anterior foi substituída. Avise quem pediu: o e-mail já sai escrito, com o link para baixar.'
+      : st === 'aprovada' && estado.pedidoLink ? 'Esta é a versão oficial. Baixe nos formatos abaixo.'
       : versao ? 'A versão anterior continua guardada no painel. Use este código daqui pra frente.' : 'Guarde esse código. Ele identifica esta versão oficial da peça no painel.';
     $('pendente').hidden = !falha;
     if (falha) $('pendente-texto').textContent = 'Não consegui registrar no painel agora (' + explicar(falha) + ').';
+    $('tentar').textContent = central ? 'Enviar de novo' : 'Tentar registrar de novo';
     var local = !R.central(estado.sistema.registro || {});
     $('copiado').textContent = !estado.imagensEmbutidas ? '' : local
       ? 'Modo de teste: as imagens ficaram embutidas no arquivo. Servem para baixar e ajustar; para disparo, use o site publicado.'
@@ -1160,19 +1274,132 @@
     $('feito').hidden = false;
     mudarAba('editar');
     $('feito').scrollIntoView({ block: 'start', behavior: 'smooth' });
-    var primeiro = exporta('html') ? $('copiar') : $('exportar-grupo').querySelector('button');
+    var primeiro = bloqueado ? null : exporta('html') ? $('copiar') : $('exportar-grupo').querySelector('button');
     if (primeiro) primeiro.focus({ preventScroll: true });
+    // Peça aberta pelo link e já aprovada: não tem "nova versão" a partir daqui.
+    $('editar').hidden = !!(estado.pedidoLink && estado.pedidoLink.soBaixar);
+  }
+
+  /* Situação da peça no cartão final: link para acompanhar, aviso para o Marketing mandar o e-mail. */
+  function montarStatus(falha) {
+    var caixa = $('status-pedido'); caixa.textContent = '';
+    var t = estado.ultimoT, st = estado.ultimoStatus;
+    if (falha || !t) { caixa.hidden = true; return; }
+    var link = A.link(estado.sistema, estado.ultimoCodigo, t);
+    var info = A.status(st);
+    caixa.appendChild(el('p', { 'class': 'situacao-linha' }, [el('span', { 'class': 'selo ' + info.classe, texto: info.nome })]));
+    if (estado.ajusteToken && st === 'aprovada') {
+      var p = estado.pedidoLink && estado.pedidoLink.p || {};
+      var m = A.mensagem({ nome: M.limpar($('f-solicitante').value), email: M.limpar($('f-email').value), titulo: estado.ultimoTitulo, codigo: estado.ultimoCodigo, formatoNome: estado.formato.nome },
+        { status: 'aprovada', ajustada: true, link: link, quem: lerSessaoPainel().nome || '' });
+      caixa.appendChild(el('div', { 'class': 'acoes' }, [
+        el('a', { 'class': 'btn primario', href: A.mailto(m) }, ['Avisar ' + ((p.nome || '').split(/\s+/)[0] || 'quem pediu') + ' pelo Outlook']),
+        el('a', { 'class': 'link', href: 'painel.html' }, ['Voltar ao painel'])
+      ]));
+      return;
+    }
+    if (st === 'aguardando') {
+      var copiarLink = el('button', { type: 'button', 'class': 'btn-mini', onclick: function () {
+        navigator.clipboard.writeText(link).then(function () { $('copiado').textContent = 'Link copiado.'; }).catch(function () { $('copiado').textContent = link; });
+      } }, ['Copiar link de acompanhamento']);
+      caixa.appendChild(el('p', { 'class': 'ajuda', texto: 'Você também acompanha a situação em "Suas peças", na tela inicial deste aparelho, ou por este link:' }));
+      caixa.appendChild(el('div', { 'class': 'acoes' }, [el('a', { 'class': 'btn-mini', href: link }, ['Abrir acompanhamento']), copiarLink]));
+    }
+    caixa.hidden = false;
+  }
+
+  function lerSessaoPainel() {
+    try { var s = JSON.parse(localStorage.getItem('unimed-sessao-painel-v1') || 'null'); return s && s.token && (!s.expira || s.expira > Date.now()) ? s : {}; } catch (e) { return {}; }
+  }
+
+  /* ---------- Peça aberta pelo link (?pedido=CÓDIGO&t=CHAVE) ---------- */
+  async function abrirPedidoDoLink() {
+    var q = new URLSearchParams(location.search);
+    var codigo = (q.get('pedido') || '').toUpperCase(), t = q.get('t') || '';
+    if (!codigo || !t) return false;
+    var ajuste = q.get('ajuste') === '1';
+    $('boasvindas').hidden = true; $('busca').hidden = false;
+    var falhou = function (msg) {
+      $('busca').insertBefore(el('div', { 'class': 'alerta erro', role: 'alert', texto: msg }), $('busca').querySelector('.combo'));
+      mostrarQuem(true);
+    };
+    var p;
+    try { p = await R.consultar(estado.sistema.registro, codigo, t); }
+    catch (e) { falhou('Não consegui abrir a peça ' + codigo + ': ' + e.message); return true; }
+    var f = estado.indice.formatos.filter(function (x) { return x.id === p.formato; })[0];
+    if (!f) { falhou('O formato dessa peça não está mais disponível.'); return true; }
+    var sessao = ajuste ? lerSessaoPainel() : {};
+    if (ajuste && !sessao.token) { ajuste = false; }
+    estado.ajusteToken = ajuste ? sessao.token : '';
+    estado.pedidoLink = { codigo: codigo, t: t, status: p.status, ajuste: ajuste, p: p };
+    // Quem pediu: no ajuste, os dados são da pessoa que pediu (não mexe no "quem" deste aparelho).
+    if (ajuste || !M.limpar($('f-solicitante').value)) {
+      $('f-solicitante').value = p.nome || ''; $('f-area').value = p.area || ''; $('f-email').value = p.email || '';
+      if (!ajuste) guardarQuem();
+    }
+    if (!M.limpar($('f-email').value) && p.email) $('f-email').value = p.email;
+    estado.semRascunho = true;
+    await escolher(f);
+    preencher(p.conteudo || {});
+    // Uma nova versão a partir daqui continua a numeração (…-V2, -V3).
+    var ref = p.versao_nova || codigo;
+    var m = /^(.*?)(?:-V(\d+))?$/.exec(ref);
+    estado.edicao = { base: m[1], versao: m[2] ? Number(m[2]) : 1, ultimo: codigo };
+    estado.editando = true;
+    mostrarQuem(true);
+    if (p.status !== 'aprovada' || ajuste) atualizarPrevia();
+    var faltaFoto = (p.conteudo && (p.conteudo.imagens || []).some(function (i) { return /^enviada-/.test(i.id); })) ||
+      estado.formato.campos.some(function (c) { return c.tipo === 'imagens-documento' && ((p.conteudo || {})[c.id] || []).length; });
+    var aviso = $('aviso-pedido'); aviso.textContent = ''; aviso.className = 'aviso-pedido';
+    var st = A.status(p.status);
+    var linha = function (filhos) { aviso.appendChild(el('p', {}, filhos)); };
+    aviso.appendChild(el('p', { 'class': 'situacao-linha' }, [el('span', { 'class': 'selo ' + st.classe, texto: st.nome }), ' ' + codigo + (p.decidido_por ? ' · ' + p.decidido_por : '')]));
+    if (ajuste) {
+      aviso.classList.add('ajuste');
+      linha([el('b', { texto: 'Modo ajuste do Marketing. ' }), 'Peça de ' + (p.nome || '—') + ' (' + (p.area || '—') + '). Ajuste o que precisar e gere: a nova versão já sai aprovada e o e-mail para quem pediu fica pronto.']);
+      $('gerar-rotulo').textContent = 'Gerar versão aprovada';
+    } else if (p.status === 'reprovada') {
+      aviso.classList.add('reprovada');
+      linha([el('b', { texto: 'O Marketing pediu ajustes: ' }), p.observacao || '']);
+      linha(['Corrija abaixo e clique em "Enviar nova versão". Ela substitui esta.']);
+      $('gerar-rotulo').textContent = 'Enviar nova versão';
+    } else if (p.status === 'aguardando') {
+      linha(['Esta peça está em análise pelo Marketing. Se quiser mudar algo, edite e envie de novo: a nova versão substitui esta.']);
+      $('gerar-rotulo').textContent = 'Enviar nova versão';
+    } else if (p.status === 'substituida') {
+      linha(['Esta versão foi substituída' + (p.versao_nova ? ' pela ' + p.versao_nova : '') + '. Use o link do e-mail mais recente.']);
+      $('gerar-rotulo').textContent = 'Enviar nova versão';
+    }
+    if (faltaFoto && p.status !== 'aprovada') linha([el('b', { texto: 'Atenção: ' }), 'as fotos enviadas do computador não ficam guardadas. Envie de novo antes de gerar.']);
+    aviso.hidden = false;
+
+    if (p.status === 'aprovada' && !ajuste) {
+      // Aprovada: mostra direto os downloads da versão oficial, sem registrar de novo.
+      estado.pedidoLink.soBaixar = true;
+      var r = await atualizarPrevia(codigo);
+      if (!r) { falhou('Não consegui montar a peça aprovada.'); return true; }
+      var oficial = p.html && !r.plano.kit ? p.html : '';
+      if (oficial) $('quadro').srcdoc = oficial;
+      estado.ultimoHtml = oficial || r.html; estado.ultimoHtmlLocal = oficial || r.htmlLocal;
+      estado.ultimoPlano = r.plano; estado.ultimoDados = lerDados(); estado.ultimoCodigo = codigo; estado.ultimoTitulo = p.titulo || M.limpar(estado.ultimoDados.titulo);
+      estado.ultimoStatus = 'aprovada'; estado.ultimoT = '';
+      estado.imagensEmbutidas = false;
+      mostrarFeito(null, false);
+      if (p.observacao) $('feito-texto').textContent += ' Observação do Marketing: ' + p.observacao;
+      if (r.plano.kit && faltaFoto) $('copiado').textContent = 'Atenção: a foto enviada do computador não fica guardada. Se ela não aparecer nas peças, peça ao Marketing o arquivo.';
+    }
+    return true;
   }
 
   async function tentarDeNovo() {
     if (!estado.pendente) return;
     var b = $('tentar'); b.disabled = true; b.textContent = 'Tentando…';
     try {
-      await R.salvar(estado.sistema.registro, estado.pendente, { soBanco: true });
+      var resp = await R.salvar(estado.sistema.registro, estado.pendente, { soBanco: true, token: estado.ajusteToken || '' });
+      estado.ultimoStatus = resp.status; estado.ultimoT = resp.t;
+      if (resp.t && !estado.ajusteToken) A.guardarMinha({ codigo: estado.pendente.codigo, t: resp.t, titulo: estado.pendente.titulo, formato: estado.formato.nome, criado_em: estado.pendente.criado_em });
       estado.pendente = null;
-      $('pendente').hidden = true;
-      $('feito-titulo').textContent = 'Peça registrada';
-      $('feito-texto').textContent = 'Pronto, o registro entrou no painel. Guarde esse código.';
+      mostrarFeito(null, false);
     } catch (e) {
       $('pendente-texto').textContent = 'Ainda não consegui registrar (' + explicar(e) + '). Tente de novo em alguns minutos.';
     } finally { b.disabled = false; b.textContent = 'Tentar registrar de novo'; }
@@ -1218,6 +1445,7 @@
         largura: fe.quadro || 680,
         escala: (fe.escalaImagem || 2) * fatorAltaDef(),
         escalaPdf: fe.escalaPdf || null,
+        sangria: fe.sangria || 0,
         dpi: fe.dpi || null
       };
       if (tipo === 'docx') {
@@ -1259,6 +1487,22 @@
         aviso.textContent = 'Kit baixado: ' + pecas.length + ' peças.';
         return;
       }
+      if (tipo === 'pdf-todas') {
+        await E.carregar('jspdf');
+        var J = window.jspdf.jsPDF, doc = null;
+        for (var k = 0; k < pecas.length; k++) {
+          var pk = pecas[k];
+          aviso.textContent = 'Preparando o PDF: ' + pk.nome + ' (' + (k + 1) + ' de ' + pecas.length + ')…';
+          var bl = await E.png(pk.html, nomeArq(pk, 'png'), info(pk, { blob: true }));
+          var url = await new Promise(function (ok) { var fr = new FileReader(); fr.onload = function () { ok(fr.result); }; fr.readAsDataURL(bl); });
+          if (!doc) doc = new J({ orientation: 'portrait', unit: 'px', format: [pk.largura, pk.altura], hotfixes: ['px_scaling'], compress: true });
+          else doc.addPage([pk.largura, pk.altura], 'portrait');
+          doc.addImage(url, 'PNG', 0, 0, pk.largura, pk.altura);
+        }
+        await E.arquivo(doc.output('blob'), estado.ultimoCodigo + '-carrossel.pdf');
+        aviso.textContent = 'PDF baixado: ' + pecas.length + ' páginas, uma por card.';
+        return;
+      }
       var p2 = pecas.filter(function (x) { return x.id === qual; })[0];
       if (!p2) throw new Error('peça não encontrada');
       aviso.textContent = 'Preparando ' + p2.nome + '…';
@@ -1272,15 +1516,26 @@
 
   function nova() {
     gravar(CHAVE_RASCUNHO + estado.formato.id, null);
-    var nome = $('f-solicitante').value, area = $('f-area').value;
+    var email = $('f-email').value;
     $('formulario').reset();
-    $('f-solicitante').value = nome; $('f-area').value = area;
+    $('f-email').value = email;
     estado.edicao = null; estado.editando = false; estado.pendente = null; estado.docImagens = [];
+    sairDoLink();
     $('gerar-rotulo').textContent = 'Gerar peça';
     $('rascunho').hidden = true;
     mostrarFormulario();
     montarFormulario(); atualizarPrevia();
     var t = $('f-titulo'); if (t) t.focus({ preventScroll: true });
+  }
+
+  /* Começar outra peça depois de abrir um link: volta ao "quem" deste aparelho e limpa o endereço. */
+  function sairDoLink() {
+    if (!estado.pedidoLink) return;
+    var eraAjuste = !!estado.ajusteToken;
+    estado.pedidoLink = null; estado.ajusteToken = ''; estado.semRascunho = false;
+    $('aviso-pedido').hidden = true;
+    if (history.replaceState) history.replaceState(null, '', location.pathname);
+    if (eraAjuste) { var q = ler(CHAVE_QUEM) || {}; $('f-solicitante').value = q.nome || ''; $('f-area').value = q.area || ''; $('f-email').value = q.email || ''; mostrarQuem(true); }
   }
 
   /* ---------- Abas Editar | Prévia (telas estreitas) ---------- */
@@ -1329,11 +1584,12 @@
       estado.marca.areas.forEach(function (a) { area.appendChild(el('option', { value: a, texto: a })); validos.push(a); });
     }
     var quem = ler(CHAVE_QUEM);
-    if (quem) { $('f-solicitante').value = quem.nome || ''; if (validos.indexOf(quem.area) >= 0) area.value = quem.area; }
-    mostrarQuem(true);
-    $('quem-trocar').addEventListener('click', function () { mostrarQuem(false); $('f-solicitante').focus(); });
-    $('f-solicitante').addEventListener('change', guardarQuem);
-    area.addEventListener('change', guardarQuem);
+    if (quem) { $('f-solicitante').value = quem.nome || ''; if (validos.indexOf(quem.area) >= 0) area.value = quem.area; $('f-email').value = quem.email || ''; }
+    $('email-caixa').hidden = !precisaEmail();
+    $('form-quem').addEventListener('submit', continuarBoasVindas);
+    $('quem-trocar').addEventListener('click', function () { mostrarQuem(false); });
+    $('ola-trocar').addEventListener('click', function () { mostrarQuem(false); });
+    $('f-email').addEventListener('change', guardarQuem);
 
     // Atalhos: os formatos ativos primeiro e em destaque; "em breve" apagados.
     var atalhos = $('atalhos');
@@ -1387,6 +1643,12 @@
     // A cartilha pagina depois de carregar as fontes: reajusta a altura da prévia.
     window.addEventListener('message', function (e) { if (e.data && e.data.tipo === 'unimed-paginado') ajustarQuadro(); });
     window.addEventListener('resize', ajustarQuadro);
+
+    // Link de acompanhamento/aprovação? Abre a peça. Senão: nome e setor primeiro, depois a busca.
+    if (!(await abrirPedidoDoLink())) {
+      if (M.limpar($('f-solicitante').value) && $('f-area').value) { $('busca').hidden = false; mostrarQuem(true); mostrarMinhas(); }
+      else mostrarQuem(false);
+    }
   }
   iniciar();
 })();

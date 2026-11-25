@@ -37,11 +37,40 @@
       if (!gravarLocal(lista.slice(0, 300))) gravarLocal(lista.slice(0, 50));
     }
     if (central(cfg)) {
-      var r = await fetch(api(cfg) + '/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pedido) });
+      var cab = { 'Content-Type': 'application/json' };
+      // Ajuste do Marketing: com o passe da sessão, a nova versão já entra aprovada.
+      if (opcoes && opcoes.token) cab.Authorization = 'Bearer ' + opcoes.token;
+      var r = await fetch(api(cfg) + '/pedidos' + (opcoes && opcoes.token ? '?aprovar=1' : ''), { method: 'POST', headers: cab, body: JSON.stringify(pedido) });
+      var d = {}; try { d = await r.json(); } catch (e) { d = {}; }
       // 409 = já estava registrado (ex.: nova tentativa de envio): está tudo certo.
-      if (!r.ok && r.status !== 409) throw new Error('O registro recusou o pedido (' + r.status + ').');
+      if (!r.ok && r.status !== 409) throw new Error(d.erro || 'O registro recusou o pedido (' + r.status + ').');
+      return { t: d.t || '', status: d.status || 'aguardando' };
     }
-    return pedido;
+    return { t: '', status: '' };
+  }
+
+  /* Aprovação ---------------------------------------------------------- */
+  async function lerJson(r, padrao) {
+    var d = {}; try { d = await r.json(); } catch (e) { d = {}; }
+    if (!r.ok) throw new Error(d.erro || padrao + ' (' + r.status + ').');
+    return d;
+  }
+  /* Uma peça pelo link de acompanhamento (código + chave). */
+  async function consultar(cfg, codigo, t) {
+    var r = await fetch(api(cfg) + '/pedido/' + encodeURIComponent(codigo) + '?t=' + encodeURIComponent(t));
+    return lerJson(r, 'Não consegui abrir essa peça');
+  }
+  /* Situação de várias peças (as que a pessoa pediu neste aparelho). */
+  async function situacao(cfg, itens) {
+    if (!central(cfg) || !itens.length) return [];
+    var r = await fetch(api(cfg) + '/situacao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ itens: itens }) });
+    return lerJson(r, 'Não consegui ver a situação');
+  }
+  /* Marketing: aprovar ou reprovar. */
+  async function decidir(cfg, token, codigo, acao, observacao) {
+    var r = await fetch(api(cfg) + '/pedidos/' + encodeURIComponent(codigo) + '/decisao', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token }, body: JSON.stringify({ acao: acao, observacao: observacao || '' }) });
+    if (r.status === 401) throw new Error('Sua sessão expirou. Clique em Sair e entre de novo.');
+    return lerJson(r, 'Não consegui registrar a decisão');
   }
 
   /* Ler todos os pedidos exige o login do Marketing (passe da sessão). */
@@ -64,5 +93,5 @@
     return d.url;
   }
 
-  raiz.UnimedRegistro = { salvar: salvar, listar: listar, hash: hash, enviarImagem: enviarImagem, central: central };
+  raiz.UnimedRegistro = { salvar: salvar, consultar: consultar, situacao: situacao, decidir: decidir, listar: listar, hash: hash, enviarImagem: enviarImagem, central: central };
 })(window);

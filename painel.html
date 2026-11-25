@@ -55,10 +55,18 @@
       <input id="filtro-texto" type="search" placeholder="Buscar por nome, título ou código">
       <label for="filtro-area" style="position:absolute;left:-9999px">Área</label>
       <select id="filtro-area"><option value="">Todas as áreas</option></select>
+      <label for="filtro-status" style="position:absolute;left:-9999px">Situação</label>
+      <select id="filtro-status">
+        <option value="">Todas as situações</option>
+        <option value="aguardando">Aguardando aprovação</option>
+        <option value="aprovada">Aprovadas</option>
+        <option value="reprovada">Precisam de ajustes</option>
+        <option value="substituida">Substituídas por nova versão</option>
+      </select>
     </div>
     <div class="tabela-caixa">
       <table class="lista">
-        <thead><tr><th>Código</th><th>Quando</th><th>Quem</th><th>Área</th><th>Formato</th><th>Título</th><th></th></tr></thead>
+        <thead><tr><th>Situação</th><th>Código</th><th>Quando</th><th>Quem</th><th>Área</th><th>Formato</th><th>Título</th><th></th></tr></thead>
         <tbody id="linhas"></tbody>
       </table>
     </div>
@@ -74,11 +82,26 @@
       <button class="btn secundario" type="button" id="d-fechar">Fechar</button>
     </div>
     <iframe id="d-quadro" title="Peça oficial" sandbox referrerpolicy="no-referrer"></iframe>
+    <div class="decisao-caixa" id="d-decisao">
+      <div id="d-situacao" role="status"></div>
+      <div class="campo largo">
+        <label for="d-obs">Observação para quem pediu <span class="opc" id="d-obs-dica">(obrigatória para reprovar)</span></label>
+        <textarea id="d-obs" rows="3" maxlength="2000" placeholder="Ex.: troque a foto por uma da biblioteca e encurte o título."></textarea>
+      </div>
+      <div class="acoes decisao-botoes">
+        <button class="btn primario" type="button" id="d-aprovar">Aprovar</button>
+        <button class="btn secundario" type="button" id="d-ajustar" title="Abre a peça no gerador; a versão que você gerar já sai aprovada">Ajustar e aprovar</button>
+        <button class="btn perigo" type="button" id="d-reprovar">Reprovar</button>
+        <a class="btn-mini" id="d-email" hidden target="_blank" rel="noopener">Abrir e-mail no Outlook</a>
+      </div>
+      <p class="ajuda" id="d-aviso" role="status"></p>
+    </div>
   </div>
 </dialog>
 
 <script src="src/acesso.js"></script>
 <script src="src/registro.js"></script>
+<script src="src/aprovacao.js"></script>
 <script src="src/painel.js"></script>
 </body>
 </html>
