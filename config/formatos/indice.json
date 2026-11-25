@@ -123,50 +123,50 @@
     {
       "id": "post-linkedin",
       "nome": "Post LinkedIn",
-      "grupo": "Digital",
-      "ativo": false,
+      "grupo": "Digital · 1200 × 1200 ou 1200 × 627",
+      "ativo": true,
       "palavras": "linkedin post rede social"
     },
     {
       "id": "carrossel-instagram",
       "nome": "Carrossel Instagram",
-      "grupo": "Digital",
-      "ativo": false,
+      "grupo": "Digital · 1080 × 1350, até 10 cards",
+      "ativo": true,
       "palavras": "instagram carrossel feed rede social"
     },
     {
       "id": "story-instagram",
       "nome": "Story Instagram",
-      "grupo": "Digital",
-      "ativo": false,
+      "grupo": "Digital · 1080 × 1920",
+      "ativo": true,
       "palavras": "instagram story stories"
     },
     {
       "id": "viva-engage",
       "nome": "Post Viva Engage",
-      "grupo": "Digital",
-      "ativo": false,
+      "grupo": "Digital · 1200 × 675 ou 1080 × 1080",
+      "ativo": true,
       "palavras": "viva engage yammer interno"
     },
     {
       "id": "cartaz",
       "nome": "Cartaz A3/A4",
-      "grupo": "Gráfico",
-      "ativo": false,
+      "grupo": "Impresso · A3, A4 ou A5 (300 dpi)",
+      "ativo": true,
       "palavras": "cartaz poster mural impresso"
     },
     {
       "id": "convite",
       "nome": "Convite",
-      "grupo": "Gráfico",
-      "ativo": false,
+      "grupo": "Digital ou impresso",
+      "ativo": true,
       "palavras": "convite evento"
     },
     {
       "id": "flyer",
       "nome": "Flyer",
-      "grupo": "Gráfico",
-      "ativo": false,
+      "grupo": "Impresso · A5, A4 ou A3 (300 dpi)",
+      "ativo": true,
       "palavras": "flyer panfleto folheto impresso"
     }
   ]

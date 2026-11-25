@@ -101,9 +101,20 @@
 
   /* ---------- Modelo do formato (o desenho) e decisões ---------- */
   function modelo() { return window.UnimedModelos[estado.formato.modelo || estado.formato.id]; }
+  /* Formatos com mais de um tamanho (cartaz A3/A4/A5, convite, LinkedIn…): as medidas vêm do tamanho escolhido. */
+  function formatoEfetivo(dados) {
+    var f = estado.formato;
+    if (!f || !f.tamanhos) return f;
+    var t = dados && dados.tamanho;
+    if (!t) { var r = document.querySelector('input[name="tamanho"]:checked'); t = r ? r.value : Object.keys(f.tamanhos)[0]; }
+    var x = f.tamanhos[t] || f.tamanhos[Object.keys(f.tamanhos)[0]];
+    var e = Object.assign({}, f, x);
+    e.quadro = x.largura || f.quadro;
+    return e;
+  }
   function decidir(dados) {
-    var md = modelo();
-    return md && md.decidir ? md.decidir(estado.formato, estado.marca, estado.tendencias, dados) : M.decidir(estado.formato, estado.marca, estado.tendencias, dados);
+    var md = modelo(), f = formatoEfetivo(dados);
+    return md && md.decidir ? md.decidir(f, estado.marca, estado.tendencias, dados) : M.decidir(f, estado.marca, estado.tendencias, dados);
   }
   function exporta(tipo) { return (estado.formato.exportar || ['html', 'png', 'pdf', 'pptx']).indexOf(tipo) >= 0; }
   /* Todas as imagens que o plano usa (as do bloco de imagens e as das notícias da newsletter). */
@@ -303,7 +314,7 @@
   }
   /* Foto pequena para o formato: avisa antes de gerar (fica borrada no tamanho final). */
   function avisarNitidez(w, h, nome) {
-    var f = estado.formato || {};
+    var f = formatoEfetivo() || {};
     var precisa = Math.max(f.largura || 0, f.altura || 0);
     var caixa = $('mensagens');
     if (!caixa || !precisa) return;
@@ -334,7 +345,7 @@
   /* ---------- Imagens: até 3, escolha na biblioteca e ajuste do enquadramento ---------- */
   function slotsPara(qtd) {
     var md = modelo();
-    if (md && md.slots) return md.slots(estado.formato, qtd, lerDados());
+    if (md && md.slots) { var dd = lerDados(); return md.slots(formatoEfetivo(dd), qtd, dd); }
     var lay = (estado.formato.arvore.imagem && estado.formato.arvore.imagem.layouts) || {};
     return lay[String(qtd)] || [];
   }
@@ -406,7 +417,8 @@
     var tam = (estado.formato.arvore && estado.formato.arvore.noticias) || { destaque: { w: 536, h: 268 }, demais: { w: 176, h: 132 } };
     caixa.classList.add('largo');
     var lista = el('div', { 'class': 'noticias' });
-    var mais = el('button', { type: 'button', 'class': 'btn secundario btn-mais' }, ['+ Adicionar notícia']);
+    var item = c.item || 'Notícia', itemMin = item.toLowerCase();
+    var mais = el('button', { type: 'button', 'class': 'btn secundario btn-mais' }, ['+ Adicionar ' + itemMin]);
     var anuncio = el('span', { 'class': 'sr-only', 'aria-live': 'polite' });
     if (!estado.noticias.length) estado.noticias.push(nova());
     function nova() { return { titulo: '', texto: '', linkTexto: '', link: '', imagem: '', x: 0.5, y: 0.5, zoom: 1 }; }
@@ -435,33 +447,33 @@
           editorCaixa.textContent = '';
           var ap = estado.marca.imagensAprovadas.filter(function (a) { return a.id === n.imagem; })[0];
           if (!ap) return;
-          editorCaixa.appendChild(Rc.editor({ id: 'noticia' + i, numero: i + 1, src: ap.arquivo, w: t.w, h: t.h, rotulo: 'Foto da notícia ' + (i + 1), ajuste: n, aoMudar: function (aj) { n.x = aj.x; n.y = aj.y; n.zoom = aj.zoom; mudou(); } }));
+          editorCaixa.appendChild(Rc.editor({ id: 'noticia' + i, numero: i + 1, src: ap.arquivo, w: t.w, h: t.h, rotulo: 'Foto do ' + itemMin + ' ' + (i + 1), ajuste: n, aoMudar: function (aj) { n.x = aj.x; n.y = aj.y; n.zoom = aj.zoom; mudou(); } }));
         }
         sel.addEventListener('change', function () { n.imagem = sel.value; n.x = 0.5; n.y = 0.5; n.zoom = 1; editor(); });
         editor();
         var enviarN = botaoEnviar('Enviar foto do computador', function (img) { n.imagem = img.id; n.x = 0.5; n.y = 0.5; n.zoom = 1; desenhar(); mudou(); });
-        var sobe = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Subir notícia ' + (i + 1), disabled: i === 0, onclick: function () { trocar(i, -1); } }, ['↑']);
-        var desce = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Descer notícia ' + (i + 1), disabled: i === estado.noticias.length - 1, onclick: function () { trocar(i, 1); } }, ['↓']);
-        var tirar = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Remover notícia ' + (i + 1), disabled: estado.noticias.length === 1, onclick: function () { estado.noticias.splice(i, 1); desenhar(); anuncio.textContent = 'Notícia removida.'; mudou(); } }, ['Remover']);
+        var sobe = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Subir ' + itemMin + ' ' + (i + 1), disabled: i === 0, onclick: function () { trocar(i, -1); } }, ['↑']);
+        var desce = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Descer ' + itemMin + ' ' + (i + 1), disabled: i === estado.noticias.length - 1, onclick: function () { trocar(i, 1); } }, ['↓']);
+        var tirar = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': 'Remover ' + itemMin + ' ' + (i + 1), disabled: estado.noticias.length === 1, onclick: function () { estado.noticias.splice(i, 1); desenhar(); anuncio.textContent = item + ' removido.'; mudou(); } }, ['Remover']);
         lista.appendChild(el('fieldset', { 'class': 'noticia' }, [
-          el('legend', {}, [el('b', { texto: 'Notícia ' + (i + 1) }), el('span', { 'class': 'opc', texto: i === 0 ? ' · destaque, foto ' + t.w + ' × ' + t.h : ' · lista, foto ' + t.w + ' × ' + t.h })]),
+          el('legend', {}, [el('b', { texto: item + ' ' + (i + 1) }), el('span', { 'class': 'opc', texto: c.semLink ? '' : i === 0 ? ' · destaque, foto ' + t.w + ' × ' + t.h : ' · lista, foto ' + t.w + ' × ' + t.h })]),
           el('div', { 'class': 'noticia-acoes' }, [sobe, desce, tirar]),
           el('div', { 'class': 'campos' }, [
             entrada(n, 'titulo', 'Título', i),
-            entrada(n, 'texto', 'Resumo (opcional)', i, 'area'),
-            entrada(n, 'linkTexto', 'Texto do link', i, 'text', 'Leia mais'),
-            entrada(n, 'link', 'Link (opcional)', i, 'url', 'https://'),
+            entrada(n, 'texto', c.rotuloTexto || 'Resumo (opcional)', i, 'area'),
+            c.semLink ? null : entrada(n, 'linkTexto', 'Texto do link', i, 'text', 'Leia mais'),
+            c.semLink ? null : entrada(n, 'link', 'Link (opcional)', i, 'url', 'https://'),
             el('div', { 'class': 'campo largo' }, [el('label', { 'for': 'n-' + i + '-imagem' }, ['Foto (opcional)']), el('div', { 'class': 'linha-foto' }, [sel, enviarN]), editorCaixa])
           ])
         ]));
       });
       mais.disabled = estado.noticias.length >= limite;
-      mais.textContent = estado.noticias.length >= limite ? 'Limite de ' + limite + ' notícias' : '+ Adicionar notícia';
+      mais.textContent = estado.noticias.length >= limite ? 'Limite de ' + limite + ' ' + (c.itemPlural || 'notícias') : '+ Adicionar ' + itemMin;
       if (foco != null) { var f = document.getElementById('n-' + foco + '-titulo'); if (f) f.focus(); }
     }
     function trocar(i, d) {
       var j = i + d; var t = estado.noticias[i]; estado.noticias[i] = estado.noticias[j]; estado.noticias[j] = t;
-      desenhar(j); anuncio.textContent = 'Notícia agora na posição ' + (j + 1) + '.'; mudou();
+      desenhar(j); anuncio.textContent = item + ' agora na posição ' + (j + 1) + '.'; mudou();
     }
     mais.addEventListener('click', function () { if (estado.noticias.length < limite) { estado.noticias.push(nova()); desenhar(estado.noticias.length - 1); mudou(); } });
     estado.redesenharNoticias = function () { desenhar(); };
@@ -890,9 +902,10 @@
     if (palco.hidden) return;
     var doc; try { doc = q.contentDocument; } catch (e) { return; }
     if (!doc || !doc.documentElement) return;
-    LARGURA_QUADRO = estado.formato.quadro || 680;
+    LARGURA_QUADRO = (formatoEfetivo() || estado.formato).quadro || 680;
     q.style.width = LARGURA_QUADRO + 'px';
-    var h = doc.documentElement.scrollHeight;
+    // Altura do conteúdo (o body), não da janela: senão a prévia herda a altura da peça anterior.
+    var h = doc.body ? Math.max(doc.body.scrollHeight, doc.body.offsetHeight) : doc.documentElement.scrollHeight;
     var s = Math.min(1, palco.clientWidth / LARGURA_QUADRO);
     q.style.height = h + 'px';
     q.style.transform = s < 1 ? 'scale(' + s + ')' : '';
@@ -915,6 +928,7 @@
       return null;
     }
     $('moldura').classList.toggle('exemplo', !!exemplo);
+    var fe0 = formatoEfetivo(dados); if (fe0 && fe0.largura) $('largura').textContent = fe0.altura ? fe0.largura + ' × ' + fe0.altura + ' px' + (fe0.dpi ? ' · sai a ' + fe0.dpi * (fe0.escalaPdf || 1) + ' dpi' : '') : fe0.largura + ' px de largura';
     var plano = decidir(dados);
     try { await recortar(plano); } catch (e) { /* segue com a imagem original */ }
     if (minha !== rodada && !codigo) return null;
@@ -1074,7 +1088,8 @@
   function montarDownloadsKit() {
     $('acoes-html').hidden = true;
     var grupo = $('exportar-grupo'); grupo.textContent = '';
-    var tudo = el('button', { type: 'button', 'class': 'btn primario', 'data-exportar': 'kit' }, ['Baixar o kit completo (.zip)']);
+    var carro = estado.ultimoPlano.variante === 'carrossel';
+    var tudo = el('button', { type: 'button', 'class': 'btn primario', 'data-exportar': 'kit' }, [carro ? 'Baixar todos os cards (.zip)' : 'Baixar o kit completo (.zip)']);
     tudo.addEventListener('click', exportarKit);
     grupo.appendChild(tudo);
     var lista = el('ul', { 'class': 'kit-lista' });
@@ -1090,8 +1105,8 @@
       ]));
     });
     grupo.appendChild(lista);
-    $('exportar-titulo').textContent = 'Baixar as peças da campanha';
-    $('exportar-ajuda').textContent = 'O .zip traz todas as peças em PNG e o e-mail em HTML. As imagens saem no tamanho exato de cada canal. No HTML do e-mail baixado, a foto fica dentro do arquivo: para disparo, suba a foto na ferramenta de envio.';
+    $('exportar-titulo').textContent = carro ? 'Baixar o carrossel' : 'Baixar as peças da campanha';
+    $('exportar-ajuda').textContent = carro ? 'O .zip traz os cards numerados na ordem de publicação. Suba no Instagram ou no LinkedIn nessa ordem.' : 'O .zip traz todas as peças em PNG e o e-mail em HTML. As imagens saem no tamanho exato de cada canal. No HTML do e-mail baixado, a foto fica dentro do arquivo: para disparo, suba a foto na ferramenta de envio.';
     montarAltaDef(true);
   }
 
@@ -1107,10 +1122,11 @@
   }
 
   function montarDownloads() {
+    var fe = formatoEfetivo(estado.ultimoDados) || estado.formato;
     if (estado.ultimoPlano && estado.ultimoPlano.kit) return montarDownloadsKit();
     var html = exporta('html');
     $('acoes-html').hidden = !html;
-    var tipos = (estado.formato.exportar || ['html', 'png', 'pdf', 'pptx']).filter(function (t) { return t !== 'html'; });
+    var tipos = (fe.exportar || ['html', 'png', 'pdf', 'pptx']).filter(function (t) { return t !== 'html'; });
     var grupo = $('exportar-grupo'); grupo.textContent = '';
     tipos.forEach(function (t, i) {
       var b = el('button', { type: 'button', 'class': html ? 'btn-mini' : (i === 0 ? 'btn primario' : 'btn secundario'), 'data-exportar': t }, [ROTULOS[t] || t.toUpperCase()]);
@@ -1118,12 +1134,12 @@
       grupo.appendChild(b);
     });
     $('exportar-titulo').textContent = html ? 'Baixar para ajustes' : 'Baixar a peça';
-    montarAltaDef(!!estado.formato.largura && (tipos.indexOf('png') >= 0 || tipos.indexOf('jpg') >= 0));
+    montarAltaDef(!!fe.largura && (tipos.indexOf('png') >= 0 || tipos.indexOf('jpg') >= 0));
     var ajuda = [];
     if (tipos.indexOf('pptx') >= 0) ajuda.push('O PowerPoint vem com os textos editáveis.');
     if (tipos.indexOf('docx') >= 0) ajuda.push('O Word vem no padrão, com a tabela de cabeçalho em todas as páginas.');
-    if (tipos.indexOf('png') >= 0 || tipos.indexOf('jpg') >= 0) ajuda.push(estado.formato.largura ? 'A imagem sai em ' + estado.formato.largura + ' × ' + estado.formato.altura + ' px (ou o dobro, em alta definição). PNG sem perda; JPG com qualidade máxima.' : 'A imagem e o PDF saem iguais à prévia.');
-    if (estado.formato.dpi) ajuda.push('Resolução de ' + estado.formato.dpi + ' dpi.');
+    if (tipos.indexOf('png') >= 0 || tipos.indexOf('jpg') >= 0) ajuda.push(fe.largura ? 'A imagem sai em ' + fe.largura + ' × ' + fe.altura + ' px (ou o dobro, em alta definição). PNG sem perda; JPG com qualidade máxima.' : 'A imagem e o PDF saem iguais à prévia.');
+    if (fe.dpi) ajuda.push('Resolução de ' + fe.dpi + ' dpi.');
     $('exportar-ajuda').textContent = ajuda.join(' ');
   }
 
@@ -1196,11 +1212,13 @@
     botoes.forEach(function (b) { b.disabled = true; });
     aviso.textContent = 'Preparando ' + nomes[tipo] + '…';
     try {
+      var fe = formatoEfetivo(estado.ultimoDados) || estado.formato;
       var info = {
         codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao,
-        largura: estado.formato.quadro || 680,
-        escala: (estado.formato.escalaImagem || 2) * fatorAltaDef(),
-        dpi: estado.formato.dpi || null
+        largura: fe.quadro || 680,
+        escala: (fe.escalaImagem || 2) * fatorAltaDef(),
+        escalaPdf: fe.escalaPdf || null,
+        dpi: fe.dpi || null
       };
       if (tipo === 'docx') {
         await window.UnimedExportar.carregar('pptx'); // traz o JSZip
@@ -1348,7 +1366,7 @@
     $('formulario').addEventListener('input', agendarPrevia);
     $('formulario').addEventListener('change', agendarPrevia);
     // Trocar o público pode mudar o quadro da foto (campanha): redesenha o enquadramento.
-    $('formulario').addEventListener('change', function (e) { if (e.target && e.target.name === 'publico') { aplicarCondicoes(); if (estado.redesenharImagens) estado.redesenharImagens(); } });
+    $('formulario').addEventListener('change', function (e) { if (e.target && (e.target.name === 'publico' || e.target.name === 'tamanho')) { aplicarCondicoes(); if (estado.redesenharImagens) estado.redesenharImagens(); } });
     $('formulario').addEventListener('submit', gerar);
     $('trocar').addEventListener('click', function () { $('trabalho').hidden = true; $('busca').classList.remove('compacta'); busca.value = ''; busca.focus(); });
     $('baixar').addEventListener('click', baixar);
