@@ -2,7 +2,8 @@
 // Unimed Uberlândia · API do Gerador de Peças (Cloudflare Worker)
 // Guarda o registro de cada peça (banco D1) e as fotos dos e-mails (KV).
 // Ligações no Worker: DB = banco D1 "unimed-pecas" · IMAGENS = KV "unimed-pecas"
-// Variável secreta: SENHA = senha do painel do Marketing
+// Segredos: USUARIOS = logins do Marketing em JSON, ex.: {"joander":"senha1","maria":"senha2"}
+//           SENHA    = senha geral (opcional; vale sem usuário)
 // ============================================================
 const ORIGENS = ['https://informativoudi.github.io'];
 const TESTE = /^http:\/\/(localhost|127\.0\.0\.\d+)(:\d+)?$/; // computador local, para testes
@@ -18,19 +19,57 @@ function cors(req) {
   };
 }
 const json = (req, obj, status = 200) => new Response(JSON.stringify(obj), { status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...cors(req) } });
-const autorizado = (req, env) => !!env.SENHA && (req.headers.get('Authorization') || '') === 'Bearer ' + env.SENHA;
+// Devolve o nome de quem entrou, ou '' se a senha não confere.
+// O site manda "Bearer usuario:senha" (login próprio) ou "Bearer senha" (senha geral).
+function autorizado(req, env) {
+  const h = req.headers.get('Authorization') || '';
+  if (!h.startsWith('Bearer ')) return '';
+  const token = h.slice(7);
+  if (env.USUARIOS) {
+    let lista = {};
+    try { lista = JSON.parse(env.USUARIOS); } catch (e) { lista = {}; }
+    const i = token.indexOf(':');
+    if (i > 0) {
+      const u = token.slice(0, i).trim().toLowerCase();
+      const chave = Object.keys(lista).find((k) => k.toLowerCase() === u);
+      if (chave && String(lista[chave]) === token.slice(i + 1)) return chave;
+    }
+  }
+  if (env.SENHA && token === env.SENHA) return 'marketing';
+  return '';
+}
+
+// Cria a tabela sozinho na primeira chamada (não depende de rodar o SQL à mão).
+let pronto = false;
+async function garantirTabela(env) {
+  if (pronto) return;
+  await env.DB.prepare('CREATE TABLE IF NOT EXISTS pedidos (codigo TEXT PRIMARY KEY, criado_em TEXT NOT NULL, nome TEXT, area TEXT, formato TEXT, titulo TEXT, dados TEXT NOT NULL)').run();
+  await env.DB.prepare('CREATE INDEX IF NOT EXISTS pedidos_data ON pedidos (criado_em DESC)').run();
+  pronto = true;
+}
 
 export default {
   async fetch(req, env) {
+    try { return await atender(req, env); }
+    catch (e) { return json(req, { erro: 'Erro no servidor: ' + (e && e.message ? e.message : e) }, 500); }
+  }
+};
+
+async function atender(req, env) {
+  {
     const url = new URL(req.url);
     const p = url.pathname;
     if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: cors(req) });
     if (p === '/') return json(req, { ok: true, servico: 'unimed-pecas' });
 
-    // Painel: confere a senha do Marketing.
-    if (p === '/entrar' && req.method === 'POST') return autorizado(req, env) ? json(req, { ok: true }) : json(req, { erro: 'Senha incorreta.' }, 401);
+    // Painel: confere o login do Marketing.
+    if (p === '/entrar' && req.method === 'POST') {
+      const quem = autorizado(req, env);
+      return quem ? json(req, { ok: true, usuario: quem }) : json(req, { erro: 'Usuário ou senha incorretos.' }, 401);
+    }
 
     // Registrar uma peça (qualquer pessoa que gera uma peça).
+    if (p === '/pedidos') await garantirTabela(env);
     if (p === '/pedidos' && req.method === 'POST') {
       const texto = await req.text();
       if (texto.length > 1900000) return json(req, { erro: 'Pedido grande demais.' }, 413);
@@ -45,7 +84,7 @@ export default {
 
     // Ler os pedidos (só com a senha do Marketing).
     if (p === '/pedidos' && req.method === 'GET') {
-      if (!autorizado(req, env)) return json(req, { erro: 'Senha incorreta.' }, 401);
+      if (!autorizado(req, env)) return json(req, { erro: 'Usuário ou senha incorretos.' }, 401);
       const { results } = await env.DB.prepare('SELECT dados FROM pedidos ORDER BY criado_em DESC LIMIT 1000').all();
       return json(req, results.map((r) => JSON.parse(r.dados)));
     }
@@ -70,4 +109,4 @@ export default {
     }
     return json(req, { erro: 'Não encontrado.' }, 404);
   }
-};
+}

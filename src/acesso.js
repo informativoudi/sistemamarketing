@@ -24,11 +24,13 @@
   }
   function api() { var c = (sistema && sistema.registro) || {}; return c.modo === 'cloudflare' ? String(c.api || '').replace(/\/$/, '') : ''; }
 
-  async function conferir(senha) {
-    var r = await fetch(api() + '/entrar', { method: 'POST', headers: { Authorization: 'Bearer ' + senha } });
-    if (r.status === 401) throw new Error('Senha incorreta.');
-    if (!r.ok) throw new Error('Não consegui conferir a senha (' + r.status + ').');
-    return { senha: senha, conferido: Date.now() };
+  /* token = "usuario:senha" (login próprio) ou só a senha geral. */
+  async function conferir(token) {
+    var r = await fetch(api() + '/entrar', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
+    if (r.status === 401) throw new Error('Usuário ou senha incorretos.');
+    if (!r.ok) throw new Error('Não consegui conferir o acesso (' + r.status + ').');
+    var d = {}; try { d = await r.json(); } catch (e) { d = {}; }
+    return { senha: token, usuario: d.usuario || '', conferido: Date.now() };
   }
 
   function sair() { gravar(null); location.href = 'index.html'; }
@@ -76,6 +78,8 @@
     ]);
 
     if (comFormulario) {
+      var usuario = el('input', { id: 'usuario-painel', type: 'text', autocomplete: 'username', autocapitalize: 'none', spellcheck: 'false', placeholder: 'Seu usuário' });
+      try { usuario.value = localStorage.getItem('unimed-usuario-painel') || ''; } catch (e) { /* sem memória */ }
       var campo = el('input', { id: 'senha-painel', type: 'password', autocomplete: 'current-password', placeholder: 'Digite a senha', 'aria-describedby': 'senha-dica' });
       var ver = el('button', { type: 'button', 'class': 'portao-ver', 'aria-label': 'Mostrar senha', 'aria-pressed': 'false' });
       ver.innerHTML = OLHO;
@@ -91,7 +95,9 @@
       var status = el('p', { 'class': 'portao-status', role: 'status', 'aria-live': 'polite' });
       var botao = el('button', { 'class': 'btn primario portao-entrar', type: 'submit' }, ['Entrar', el('span', { 'aria-hidden': 'true', texto: '→' })]);
       var form = el('form', { 'class': 'portao-form', novalidate: true }, [
-        el('label', { 'for': 'senha-painel', texto: 'Senha do Marketing' }),
+        el('label', { 'for': 'usuario-painel', texto: 'Usuário' }),
+        el('div', { 'class': 'portao-campo' }, [usuario]),
+        el('label', { 'for': 'senha-painel', texto: 'Senha' }),
         el('div', { 'class': 'portao-campo' }, [campo, ver]),
         dica, botao, status
       ]);
@@ -100,12 +106,17 @@
         dica.textContent = caps ? 'Atenção: o Caps Lock está ligado.' : 'A senha fica salva só neste navegador.';
         dica.classList.toggle('caps', !!caps);
       });
-      campo.addEventListener('input', function () { form.classList.remove('com-erro'); status.textContent = ''; });
+      [campo, usuario].forEach(function (c) { c.addEventListener('input', function () { form.classList.remove('com-erro'); status.textContent = ''; }); });
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
         if (!campo.value) { form.classList.add('com-erro'); status.textContent = 'Digite a senha.'; campo.focus(); return; }
         botao.disabled = true; botao.classList.add('carregando'); status.textContent = 'Conferindo…';
-        try { gravar(await conferir(campo.value)); status.textContent = ''; aoEntrar(); }
+        var u = usuario.value.trim();
+        try {
+          gravar(await conferir(u ? u + ':' + campo.value : campo.value));
+          try { localStorage.setItem('unimed-usuario-painel', u); } catch (e2) { /* sem memória */ }
+          status.textContent = ''; aoEntrar();
+        }
         catch (x) {
           form.classList.add('com-erro');
           status.textContent = /fetch|NetworkError/i.test(x.message) ? 'Sem conexão com o registro. Tente de novo em instantes.' : x.message;
@@ -113,7 +124,7 @@
         }
       });
       lado2.appendChild(form);
-      setTimeout(function () { campo.focus(); }, 50);
+      setTimeout(function () { (usuario.value ? campo : usuario).focus(); }, 50);
     }
     if (mensagem) lado2.appendChild(el('p', { 'class': 'alerta ' + (mensagem.aviso ? 'aviso' : 'erro'), role: 'status', texto: mensagem.texto }));
     lado2.appendChild(el('div', { 'class': 'portao-rodape' }, [
@@ -134,6 +145,7 @@
       if (i[0] === atual) a.setAttribute('aria-current', 'page');
       nav.appendChild(a);
     });
+    if (memoria && memoria.usuario && memoria.usuario !== 'marketing') nav.appendChild(el('span', { 'class': 'quem', texto: memoria.usuario }));
     nav.appendChild(el('button', { type: 'button', 'class': 'link sair', onclick: sair, texto: 'Sair' }));
   }
 
