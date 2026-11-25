@@ -339,7 +339,7 @@
     if (cp.estilo === 'icones' && g.area) {
       var A2 = g.area;
       var itens = String(dados.itens || '').split(/[,;\n]+/).map(limpar).filter(Boolean);
-      var padrao = ['Consulta', 'Telemedicina', 'Carteirinha', 'Cuidado', 'Família', 'Agenda'];
+      var padrao = cp.itensPadrao || (((marca.icones || {}).padraoPorTema || {})[dados.tema]) || ['Consulta', 'Telemedicina', 'Carteirinha', 'Cuidado', 'Família', 'Agenda'];
       var total = A2.cols * A2.rows - (g.foto ? 2 : 0);
       var CARTOES = [[P.petroleo, '#ffffff', P.citrico], ['#ffffff', P.petroleo, P.laranja], [P.institucional, '#ffffff', P.citrico], [P.citrico, P.petroleo, P.institucional], [P.rosa, P.petroleo, P.institucional], [P.petroleo, '#ffffff', P.amarelo]];
       var usados = {}, k = 0;

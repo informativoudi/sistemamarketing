@@ -19,7 +19,7 @@
       el('div', { 'class': 'kpi' }, [el('b', { texto: m.versao }), el('span', { texto: 'versão da marca' })]),
       el('div', { 'class': 'kpi' }, [el('b', { texto: String(cores.length) }), el('span', { texto: 'cores' })]),
       el('div', { 'class': 'kpi' }, [el('b', { texto: String(m.imagensAprovadas.length) }), el('span', { texto: 'imagens aprovadas' })]),
-      el('div', { 'class': 'kpi' }, [el('b', { texto: String((m.fontes || []).length) }), el('span', { texto: 'manuais de origem' })])
+      el('div', { 'class': 'kpi' }, [el('b', { texto: String(((m.setores || {}).lista || []).length) }), el('span', { texto: 'setores' })])
     ]));
 
     if (m.fontes) {
@@ -63,14 +63,34 @@
         }))
       ]));
     }
-    if (m.icones && m.icones.porArea) {
-      alvo.appendChild(cartao('Ícones das áreas', null, [
+    if (m.icones && (m.icones.porPalavra || m.icones.porArea)) {
+      var regrasIc = m.icones.porPalavra || [];
+      // Quantos setores reais caem em cada ícone (mesma regra do gerador).
+      var setores = (m.setores && m.setores.lista) || [];
+      var achar = function (nome) {
+        var a = nome.toLowerCase();
+        var r = regrasIc.filter(function (x) { return x.palavras.some(function (w) { return new RegExp('(^|[^a-zà-ú])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(a); }); })[0];
+        return r ? r.icone : m.icones.padrao;
+      };
+      var porIcone = {};
+      setores.forEach(function (st) { var k = achar(st.nome); (porIcone[k] = porIcone[k] || []).push(st.nome); });
+      var icones = Object.keys(porIcone).sort(function (a, b) { return porIcone[b].length - porIcone[a].length; });
+      alvo.appendChild(cartao('Ícones das áreas', setores.length + ' setores, cada um com o ícone escolhido pelas palavras do nome. Passe o mouse para ver os setores.', [
         regra(m.icones._regra),
-        el('div', { 'class': 'icones-area' }, Object.keys(m.icones.porArea).map(function (a) {
-          return el('figure', {}, [
-            el('span', { 'class': 'icone-quadro', style: 'background:' + m.cores.verdeEscuro }, [el('img', { src: m.icones.pasta + m.icones.porArea[a] + '.svg', alt: '' })]),
-            el('figcaption', { texto: a })
+        el('div', { 'class': 'icones-area' }, icones.map(function (k) {
+          return el('figure', { title: porIcone[k].join('\n') }, [
+            el('span', { 'class': 'icone-quadro', style: 'background:' + m.cores.verdeEscuro }, [el('img', { src: m.icones.pasta + k + '.svg', alt: '' })]),
+            el('figcaption', {}, [el('b', { texto: ({ 'rede-assistencial-regulacao': 'Rede e assistência', 'rotinas-administrativas': 'Administrativo', relatorios: 'Gestão e números', 'governanca-auditoria': 'Governança', 'tecnologia-sistemas': 'Tecnologia', 'gestao-de-chamados': 'Atendimento', 'juridico-ouvidoria': 'Jurídico e ouvidoria', 'apoio-ao-colaborador': 'Pessoas', 'assessoria-processos-projetos': 'Processos e projetos', 'comercial-relacionamento': 'Comunicação', 'relacionamento-cooperado': 'Cooperado', 'bem-vindo': 'Padrão', 'abra-seu-chamado': 'Chamados' })[k] || k.replace(/-/g, ' ') }), el('span', { 'class': 'sub', texto: ' · ' + porIcone[k].length + (porIcone[k].length > 1 ? ' setores' : ' setor') })])
           ]);
+        }))
+      ]));
+    }
+    if (m.icones && m.icones.padraoPorTema) {
+      var pt = m.icones.padraoPorTema;
+      alvo.appendChild(cartao('Ícones por tema', null, [
+        regra(pt._regra),
+        el('div', { 'class': 'temas-icones' }, Object.keys(pt).filter(function (k) { return k.charAt(0) !== '_'; }).map(function (t) {
+          return el('div', { 'class': 'tema-icones' }, [el('b', { texto: t }), el('ul', { 'class': 'pilulas' }, pt[t].map(function (x) { return el('li', { texto: x }); }))]);
         }))
       ]));
     }
@@ -102,20 +122,70 @@
       ]));
     }
 
-    alvo.appendChild(cartao('Imagens de exemplo', 'Aparecem como exemplo no gerador. Quem pede pode enviar a própria imagem do computador; o recorte e os cantos da marca são aplicados igual.', [
-      el('div', { 'class': 'galeria' }, m.imagensAprovadas.map(function (i) {
-        return el('figure', {}, [el('img', { src: i.arquivo, alt: i.descricao, loading: 'lazy' }), el('figcaption', { texto: i.descricao })]);
-      }))
+    // Banco de imagens por tema e filial (filtro por tema).
+    var temasBanco = ((m.bancoImagens || {}).temas) || [];
+    var galeria = el('div', { 'class': 'galeria' });
+    var desenharGaleria = function (tema) {
+      galeria.textContent = '';
+      m.imagensAprovadas.filter(function (i) { return !tema || (i.temas || []).indexOf(tema) >= 0; }).forEach(function (i) {
+        galeria.appendChild(el('figure', {}, [el('img', { src: i.arquivo, alt: i.descricao, loading: 'lazy' }), el('figcaption', {}, [i.descricao,
+          el('span', { 'class': 'tags' }, (i.temas || []).map(function (t) { return el('span', { 'class': 'selo', texto: t }); }).concat((i.filiais || []).length ? [el('span', { 'class': 'selo st-aprovada', texto: i.filiais.join(', ') })] : [el('span', { 'class': 'selo st-substituida', texto: 'Todas as filiais' })]))])]));
+      });
+    };
+    var filtros = el('div', { 'class': 'segmento filtro-temas', role: 'radiogroup', 'aria-label': 'Filtrar por tema' });
+    [''].concat(temasBanco).forEach(function (t, i) {
+      var b = el('button', { type: 'button', role: 'radio', 'aria-checked': i === 0 ? 'true' : 'false', texto: t || 'Todas', onclick: function () {
+        filtros.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-checked', 'false'); }); b.setAttribute('aria-checked', 'true'); desenharGaleria(t);
+      } });
+      filtros.appendChild(b);
+    });
+    desenharGaleria('');
+    alvo.appendChild(cartao('Banco de imagens', m.imagensAprovadas.length + ' imagens. No gerador, as do tema escolhido e da filial de quem pede aparecem primeiro. Quem pede também pode enviar a própria imagem; o recorte e os cantos da marca são aplicados igual.', [
+      regra((m.bancoImagens || {})._regra), filtros, galeria
     ]));
 
-    alvo.appendChild(cartao('Áreas', 'Aparecem na lista "Sua área" e viram o cabeçalho e a assinatura do e-mail.', [
-      el('ul', { 'class': 'pilulas' }, m.areas.map(function (a) { return el('li', { texto: a }); }))
-    ]));
+    // Assinatura em letras dos serviços e recursos próprios (MS.024).
+    var at = m.assinaturaTextual;
+    if (at && at.servicos) {
+      alvo.appendChild(cartao('Assinatura dos serviços próprios', at.quando || null, [
+        regra(at._regra),
+        el('div', { 'class': 'assinaturas' }, Object.keys(at.servicos).filter(function (k) { return k.charAt(0) !== '_'; }).map(function (k) {
+          var sv = at.servicos[k];
+          return el('figure', { 'class': 'assinatura-ms' }, [
+            el('div', { 'class': 'assinatura-box' }, [el('p', { 'class': 'as-nome', texto: sv.nome }), sv.apoio ? el('p', { 'class': 'as-apoio', texto: sv.apoio }) : null]),
+            el('figcaption', { texto: k })
+          ]);
+        })),
+        el('p', { 'class': 'ajuda', texto: 'Fonte: ' + (at.fonte || 'MS.024') + '. Edite nomes e frases de apoio em config/marca.json → assinaturaTextual.servicos.' })
+      ]));
+    }
+
+    var lista = (m.setores && m.setores.lista) || [];
+    var porFilial = {};
+    lista.forEach(function (st) { (porFilial[st.filial] = porFilial[st.filial] || []).push(st.nome); });
+    alvo.appendChild(cartao('Setores', lista.length + ' setores em ' + Object.keys(porFilial).length + ' filiais. Aparecem na primeira tela ("Seu setor") e viram o cabeçalho da peça e a assinatura do e-mail.', Object.keys(porFilial).map(function (f) {
+      return el('details', { 'class': 'filial' }, [el('summary', {}, [el('b', { texto: f }), ' · ' + porFilial[f].length]), el('ul', { 'class': 'pilulas' }, porFilial[f].map(function (a) { return el('li', { texto: a }); }))]);
+    })));
+
+    // Campanhas do ano (config/campanhas.json).
+    try {
+      var cs = await fetch('config/campanhas.json', { cache: 'no-store' }).then(function (r) { return r.json(); });
+      alvo.appendChild(cartao('Campanhas do ano', cs.guardaChuva ? 'Todas debaixo do guarda-chuva ' + cs.guardaChuva.nome + '. Cada uma ajusta a Key Art da linha: estilo, destaque, selo e ícones.' : null, [
+        el('div', { 'class': 'campanhas-cards' }, cs.lista.map(function (c) {
+          return el('div', { 'class': 'campanha-card', style: '--cor:' + (m.cores[c.destaque] || ({ rosa: '#f4aab8', amarelo: '#f9b000', citrico: '#d3d92b' })[c.destaque] || m.cores.citrico) + ';cursor:default' }, [
+            el('span', { 'class': 'campanha-nome', texto: c.nome }),
+            el('span', { 'class': 'campanha-info', texto: (c.periodo || '') + ' · linhas: ' + (c.linhas || []).join(' e ') + ' · estilo ' + c.estiloPadrao + (c.aguardandoMaterial ? ' · aguardando material' : '') }),
+            el('p', { 'class': 'detalhe', style: 'margin:8px 0 0;font-size:13px', texto: c.essencia })
+          ]);
+        }))
+      ]));
+    } catch (e) { /* sem campanhas */ }
 
     // Mudanças nas regras: feitas com o Claude (licença do Marketing), que altera os arquivos e publica no GitHub.
     alvo.appendChild(el('section', { 'class': 'cartao bloco como-mudar' }, [
       el('h2', { texto: 'Como mudar uma regra' }),
-      el('p', { 'class': 'sub', texto: 'Peça ao Claude em palavras (ex.: "inclua a área Ouvidoria", "na peça quadrada, limite o título a 60 caracteres"). Ele altera os arquivos de regras, mostra o que mudou e publica no GitHub. O site atualiza em 1 a 2 minutos.' }),
+      el('p', { 'class': 'sub' }, ['As áreas pedem mudanças em ', el('a', { href: 'mudanca.html', texto: 'Pedir mudança' }), ' e o Marketing acompanha em ', el('a', { href: 'mudancas.html', texto: 'Pedidos de mudança' }), '.']),
+      el('p', { 'class': 'sub', texto: 'Para fazer a mudança, peça ao Claude em palavras (ex.: "inclua a área Ouvidoria", "na peça quadrada, limite o título a 60 caracteres"). Ele altera os arquivos de regras, mostra o que mudou e publica no GitHub. O site atualiza em 1 a 2 minutos.' }),
       el('p', { 'class': 'ajuda', texto: 'As regras ficam em config/marca.json (marca) e config/formatos/ (cada formato). Também dá para editar direto no GitHub.' })
     ]));
   }

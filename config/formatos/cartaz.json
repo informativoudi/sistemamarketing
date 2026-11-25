@@ -82,6 +82,17 @@
       "ajuda": "Uma frase de apoio, se precisar."
     },
     {
+      "id": "campanha",
+      "rotulo": "Campanha",
+      "tipo": "escolha",
+      "obrigatorio": false,
+      "opcoesDe": "campanhas",
+      "opcoes": [
+        "Humano por natureza"
+      ],
+      "ajuda": "A campanha do ano ajusta o estilo, a cor de destaque e o selo da Key Art. Sem campanha específica, vale o guarda-chuva Humano por natureza."
+    },
+    {
       "id": "estilo",
       "rotulo": "Estilo da key art",
       "tipo": "escolha",
@@ -116,6 +127,22 @@
       "obrigatorio": false,
       "limite": 1,
       "ajuda": "Uma foto da biblioteca aprovada. O tamanho é fixo; arraste para ajustar o enquadramento."
+    },
+    {
+      "id": "ladoFoto",
+      "rotulo": "Lado da foto",
+      "tipo": "escolha",
+      "obrigatorio": false,
+      "opcoes": [
+        "Padrão",
+        "Invertido"
+      ],
+      "descricoes": {
+        "Padrão": "Horizontal: foto à direita · Quadrado e vertical: foto em cima",
+        "Invertido": "Horizontal: foto à esquerda · Quadrado e vertical: foto embaixo"
+      },
+      "seNaoCampanha": true,
+      "ajuda": "Só vale com foto, fora das campanhas (a Key Art tem desenho próprio)."
     },
     {
       "id": "data",
@@ -163,7 +190,8 @@
       "id": "imagens",
       "nome": "Imagem",
       "campos": [
-        "imagens"
+        "imagens",
+        "ladoFoto"
       ],
       "vazio": "Sem imagem"
     },
@@ -189,6 +217,7 @@
       "id": "keyart",
       "nome": "Visual da campanha",
       "campos": [
+        "campanha",
         "estilo",
         "itens"
       ],
@@ -291,7 +320,8 @@
         "png",
         "jpg"
       ],
-      "_descricao": "Mural, recepção, elevador"
+      "_descricao": "Mural, recepção, elevador · PDF com 3 mm de sangria e marcas de corte",
+      "sangria": 3
     },
     "A4 · 210 × 297 mm": {
       "largura": 1240,
@@ -305,7 +335,8 @@
         "png",
         "jpg"
       ],
-      "_descricao": "Quadro de avisos, porta"
+      "_descricao": "Quadro de avisos, porta · PDF com 3 mm de sangria e marcas de corte",
+      "sangria": 3
     },
     "A5 · 148 × 210 mm": {
       "largura": 874,
@@ -319,7 +350,8 @@
         "png",
         "jpg"
       ],
-      "_descricao": "Balcão, mesa"
+      "_descricao": "Balcão, mesa · PDF com 3 mm de sangria e marcas de corte",
+      "sangria": 3
     }
   }
 }

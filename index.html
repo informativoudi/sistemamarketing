@@ -9,7 +9,7 @@
 <body>
 <header class="topo">
   <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
-  <nav aria-label="Seções"><a href="index.html" aria-current="page">Criar peça</a><a href="painel.html" class="restrito">Área restrita</a></nav>
+  <nav aria-label="Seções"><a href="index.html" aria-current="page">Criar peça</a><a href="mudanca.html">Pedir mudança</a><a href="painel.html" class="restrito">Área restrita</a></nav>
 </header>
 
 <main class="casca">
@@ -42,6 +42,10 @@
       <ul id="formato-lista" role="listbox" hidden></ul>
     </div>
     <div class="atalhos" id="atalhos"></div>
+    <div class="campanhas-ano" id="campanhas-ano" hidden>
+      <h2>Campanhas do ano <span id="campanhas-guarda"></span></h2>
+      <div class="campanhas-cards" id="campanhas-cards"></div>
+    </div>
     <div class="minhas" id="minhas" hidden>
       <h2>Suas peças</h2>
       <ul id="minhas-lista"></ul>
@@ -123,6 +127,7 @@
 <script src="src/modelos/cartilha.js"></script>
 <script src="src/modelos/campanha-kit.js"></script>
 <script src="src/modelos/carrossel.js"></script>
+<script src="src/modelos/flyer.js"></script>
 <script src="src/registro.js"></script>
 <script src="src/aprovacao.js"></script>
 <script src="src/exportar.js"></script>

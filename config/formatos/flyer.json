@@ -1,9 +1,9 @@
 {
-  "_sobre": "Flyer para impressão (frente). Desenhado a 150 px por polegada e exportado a 300 dpi.",
+  "_sobre": "Flyer para impressão: frente e, se quiser, verso. Desenhado a 150 px por polegada e exportado a 300 dpi.",
   "id": "flyer",
   "nome": "Flyer",
   "sigla": "FY",
-  "modelo": "peca-fixa",
+  "modelo": "flyer",
   "largura": 874,
   "altura": 1240,
   "margem": 61,
@@ -82,6 +82,17 @@
       "ajuda": "Uma frase de apoio, se precisar."
     },
     {
+      "id": "campanha",
+      "rotulo": "Campanha",
+      "tipo": "escolha",
+      "obrigatorio": false,
+      "opcoesDe": "campanhas",
+      "opcoes": [
+        "Humano por natureza"
+      ],
+      "ajuda": "A campanha do ano ajusta o estilo, a cor de destaque e o selo da Key Art. Sem campanha específica, vale o guarda-chuva Humano por natureza."
+    },
+    {
       "id": "estilo",
       "rotulo": "Estilo da key art",
       "tipo": "escolha",
@@ -118,6 +129,22 @@
       "ajuda": "Uma foto da biblioteca aprovada. O tamanho é fixo; arraste para ajustar o enquadramento."
     },
     {
+      "id": "ladoFoto",
+      "rotulo": "Lado da foto",
+      "tipo": "escolha",
+      "obrigatorio": false,
+      "opcoes": [
+        "Padrão",
+        "Invertido"
+      ],
+      "descricoes": {
+        "Padrão": "Horizontal: foto à direita · Quadrado e vertical: foto em cima",
+        "Invertido": "Horizontal: foto à esquerda · Quadrado e vertical: foto embaixo"
+      },
+      "seNaoCampanha": true,
+      "ajuda": "Só vale com foto, fora das campanhas (a Key Art tem desenho próprio)."
+    },
+    {
       "id": "data",
       "rotulo": "Data",
       "tipo": "data",
@@ -144,6 +171,56 @@
       "obrigatorio": false,
       "max": 40,
       "ajuda": "Em branco, entra o nome da sua área."
+    },
+    {
+      "id": "verso",
+      "rotulo": "Verso",
+      "tipo": "escolha",
+      "obrigatorio": false,
+      "opcoes": [
+        "Sem verso",
+        "Com verso"
+      ],
+      "descricoes": {
+        "Sem verso": "Só a frente",
+        "Com verso": "Frente e verso no mesmo tamanho; o PDF da gráfica sai com as duas páginas"
+      }
+    },
+    {
+      "id": "versoTitulo",
+      "rotulo": "Título do verso",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 60,
+      "se": {
+        "campo": "verso",
+        "valor": "Com verso"
+      },
+      "ajuda": "Ex.: Como participar"
+    },
+    {
+      "id": "versoTexto",
+      "rotulo": "Texto do verso",
+      "tipo": "texto-longo",
+      "obrigatorio": false,
+      "max": 900,
+      "se": {
+        "campo": "verso",
+        "valor": "Com verso"
+      },
+      "ajuda": "Parágrafos curtos. Comece a linha com \"- \" para virar tópico com o quadrado laranja. Texto longo diminui sozinho para caber."
+    },
+    {
+      "id": "versoContato",
+      "rotulo": "Contato no rodapé do verso",
+      "tipo": "texto",
+      "obrigatorio": false,
+      "max": 90,
+      "se": {
+        "campo": "verso",
+        "valor": "Com verso"
+      },
+      "ajuda": "Vira uma faixa no pé do verso. Ex.: 0800 000 0000 · unimeduberlandia.coop.br"
     }
   ],
   "secoes": [
@@ -163,7 +240,8 @@
       "id": "imagens",
       "nome": "Imagem",
       "campos": [
-        "imagens"
+        "imagens",
+        "ladoFoto"
       ],
       "vazio": "Sem imagem"
     },
@@ -186,9 +264,21 @@
       "vazio": "Nome da sua área"
     },
     {
+      "id": "verso",
+      "nome": "Verso",
+      "campos": [
+        "verso",
+        "versoTitulo",
+        "versoTexto",
+        "versoContato"
+      ],
+      "vazio": "Só a frente"
+    },
+    {
       "id": "keyart",
       "nome": "Visual da campanha",
       "campos": [
+        "campanha",
         "estilo",
         "itens"
       ],
@@ -291,7 +381,8 @@
         "png",
         "jpg"
       ],
-      "_descricao": "Distribuição em mãos"
+      "_descricao": "Distribuição em mãos · PDF com 3 mm de sangria e marcas de corte",
+      "sangria": 3
     },
     "A4 · 210 × 297 mm": {
       "largura": 1240,
@@ -305,7 +396,8 @@
         "png",
         "jpg"
       ],
-      "_descricao": "Folheto maior"
+      "_descricao": "Folheto maior · PDF com 3 mm de sangria e marcas de corte",
+      "sangria": 3
     },
     "A3 · 297 × 420 mm": {
       "largura": 1754,
@@ -319,7 +411,8 @@
         "png",
         "jpg"
       ],
-      "_descricao": "Uso como cartaz"
+      "_descricao": "Uso como cartaz · PDF com 3 mm de sangria e marcas de corte",
+      "sangria": 3
     }
   }
 }

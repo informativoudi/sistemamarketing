@@ -55,6 +55,17 @@
       "ajuda": "Uma frase que completa o título."
     },
     {
+      "id": "campanha",
+      "rotulo": "Campanha",
+      "tipo": "escolha",
+      "obrigatorio": false,
+      "opcoesDe": "campanhas",
+      "opcoes": [
+        "Humano por natureza"
+      ],
+      "ajuda": "A campanha do ano ajusta o estilo, a cor de destaque e o selo da Key Art. Sem campanha específica, vale o guarda-chuva Humano por natureza."
+    },
+    {
       "id": "estilo",
       "rotulo": "Estilo da key art",
       "tipo": "escolha",
@@ -170,6 +181,7 @@
       "id": "keyart",
       "nome": "Visual da campanha",
       "campos": [
+        "campanha",
         "estilo",
         "itens"
       ],

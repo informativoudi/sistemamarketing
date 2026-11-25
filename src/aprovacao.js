@@ -30,6 +30,7 @@
   /* Monta o e-mail para quem pediu. p: { nome, email, titulo, codigo, formatoNome }
      d: { status, observacao, link, quem (quem aprovou), ajustada (Marketing fez nova versão) } */
   function mensagem(p, d) {
+    p = Object.assign({}, p, { titulo: String(p.titulo || '').replace(/\*+/g, '').replace(/==/g, '') });
     var ola = 'Olá' + (primeiroNome(p.nome) ? ', ' + primeiroNome(p.nome) : '') + '!';
     var peca = '"' + (p.titulo || p.codigo) + '"' + (p.formatoNome ? ' (' + p.formatoNome + ')' : '');
     var assinatura = '\n\n' + (d.quem ? d.quem + '\n' : '') + 'Marketing e Comunicação · Unimed Uberlândia';
@@ -42,8 +43,10 @@
         'Abra pelo link abaixo: o conteúdo já vem preenchido. É só corrigir e clicar em "Enviar nova versão".\n' + d.link +
         '\n\nCódigo da peça: ' + p.codigo + assinatura;
     } else {
-      assunto = 'Peça aprovada · ' + (p.titulo || p.codigo);
-      corpo = ola + '\n\n' + (d.ajustada
+      assunto = (d.atualizada ? 'Peça atualizada · ' : 'Peça aprovada · ') + (p.titulo || p.codigo);
+      corpo = ola + '\n\n' + (d.atualizada
+        ? 'Atualizamos a sua peça ' + peca + ' para o visual atual da marca e da campanha (Key Art). O conteúdo é o mesmo.\n\nA versão anterior deixa de valer: use só a nova.'
+        : d.ajustada
         ? 'Fizemos alguns ajustes na sua peça ' + peca + ' e ela já está aprovada.'
         : 'Sua peça ' + peca + ' foi aprovada pelo Marketing.') +
         (obs ? '\n\nObservação:\n' + obs : '') +

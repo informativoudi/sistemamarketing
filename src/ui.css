@@ -601,3 +601,56 @@ dialog iframe { height: 56vh; }
 .kpi-acao:hover { border-color: var(--institucional); }
 table.lista tr.espera td { background: #fffdf3; }
 .btn-mini.analisar { border-color: var(--laranja); color: var(--laranja-escuro); }
+
+/* Núcleo · ícones por tema, banco de imagens, assinaturas MS.024, setores */
+.temas-icones { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.tema-icones b { display: block; margin-bottom: 6px; color: var(--petroleo); }
+.filtro-temas { margin: 10px 0 14px; }
+.galeria figcaption .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.galeria figcaption .tags .selo { font-size: 11px; padding: 2px 7px; }
+.assinaturas { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 14px; }
+.assinatura-ms { margin: 0; }
+.assinatura-box { background: #fff; border: 1px solid var(--borda); border-radius: 14px 14px 0 14px; padding: 18px; min-height: 96px; display: flex; flex-direction: column; justify-content: center; }
+.as-nome { margin: 0; font-weight: 700; text-transform: uppercase; color: var(--petroleo); line-height: 1.1; font-size: 17px; }
+.as-apoio { margin: 4px 0 0; font-family: "Unimed Slab", Georgia, serif; font-weight: 700; color: var(--institucional); font-size: 15px; line-height: 1.15; }
+.assinatura-ms figcaption { margin-top: 6px; font-size: 12.5px; color: var(--suave); }
+details.filial { border-top: 1px solid var(--borda); padding: 8px 0; }
+details.filial summary { cursor: pointer; color: var(--suave); }
+details.filial summary b { color: var(--petroleo); }
+details.filial .pilulas { margin-top: 8px; }
+.icones-area figcaption { text-transform: none; }
+.icones-area figcaption b { text-transform: capitalize; }
+.filtro-temas button[aria-checked="true"] { background: var(--petroleo); color: #fff; }
+
+/* Pedir mudança */
+.mudanca-topo { padding-bottom: 18px; }
+.mudanca-grade { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+@media (max-width: 860px) { .mudanca-grade { grid-template-columns: minmax(0, 1fr); } }
+.opcoes-tipo { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.chip-tipo { border: 1.5px solid var(--borda-forte); background: #fff; border-radius: 999px; padding: 8px 14px; font: inherit; font-weight: 700; color: var(--petroleo); cursor: pointer; }
+.chip-tipo[aria-checked="true"] { background: var(--petroleo); border-color: var(--petroleo); color: #fff; }
+.lista-mudancas { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.lista-mudancas li { border: 1px solid var(--borda); border-radius: 12px 12px 0 12px; padding: 12px 14px; background: #fff; }
+.mud-topo { display: flex; justify-content: space-between; gap: 10px; align-items: center; flex-wrap: wrap; }
+.mud-topo b { color: var(--petroleo); }
+.mud-texto { margin: 6px 0 0; font-size: 14px; white-space: pre-wrap; }
+.mud-resposta { margin: 8px 0 0; font-size: 14px; background: var(--fundo); border-radius: 8px; padding: 8px 10px; }
+.mud-info { display: block; margin-top: 6px; font-size: 12px; color: var(--suave); }
+.mud-acoes { display: grid; gap: 8px; margin-top: 10px; }
+.mud-acoes textarea, .mud-acoes select { width: 100%; border: 1.5px solid var(--borda-forte); border-radius: 10px; padding: 8px 10px; font: inherit; background: #fff; }
+.mud-acoes .acoes { margin: 0; gap: 8px; }
+.grade-mudancas { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
+@media (max-width: 480px) { .topo nav { gap: 12px; font-size: 13px; } .topo img { height: 30px; } }
+
+/* Campanhas do ano (tela inicial) */
+.campanhas-ano { width: min(900px, 100%); text-align: left; margin-top: 18px; }
+.busca.compacta .campanhas-ano { display: none; }
+.campanhas-ano h2 { margin: 0 0 10px; font-size: 13px; letter-spacing: .14em; text-transform: uppercase; color: var(--institucional); }
+.campanhas-ano h2 span { letter-spacing: .04em; text-transform: none; color: var(--suave); font-weight: 500; }
+.campanhas-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; }
+.campanha-card { position: relative; display: flex; flex-direction: column; gap: 4px; text-align: left; border: 1px solid var(--borda); border-radius: 16px 16px 0 16px; background: var(--superficie); padding: 18px 16px 14px; cursor: pointer; font: inherit; overflow: hidden; }
+.campanha-card::before { content: ""; position: absolute; left: 0; top: 0; right: 0; height: 6px; background: var(--cor); }
+.campanha-card:hover { border-color: var(--institucional); }
+.campanha-nome { font-weight: 800; font-size: 17px; color: var(--petroleo); line-height: 1.15; }
+.campanha-info { font-size: 12.5px; color: var(--suave); }
+.campanha-acao { margin-top: 8px; font-size: 13px; font-weight: 700; color: var(--institucional); }

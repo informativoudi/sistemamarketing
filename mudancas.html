@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedidos de mudança · Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Área restrita" id="menu-restrito"></nav>
+</header>
+
+<main class="casca">
+  <section id="portao" class="portao" hidden></section>
+  <div id="conteudo-restrito" hidden>
+    <section class="busca compacta" style="padding-top:8px">
+      <h1>Pedidos <span>de mudança</span></h1>
+    </section>
+    <p class="intro">O que as áreas pediram para mudar nas regras, nos layouts e nos formatos. Para fazer uma mudança, copie o pedido e cole no Claude: ele altera os arquivos e prepara a atualização.</p>
+    <p id="origem" class="alerta aviso" hidden></p>
+    <div class="kpis" id="m-kpis"></div>
+    <div class="filtros">
+      <label for="m-filtro" style="position:absolute;left:-9999px">Situação</label>
+      <select id="m-filtro">
+        <option value="abertos">Abertos (recebidos e em análise)</option>
+        <option value="">Todos</option>
+        <option value="nova">Recebidos</option>
+        <option value="analise">Em análise</option>
+        <option value="feita">Feitos</option>
+        <option value="recusada">Não vamos fazer</option>
+      </select>
+    </div>
+    <ul class="lista-mudancas grade-mudancas" id="m-lista"></ul>
+    <p class="vazio" id="m-vazio" hidden>Nenhum pedido com esse filtro.</p>
+  </div>
+</main>
+
+<script src="src/acesso.js"></script>
+<script src="src/aprovacao.js"></script>
+<script src="src/mudancas.js"></script>
+</body>
+</html>

@@ -24,7 +24,7 @@
     ultimoStatus: '', ultimoT: '',
     redesenharImagens: null, desenharOrdem: null, marcarVazios: null
   };
-  var LARGOS = { publico: 1, cabecalho: 1, tema: 1, titulo: 1, subtitulo: 1, texto: 1, imagens: 1, local: 1, ordem: 1 };
+  var LARGOS = { versoTitulo: 1, versoTexto: 1, versoContato: 1, publico: 1, cabecalho: 1, tema: 1, titulo: 1, subtitulo: 1, texto: 1, imagens: 1, local: 1, ordem: 1 };
   var CHAVE_QUEM = 'unimed-gerador-quem';
   var CHAVE_RASCUNHO = 'unimed-gerador-rascunho-';
 
@@ -168,7 +168,7 @@
     guardarQuem();
     $('boasvindas').hidden = true;
     $('busca').hidden = false;
-    if (estado.formato && vistaAntes && vistaAntes.trabalho) { $('trabalho').hidden = false; atualizarPrevia(); }
+    if (estado.formato && vistaAntes && vistaAntes.trabalho) { $('trabalho').hidden = false; if (estado.reordenarBanco) estado.reordenarBanco(); atualizarPrevia(); }
     else $('formato-busca').focus({ preventScroll: true });
     mostrarQuem(true);
     mostrarMinhas();
@@ -218,6 +218,13 @@
     var entrada;
 
     if (c.tipo === 'escolha' && c.id === 'publico' && ['Interno', 'Externo', 'Campanha interna', 'Campanha externa'].every(function (o) { return c.opcoes.indexOf(o) >= 0; }) && c.opcoes.length === 4) return campoPublico(c, caixa, id);
+    if (c.opcoesDe === 'campanhas') {
+      // Campanhas do ano (config/campanhas.json), sempre com o guarda-chuva como primeira opção.
+      var cs = estado.campanhas || { lista: [] }, gc = cs.guardaChuva || { nome: 'Humano por natureza', essencia: '' };
+      c.opcoes = [gc.nome].concat(cs.lista.map(function (x) { return x.nome; }));
+      c.descricoes = {}; c.descricoes[gc.nome] = 'Guarda-chuva do ano, sem campanha específica';
+      cs.lista.forEach(function (x) { c.descricoes[x.nome] = (x.periodo ? x.periodo + ' · ' : '') + (x.aguardandoMaterial ? 'visual provisório' : 'visual oficial'); });
+    }
     if (c.tipo === 'escolha') {
       var grupo = el('div', { 'class': 'temas', role: 'radiogroup', 'aria-labelledby': id + '-r' });
       rotulo = el('span', { id: id + '-r', 'class': 'rot' }, [c.rotulo]);
@@ -333,6 +340,15 @@
       if (!s.seCampanha) return;
       var n = document.querySelector('[data-secao="' + s.id + '"]'); if (n) n.hidden = !campanha;
     });
+    // Campos que dependem de outra escolha (ex.: campos do verso só "Com verso") ou que não valem em campanha.
+    estado.formato.campos.forEach(function (c) {
+      if (!c.se && !c.seNaoCampanha) return;
+      var n = document.querySelector('#campos .campo[data-campo="' + c.id + '"]'); if (!n) return;
+      var ok = true;
+      if (c.se) { var r = $('formulario').querySelector('input[name="' + c.se.campo + '"]:checked'); ok = !!(r && r.value === c.se.valor); }
+      if (c.seNaoCampanha && campanha) ok = false;
+      n.hidden = !ok;
+    });
   }
 
   /* Destacar palavra: envolve a seleção do título em *asteriscos* (a palavra vira Slab nas campanhas). */
@@ -410,6 +426,11 @@
   }
 
   /* Guarda a imagem enviada junto da biblioteca (só nesta sessão). */
+  function filialDe(area) {
+    var l = (estado.marca.setores && estado.marca.setores.lista) || [];
+    var s = l.filter(function (x) { return x.nome === area; })[0];
+    return s ? s.filial : '';
+  }
   function registrarEnviada(img) { estado.marca.imagensAprovadas.push(img); return img; }
   function botaoEnviar(rotulo, aoEnviar, multiplo) {
     var inp = el('input', { type: 'file', accept: 'image/jpeg,image/png,image/webp', 'class': 'sr-only', multiple: multiplo ? true : null, tabindex: '-1', 'aria-hidden': 'true' });
@@ -484,6 +505,25 @@
       if (noComeco) grade.insertBefore(lb, grade.firstChild); else grade.appendChild(lb);
     }
     estado.marca.imagensAprovadas.forEach(function (img) { miniatura(img); });
+    // Banco por tema e filial: as fotos do tema escolhido e da unidade de quem pede vêm primeiro.
+    function reordenar() {
+      var tema = (($('formulario').querySelector('input[name="tema"]:checked') || {}).value) || '';
+      var filial = filialDe($('f-area').value);
+      var nota = function (img) {
+        if (img.enviada) return 100;
+        var n = 0;
+        if (tema && (img.temas || []).indexOf(tema) >= 0) n += 2;
+        if ((img.filiais || []).length) n += (img.filiais.indexOf(filial) >= 0 ? 3 : -5);
+        return n;
+      };
+      var porId = {}; estado.marca.imagensAprovadas.forEach(function (i) { porId[i.id] = i; });
+      var lbs = Array.prototype.slice.call(grade.querySelectorAll('label'));
+      lbs.map(function (lb, i) { return { lb: lb, n: nota(porId[lb.querySelector('input').value] || {}), i: i }; })
+        .sort(function (a, b) { return b.n - a.n || a.i - b.i; })
+        .forEach(function (x) { grade.appendChild(x.lb); });
+    }
+    estado.reordenarBanco = reordenar;
+    reordenar();
     var enviar = botaoEnviar('+ Enviar do computador', function (img) {
       miniatura(img, true);
       if (estado.imagens.length < limite) estado.imagens.push({ id: img.id, x: 0.5, y: 0.5, zoom: 1 });
@@ -786,7 +826,7 @@
   }
 
   /* ---------- Ajustes finos: posição, alinhamento e tamanho do título, dentro das regras ---------- */
-  function temAjustes() { var m = estado.formato.modelo; return m === 'peca-fixa' || m === 'campanha-kit'; }
+  function temAjustes() { var m = estado.formato.modelo; return m === 'peca-fixa' || m === 'campanha-kit' || m === 'flyer'; }
   function pecasAjustaveis() {
     var k = estado.formato.kit; if (!k) return [];
     var vistos = {}, lista = [];
@@ -858,6 +898,7 @@
       }
     });
     dados.area = $('f-area') ? $('f-area').value : '';
+    dados.filial = filialDe(dados.area);
     if (estado.ordem) dados.ordem = estado.ordem.slice();
     if (temAjustes() && estado.ajustes) dados.ajustes = JSON.parse(JSON.stringify(estado.ajustes));
     dados._imagensAprovadas = estado.marca.imagensAprovadas;
@@ -882,6 +923,7 @@
       if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: false })); }
     });
     if (dados.ordem && estado.formato.blocos) { estado.ordem = dados.ordem.slice(); if (estado.desenharOrdem) estado.desenharOrdem(); }
+    aplicarCondicoes();
   }
 
   function resumoSecao(sec, dados) {
@@ -1144,7 +1186,7 @@
         formato: estado.formato.id,
         tema: dados.tema,
         variante: r.plano.variante || null,
-        titulo: M.limpar(dados.titulo),
+        titulo: M.limpar(dados.titulo).replace(/\*+/g, ''),
         caracteres: r.plano.caracteres || 0,
         imagem: (dados.imagens || []).map(function (i) { return i.id; }).join(', ') || null,
         tem_data: !!r.plano.data,
@@ -1185,7 +1227,13 @@
     $('acoes-html').hidden = true;
     var grupo = $('exportar-grupo'); grupo.textContent = '';
     var carro = estado.ultimoPlano.variante === 'carrossel';
-    var tudo = el('button', { type: 'button', 'class': 'btn primario', 'data-exportar': 'kit' }, [carro ? 'Baixar todos os cards (.zip)' : 'Baixar o kit completo (.zip)']);
+    var fv = estado.ultimoPlano.variante === 'frente-verso';
+    if (fv) {
+      var grafica = el('button', { type: 'button', 'class': 'btn primario', 'data-exportar': 'pdf-fv' }, ['PDF frente e verso (gráfica)']);
+      grafica.addEventListener('click', exportarKit);
+      grupo.appendChild(grafica);
+    }
+    var tudo = el('button', { type: 'button', 'class': fv ? 'btn secundario' : 'btn primario', 'data-exportar': 'kit' }, [carro ? 'Baixar todos os cards (.zip)' : fv ? 'Frente e verso em imagem (.zip)' : 'Baixar o kit completo (.zip)']);
     tudo.addEventListener('click', exportarKit);
     grupo.appendChild(tudo);
     if (carro) {
@@ -1206,8 +1254,9 @@
       ]));
     });
     grupo.appendChild(lista);
-    $('exportar-titulo').textContent = carro ? 'Baixar o carrossel' : 'Baixar as peças da campanha';
-    $('exportar-ajuda').textContent = carro ? 'O .zip traz os cards numerados na ordem de publicação, para o Instagram. Para o LinkedIn, use o PDF: cada página é um card.' : 'O .zip traz todas as peças em PNG e o e-mail em HTML. As imagens saem no tamanho exato de cada canal. No HTML do e-mail baixado, a foto fica dentro do arquivo: para disparo, suba a foto na ferramenta de envio.';
+    $('exportar-titulo').textContent = carro ? 'Baixar o carrossel' : fv ? 'Baixar o flyer' : 'Baixar as peças da campanha';
+    var fe0 = formatoEfetivo(estado.ultimoDados) || {};
+    $('exportar-ajuda').textContent = fv ? 'Para a gráfica, use o PDF: duas páginas (frente e verso), ' + (fe0.dpi ? fe0.dpi * (fe0.escalaPdf || 1) + ' dpi, ' : '') + 'com ' + (fe0.sangria || 3) + ' mm de sangria e marcas de corte. As imagens servem para conferir ou divulgar.' : carro ? 'O .zip traz os cards numerados na ordem de publicação, para o Instagram. Para o LinkedIn, use o PDF: cada página é um card.' : 'O .zip traz todas as peças em PNG e o e-mail em HTML. As imagens saem no tamanho exato de cada canal. No HTML do e-mail baixado, a foto fica dentro do arquivo: para disparo, suba a foto na ferramenta de envio.';
     montarAltaDef(true);
   }
 
@@ -1310,6 +1359,29 @@
 
   function lerSessaoPainel() {
     try { var s = JSON.parse(localStorage.getItem('unimed-sessao-painel-v1') || 'null'); return s && s.token && (!s.expira || s.expira > Date.now()) ? s : {}; } catch (e) { return {}; }
+  }
+
+  /* ---------- Campanhas do ano: atalho para o kit já com a campanha escolhida ---------- */
+  function montarCampanhas() {
+    var cs = estado.campanhas || {}, lista = cs.lista || [];
+    var kit = estado.indice.formatos.filter(function (f) { return f.id === 'campanha-kit' && f.ativo; })[0];
+    if (!lista.length || !kit) return;
+    var P = (estado.tendencias.keyArt && estado.tendencias.keyArt.paleta) || {};
+    $('campanhas-guarda').textContent = cs.guardaChuva ? '· guarda-chuva ' + cs.guardaChuva.nome : '';
+    var caixa = $('campanhas-cards');
+    lista.forEach(function (c) {
+      var cor = P[c.destaque] || estado.marca.cores[c.destaque] || estado.marca.cores.citrico;
+      caixa.appendChild(el('button', { type: 'button', 'class': 'campanha-card', style: '--cor:' + cor, onclick: async function () {
+        await escolher(kit);
+        preencher({ publico: (c.linhas || []).indexOf('externa') >= 0 ? 'Campanha externa' : 'Campanha interna', campanha: c.nome });
+        aplicarCondicoes(); atualizarPrevia();
+      } }, [
+        el('span', { 'class': 'campanha-nome', texto: c.nome }),
+        el('span', { 'class': 'campanha-info', texto: (c.periodo || '') + (c.aguardandoMaterial ? ' · visual provisório' : '') }),
+        el('span', { 'class': 'campanha-acao', texto: 'Criar kit da campanha →' })
+      ]));
+    });
+    $('campanhas-ano').hidden = false;
   }
 
   /* ---------- Peça aberta pelo link (?pedido=CÓDIGO&t=CHAVE) ---------- */
@@ -1469,7 +1541,10 @@
     var E = window.UnimedExportar;
     var pecas = modelo().pecasHtml(estado.ultimoPlano, estado.ultimoDados, estado.marca, { codigo: estado.ultimoCodigo, baseUrl: baseLocal() });
     var nomeArq = function (p, ext) { return estado.ultimoCodigo + '-' + p.id + (p.altura ? '-' + p.largura + 'x' + p.altura : '') + (p.altura && fatorAltaDef() > 1 ? '@2x' : '') + '.' + ext; };
-    var info = function (p, extra) { return Object.assign({ codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao, largura: p.tipo === 'email' ? 680 : p.largura, escala: p.tipo === 'email' ? 2 : fatorAltaDef() }, extra || {}); };
+    var fe = formatoEfetivo(estado.ultimoDados) || {};
+    // Impressos (flyer frente e verso): mesma resolução, sangria e marcas de corte da peça única.
+    var impresso = fe.dpi ? { escala: (fe.escalaImagem || 2) * fatorAltaDef(), escalaPdf: fe.escalaPdf || null, sangria: fe.sangria || 0, dpi: fe.dpi } : {};
+    var info = function (p, extra) { return Object.assign({ codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao, largura: p.tipo === 'email' ? 680 : p.largura, escala: p.tipo === 'email' ? 2 : fatorAltaDef() }, impresso, extra || {}); };
     botoes.forEach(function (b) { b.disabled = true; });
     try {
       if (tipo === 'kit') {
@@ -1485,6 +1560,12 @@
         var blob = await zip.generateAsync({ type: 'blob' });
         await E.arquivo(blob, estado.ultimoCodigo + '-kit.zip');
         aviso.textContent = 'Kit baixado: ' + pecas.length + ' peças.';
+        return;
+      }
+      if (tipo === 'pdf-fv') {
+        aviso.textContent = 'Preparando o PDF da gráfica (frente e verso)…';
+        await E.pdf(pecas.map(function (x) { return x.html; }), estado.ultimoCodigo + '-frente-verso', info(pecas[0]));
+        aviso.textContent = 'PDF baixado: frente e verso, com sangria e marcas de corte.';
         return;
       }
       if (tipo === 'pdf-todas') {
@@ -1554,8 +1635,10 @@
   /* ---------- Início ---------- */
   async function iniciar() {
     try {
-      var r = await Promise.all([json('config/marca.json'), json('config/tendencias.json'), json('config/sistema.json'), json('config/formatos/indice.json')]);
+      var r = await Promise.all([json('config/marca.json'), json('config/tendencias.json'), json('config/sistema.json'), json('config/formatos/indice.json'), json('config/campanhas.json').catch(function () { return { lista: [] }; })]);
       estado.marca = r[0]; estado.tendencias = r[1]; window.UnimedTendencias = r[1]; estado.sistema = r[2]; estado.indice = r[3];
+      // Campanhas do ano: os modelos leem junto das tendências (a Key Art se ajusta à campanha escolhida).
+      estado.campanhas = r[4]; estado.tendencias.campanhasTematicas = r[4];
     } catch (e) {
       $('busca').appendChild(el('div', { 'class': 'alerta erro', role: 'alert', texto: 'Não consegui carregar as regras da marca (' + e.message + '). Abra pelo endereço do site, não direto do arquivo.' }));
       return;
@@ -1607,6 +1690,8 @@
       atalhos.appendChild(b);
     });
 
+    montarCampanhas();
+
     var busca = $('formato-busca');
     busca.addEventListener('focus', mostrarLista);
     busca.addEventListener('input', function () { ativoIdx = -1; mostrarLista(); });
@@ -1622,7 +1707,12 @@
     $('formulario').addEventListener('input', agendarPrevia);
     $('formulario').addEventListener('change', agendarPrevia);
     // Trocar o público pode mudar o quadro da foto (campanha): redesenha o enquadramento.
-    $('formulario').addEventListener('change', function (e) { if (e.target && (e.target.name === 'publico' || e.target.name === 'tamanho')) { aplicarCondicoes(); if (estado.redesenharImagens) estado.redesenharImagens(); } });
+    $('formulario').addEventListener('change', function (e) {
+      if (!e.target || e.target.type !== 'radio') return;
+      aplicarCondicoes();
+      if (e.target.name === 'tema' && estado.reordenarBanco) estado.reordenarBanco();
+      if ((e.target.name === 'publico' || e.target.name === 'tamanho' || e.target.name === 'ladoFoto') && estado.redesenharImagens) estado.redesenharImagens();
+    });
     $('formulario').addEventListener('submit', gerar);
     $('trocar').addEventListener('click', function () { $('trabalho').hidden = true; $('busca').classList.remove('compacta'); busca.value = ''; busca.focus(); });
     $('baixar').addEventListener('click', baixar);

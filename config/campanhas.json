@@ -1,0 +1,63 @@
+{
+  "_sobre": "Campanhas do ano, todas debaixo do guarda-chuva \"Humano por natureza\". Cada campanha ajusta a Key Art da linha (externa ou interna) do Radar: estilo padrão, cor de destaque, selo, destaques do estilo Ícones e a frase de rodapé. Enquanto o material oficial de uma campanha não chega, ela fica com \"aguardandoMaterial\": true e usa só o guarda-chuva (o texto de essência é provisório). Para incluir ou mudar uma campanha, edite este arquivo ou peça em Pedir mudança.",
+  "guardaChuva": {
+    "id": "humano-por-natureza",
+    "nome": "Humano por natureza",
+    "essencia": "Campanha guarda-chuva aprovada para 2027. Toda campanha do ano assina debaixo dela.",
+    "mote": "Humano por natureza"
+  },
+  "lista": [
+    {
+      "id": "outubro-rosa",
+      "nome": "Outubro Rosa",
+      "periodo": "Outubro",
+      "linhas": ["externa", "interna"],
+      "essencia": "Prevenção e diagnóstico precoce do câncer de mama. Cuidado próximo, sem alarmismo. (Provisório: substituir pelo material da campanha.)",
+      "estiloPadrao": "icones",
+      "destaque": "rosa",
+      "itens": ["Mamografia", "Autoexame", "Consulta", "Cuidado", "Família", "Agenda"],
+      "selo": "Outubro Rosa",
+      "mote": "Humano por natureza",
+      "aguardandoMaterial": true
+    },
+    {
+      "id": "servicos-proprios",
+      "nome": "Serviços Próprios",
+      "periodo": "Ano todo",
+      "linhas": ["externa"],
+      "essencia": "Divulgação dos serviços e recursos próprios (Espaço + Unimed, Sempre Unimed, SOU, AMAR…). Assinatura só em letras, conforme o MS.024. (Provisório: substituir pelo material da campanha.)",
+      "estiloPadrao": "foto",
+      "destaque": "citrico",
+      "itens": ["Consulta", "Exame", "Rede", "Agenda", "Telemedicina", "Cuidado"],
+      "selo": "",
+      "mote": "Humano por natureza",
+      "aguardandoMaterial": true
+    },
+    {
+      "id": "institucional",
+      "nome": "Institucional",
+      "periodo": "Ano todo",
+      "linhas": ["externa", "interna"],
+      "essencia": "A marca Unimed Uberlândia e o cooperativismo: presença na cidade, rede e pessoas. (Provisório: substituir pelo material da campanha.)",
+      "estiloPadrao": "mosaico",
+      "destaque": "citrico",
+      "itens": ["Família", "Rede", "Carteirinha", "Cuidado", "Telemedicina", "Agenda"],
+      "selo": "",
+      "mote": "Humano por natureza",
+      "aguardandoMaterial": true
+    },
+    {
+      "id": "troca-tabela",
+      "nome": "Troca de tabela comercial",
+      "periodo": "Data da troca",
+      "linhas": ["externa", "interna"],
+      "essencia": "Comunicação da nova tabela comercial para empresas, corretores e equipe de vendas: clara, objetiva e com datas em destaque. (Provisório: substituir pelo material da campanha.)",
+      "estiloPadrao": "pilulas",
+      "destaque": "amarelo",
+      "itens": ["Agenda", "Carteirinha", "Reembolso", "Rede", "Receita", "Alerta"],
+      "selo": "Nova tabela",
+      "mote": "Humano por natureza",
+      "aguardandoMaterial": true
+    }
+  ]
+}

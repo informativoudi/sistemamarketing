@@ -27,6 +27,8 @@ const SESSAO_HORAS = 12;
 const MAX_ERROS = 5, BLOQUEIO_MIN = 15;
 const LIMITE_PEDIDOS_HORA = 60;   // por IP
 const LIMITE_FOTOS_HORA = 150;    // por IP
+const LIMITE_MUDANCAS_HORA = 20;  // por IP
+const STATUS_MUDANCA = ['nova', 'analise', 'feita', 'recusada'];
 
 function cors(req) {
   const o = req.headers.get('Origin') || '';
@@ -61,7 +63,8 @@ async function garantirTabela(env) {
     env.DB.prepare('CREATE TABLE IF NOT EXISTS usuarios (usuario TEXT PRIMARY KEY, nome TEXT, hash TEXT NOT NULL, sal TEXT NOT NULL, admin INTEGER NOT NULL DEFAULT 0, criado_em TEXT NOT NULL)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS sessoes (token TEXT PRIMARY KEY, usuario TEXT NOT NULL, nome TEXT, admin INTEGER NOT NULL DEFAULT 0, expira INTEGER NOT NULL)'),
     env.DB.prepare('CREATE TABLE IF NOT EXISTS limites (chave TEXT PRIMARY KEY, n INTEGER NOT NULL, ate INTEGER NOT NULL)'),
-    env.DB.prepare('CREATE TABLE IF NOT EXISTS config (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)')
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS config (chave TEXT PRIMARY KEY, valor TEXT NOT NULL)'),
+    env.DB.prepare('CREATE TABLE IF NOT EXISTS mudancas (id TEXT PRIMARY KEY, criado_em TEXT NOT NULL, nome TEXT, area TEXT, email TEXT, tipo TEXT, formato TEXT, descricao TEXT NOT NULL, referencia TEXT, status TEXT NOT NULL, resposta TEXT, atualizado_por TEXT, atualizado_em TEXT)')
   ]);
   // Colunas da aprovação: acrescenta só as que faltam (banco antigo continua valendo).
   const { results } = await env.DB.prepare('PRAGMA table_info(pedidos)').all();
@@ -245,7 +248,8 @@ async function atender(req, env) {
       return json(req, { erro: 'Esse código já está registrado.', jaExiste: true, t, ...situacao(atual || {}) }, 409);
     }
     // A versão nova substitui a anterior que ainda esperava análise ou tinha sido reprovada.
-    if (versaoDe) await env.DB.prepare("UPDATE pedidos SET status = 'substituida' WHERE codigo = ?1 AND (status = 'aguardando' OR status = 'reprovada')").bind(versaoDe).run();
+    // Ajuste ou atualização em lote do Marketing (já aprovada): a anterior sai de uso mesmo se estava aprovada.
+    if (versaoDe) await env.DB.prepare("UPDATE pedidos SET status = 'substituida' WHERE codigo = ?1 AND (status = 'aguardando' OR status = 'reprovada' OR (?2 = 1 AND (status = 'aprovada' OR status IS NULL)))").bind(versaoDe, mk ? 1 : 0).run();
     return json(req, { ok: true, t, status: mk ? 'aprovada' : 'aguardando' }, 201);
   }
 
@@ -290,6 +294,48 @@ async function atender(req, env) {
       if (!CODIGO.test(String(it.codigo || '')) || !iguais(String(it.t || ''), await assinar(env, it.codigo))) continue;
       const r = await env.DB.prepare('SELECT status, observacao, decidido_por, decidido_em FROM pedidos WHERE codigo = ?1').bind(it.codigo).first();
       if (r) saida.push({ codigo: it.codigo, ...situacao(r) });
+    }
+    return json(req, saida);
+  }
+
+  // ----- Pedidos de mudança (regras, layouts, formatos): as áreas pedem, o Marketing responde -----
+  if (p === '/mudancas' && req.method === 'POST') {
+    if (await contar(env, 'mud:' + ip, 3600000) > LIMITE_MUDANCAS_HORA) return json(req, { erro: 'Muitos envios em pouco tempo. Tente de novo mais tarde.' }, 429);
+    let d; try { d = JSON.parse((await req.text()).slice(0, 20000)); } catch (e) { return json(req, { erro: 'Pedido inválido.' }, 400); }
+    const descricao = String(d.descricao || '').trim().slice(0, 4000);
+    if (descricao.length < 10) return json(req, { erro: 'Conte um pouco mais do que precisa mudar.' }, 400);
+    const id = 'MUD-' + new Date().toISOString().slice(2, 10).replace(/-/g, '') + '-' + aleatorio(3).toUpperCase();
+    const email = /^[^\s@<>"',;]{1,80}@[^\s@<>"',;]{1,120}\.[a-z]{2,}$/i.test(String(d.email || '')) ? String(d.email).toLowerCase() : null;
+    const ref = /^https?:\/\/\S{3,500}$/.test(String(d.referencia || '').trim()) ? String(d.referencia).trim() : '';
+    await env.DB.prepare("INSERT INTO mudancas (id, criado_em, nome, area, email, tipo, formato, descricao, referencia, status) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, 'nova')")
+      .bind(id, new Date().toISOString(), String(d.nome || '').slice(0, 120), String(d.area || '').slice(0, 120), email, String(d.tipo || '').slice(0, 60), String(d.formato || '').slice(0, 80), descricao, ref).run();
+    await limpar(env);
+    return json(req, { ok: true, id, t: await assinar(env, 'mud:' + id) }, 201);
+  }
+  if (p === '/mudancas' && req.method === 'GET') {
+    if (!(await sessao(req, env))) return json(req, { erro: 'Sessão expirada. Entre de novo.' }, 401);
+    const { results } = await env.DB.prepare('SELECT * FROM mudancas ORDER BY criado_em DESC LIMIT 500').all();
+    return json(req, results);
+  }
+  const mud = /^\/mudancas\/(MUD-[A-Z0-9-]{4,30})$/.exec(p);
+  if (mud && req.method === 'POST') {
+    const quem = await sessao(req, env);
+    if (!quem) return json(req, { erro: 'Sessão expirada. Entre de novo.' }, 401);
+    let d; try { d = await req.json(); } catch (e) { return json(req, { erro: 'Pedido inválido.' }, 400); }
+    if (!STATUS_MUDANCA.includes(d.status)) return json(req, { erro: 'Situação inválida.' }, 400);
+    const agora = new Date().toISOString();
+    const r = await env.DB.prepare('UPDATE mudancas SET status = ?2, resposta = ?3, atualizado_por = ?4, atualizado_em = ?5 WHERE id = ?1')
+      .bind(mud[1], d.status, String(d.resposta || '').trim().slice(0, 2000), quem.nome || quem.usuario, agora).run();
+    if (!r || !r.meta || r.meta.changes === 0) return json(req, { erro: 'Pedido não encontrado.' }, 404);
+    return json(req, { ok: true, id: mud[1], status: d.status, resposta: String(d.resposta || '').trim().slice(0, 2000), atualizado_por: quem.nome || quem.usuario, atualizado_em: agora, t: await assinar(env, 'mud:' + mud[1]) });
+  }
+  if (p === '/situacao-mudancas' && req.method === 'POST') {
+    let d; try { d = await req.json(); } catch (e) { return json(req, { erro: 'Pedido inválido.' }, 400); }
+    const saida = [];
+    for (const it of (Array.isArray(d.itens) ? d.itens : []).slice(0, 20)) {
+      if (!/^MUD-[A-Z0-9-]{4,30}$/.test(String(it.id || '')) || !iguais(String(it.t || ''), await assinar(env, 'mud:' + it.id))) continue;
+      const r = await env.DB.prepare('SELECT id, status, resposta, atualizado_em FROM mudancas WHERE id = ?1').bind(it.id).first();
+      if (r) saida.push(r);
     }
     return json(req, saida);
   }

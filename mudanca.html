@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Pedir mudança · Gerador de Peças Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Seções"><a href="index.html">Criar peça</a><a href="mudanca.html" aria-current="page">Pedir mudança</a><a href="painel.html" class="restrito">Área restrita</a></nav>
+</header>
+
+<main class="casca">
+  <section class="boasvindas mudanca-topo">
+    <p class="etapa">Pedido de mudança</p>
+    <h1>O que <span>precisa mudar?</span></h1>
+    <p class="lede">Uma regra da marca, o layout de um formato, um formato novo ou uma campanha. O Marketing analisa e responde por aqui e por e-mail.</p>
+  </section>
+
+  <div class="mudanca-grade">
+    <form class="cartao" id="form-mudanca" novalidate>
+      <div class="campos" style="grid-template-columns:minmax(0,1fr)">
+        <div class="campo" data-campo="tipo">
+          <span class="rot">Tipo de mudança</span>
+          <div class="opcoes-tipo" id="m-tipos" role="radiogroup" aria-label="Tipo de mudança"></div>
+        </div>
+        <div class="campo" data-campo="formato">
+          <label for="m-formato">Formato <span class="opc">(se for sobre um formato)</span></label>
+          <select id="m-formato"><option value="">Nenhum em especial</option></select>
+        </div>
+        <div class="campo" data-campo="descricao">
+          <label for="m-descricao">Descreva a mudança</label>
+          <textarea id="m-descricao" rows="6" maxlength="4000" placeholder="Ex.: No convite, precisamos de um campo para o local do evento com o endereço completo."></textarea>
+          <span class="ajuda">Diga o que é hoje, o que precisa ser e para quê. Exemplos ajudam muito.</span>
+        </div>
+        <div class="campo" data-campo="referencia">
+          <label for="m-referencia">Link de referência <span class="opc">(opcional: arquivo no SharePoint, peça antiga, site)</span></label>
+          <input id="m-referencia" type="url" placeholder="https://…">
+        </div>
+        <div id="m-quem" class="campos" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr))">
+          <div class="campo" data-campo="nome"><label for="m-nome">Seu nome</label><input id="m-nome" type="text" maxlength="80" autocomplete="name"></div>
+          <div class="campo" data-campo="area"><label for="m-area">Seu setor</label><select id="m-area"><option value="">Selecione seu setor…</option></select></div>
+          <div class="campo" data-campo="email"><label for="m-email">Seu e-mail corporativo</label><input id="m-email" type="email" maxlength="120" autocomplete="email" placeholder="nome@unimeduberlandia.coop.br"></div>
+        </div>
+      </div>
+      <div id="m-mensagens"></div>
+      <div class="acoes" style="justify-content:flex-end"><button class="btn primario" type="submit" id="m-enviar">Enviar pedido <span aria-hidden="true">→</span></button></div>
+      <div class="alerta ok" id="m-feito" role="status" hidden></div>
+    </form>
+
+    <aside class="cartao" id="m-meus">
+      <h2>Seus pedidos</h2>
+      <p class="sub" id="m-meus-vazio">Os pedidos que você enviar deste aparelho aparecem aqui, com a resposta do Marketing.</p>
+      <ul class="lista-mudancas" id="m-meus-lista"></ul>
+    </aside>
+  </div>
+</main>
+
+<script src="src/mudanca.js"></script>
+</body>
+</html>

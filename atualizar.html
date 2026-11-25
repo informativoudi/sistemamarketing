@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Atualizar peças · Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Área restrita" id="menu-restrito"></nav>
+</header>
+
+<main class="casca">
+  <section id="portao" class="portao" hidden></section>
+  <div id="conteudo-restrito" hidden>
+    <section class="busca compacta" style="padding-top:8px">
+      <h1>Atualizar peças <span>com a Key Art atual</span></h1>
+    </section>
+    <p class="intro">Quando a Key Art, as tendências ou as regras da marca mudam, as peças já aprovadas continuam com o visual antigo. Aqui você escolhe quais atualizar: o sistema gera uma nova versão de cada uma com o mesmo conteúdo e o visual atual, já aprovada, e a anterior sai de uso.</p>
+    <p id="origem" class="alerta aviso" hidden></p>
+    <div class="kpis" id="u-kpis"></div>
+
+    <div class="cartao">
+      <h2>Quais peças</h2>
+      <div class="filtros">
+        <label for="u-linha" style="position:absolute;left:-9999px">Linha</label>
+        <select id="u-linha">
+          <option value="">Todas as linhas</option>
+          <option value="Campanha externa">Campanhas externas</option>
+          <option value="Campanha interna">Campanhas internas</option>
+          <option value="campanhas">Todas as campanhas</option>
+          <option value="Externo">Comunicados externos</option>
+          <option value="Interno">Comunicados internos</option>
+        </select>
+        <label for="u-campanha" style="position:absolute;left:-9999px">Campanha</label>
+        <select id="u-campanha"><option value="">Qualquer campanha</option></select>
+        <label for="u-formato" style="position:absolute;left:-9999px">Formato</label>
+        <select id="u-formato"><option value="">Todos os formatos</option></select>
+        <label class="campo-check filtro-check"><input type="checkbox" id="u-antigas" checked> <span>Só as feitas com Key Art ou marca anterior</span></label>
+      </div>
+      <div class="tabela-caixa">
+        <table class="lista">
+          <thead><tr><th><input type="checkbox" id="u-todas" aria-label="Selecionar todas"></th><th>Código</th><th>Quem</th><th>Formato</th><th>Linha</th><th>Título</th><th>Feita com</th></tr></thead>
+          <tbody id="u-linhas"></tbody>
+        </table>
+      </div>
+      <p class="vazio" id="u-vazio" hidden>Nenhuma peça aprovada com esses filtros.</p>
+      <div class="acoes" style="justify-content:space-between;align-items:center">
+        <p class="ajuda" id="u-resumo"></p>
+        <button class="btn primario" type="button" id="u-gerar" disabled>Gerar novas versões</button>
+      </div>
+    </div>
+
+    <div class="cartao" id="u-resultado-caixa" hidden style="margin-top:16px">
+      <h2>Resultado</h2>
+      <p class="ajuda" id="u-progresso" role="status"></p>
+      <ul class="lista-mudancas" id="u-resultado"></ul>
+    </div>
+  </div>
+</main>
+
+<script src="src/acesso.js"></script>
+<script src="src/motor.js"></script>
+<script src="src/modelos/email-marketing.js"></script>
+<script src="src/modelos/keyart-2027.js"></script>
+<script src="src/modelos/peca-fixa.js"></script>
+<script src="src/modelos/cartilha.js"></script>
+<script src="src/modelos/campanha-kit.js"></script>
+<script src="src/modelos/carrossel.js"></script>
+<script src="src/modelos/flyer.js"></script>
+<script src="src/registro.js"></script>
+<script src="src/aprovacao.js"></script>
+<script src="src/recorte.js"></script>
+<script src="src/formatacao.js"></script>
+<script src="src/atualizar.js"></script>
+</body>
+</html>

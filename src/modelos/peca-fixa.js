@@ -32,7 +32,7 @@
   var MESES = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
   /* ---------- Geometria a partir do tamanho e da margem ---------- */
-  function geometria(f, temImagem, campanha) {
+  function geometria(f, temImagem, campanha, lado) {
     var W = f.largura, H = f.altura, m = f.margem;
     // Margens por lado (ex.: Banner App do Praia Clube com 110 px embaixo; Story com áreas do Instagram).
     var mg = f.margens || {};
@@ -43,7 +43,8 @@
     var reservada = mb > m;
     var fb = reservada ? H - mb : H;                       // fim da área usável
     var mbT = reservada ? mb + Math.round(m * 0.6) : mb;   // margem inferior do texto
-    var g = { W: W, H: H, m: m, mt: mt, mb: mb, mbT: mbT, fb: fb, tipo: tipo, campanha: !!campanha };
+    var inv = /^Invert/i.test(lado || '');
+    var g = { W: W, H: H, m: m, mt: mt, mb: mb, mbT: mbT, fb: fb, tipo: tipo, campanha: !!campanha, inv: inv && !campanha && !!temImagem };
     mb = mbT;
     // Campanha: desenho da Key Art 2027 (src/modelos/keyart-2027.js), por estilo.
     if (campanha) return raiz.UnimedKeyArt.geometria(g, typeof campanha === 'object' ? campanha : { estilo: 'foto' }, temImagem);
@@ -52,6 +53,8 @@
       g.foto = temImagem ? { x: Math.round(W * (prop >= 3 ? 0.64 : 0.58)), y: 0 } : null;
       if (g.foto) { g.foto.w = W - g.foto.x; g.foto.h = H; }
       g.texto = { x: m, y: mt, w: (g.foto ? g.foto.x : W) - m - Math.round(m * (g.foto ? 0.8 : 1)), h: H - mt - mb };
+      // Foto invertida: sangra à esquerda e o texto vai para a direita.
+      if (g.inv && g.foto) { g.foto.x = 0; var tx = g.foto.w + Math.round(m * 0.8); g.texto = { x: tx, y: mt, w: W - tx - m, h: H - mt - mb }; }
     } else {
       g.U = W;
       var logoH = Math.round(W * 0.06);
@@ -62,6 +65,8 @@
       g.foto = temImagem ? { x: m, y: topoFoto, w: W - 2 * m, h: hFoto } : null;
       var yTexto = g.foto ? topoFoto + hFoto + Math.round(m * 0.45) : topoFoto;
       g.texto = { x: m, y: yTexto, w: W - 2 * m, h: H - yTexto - mb };
+      // Foto invertida: texto logo abaixo do logo e a foto embaixo, na margem.
+      if (g.inv && g.foto) { g.foto.y = H - mb - hFoto; g.texto = { x: m, y: topoFoto, w: W - 2 * m, h: g.foto.y - Math.round(m * 0.45) - topoFoto }; }
     }
     return g;
   }
@@ -76,7 +81,7 @@
   }
   function slots(formato, qtd, dados) {
     if (!qtd) return [];
-    var g = geometria(formato, true, ehCampanha(formato, dados));
+    var g = geometria(formato, true, ehCampanha(formato, dados), dados && dados.ladoFoto);
     return [{ w: g.foto.w, h: g.foto.h }];
   }
 
@@ -89,6 +94,17 @@
     var qual = /intern/i.test((dados && dados.publico) || '') ? 'interna' : 'externa';
     var todas = t.campanhas || {};
     var l = todas[qual] || (qual === 'externa' ? t.campanha : null) || {};
+    // Campanha do ano (config/campanhas.json): ajusta estilo padrão, selo, destaque e mote da linha.
+    var ct = t.campanhasTematicas || {};
+    var tem = (ct.lista || []).filter(function (x) { return x.nome === (dados && dados.campanha) || x.id === (dados && dados.campanha); })[0];
+    if (tem) {
+      l = Object.assign({}, l, {
+        nome: tem.nome + (qual === 'interna' ? ' · interna' : ''),
+        estiloPadrao: tem.estiloPadrao && (l.estilos || []).indexOf(tem.estiloPadrao) >= 0 ? tem.estiloPadrao : l.estiloPadrao,
+        selo: tem.selo ? (qual === 'interna' ? tem.selo + ' · interna' : tem.selo) : l.selo,
+        mote: tem.mote || l.mote
+      });
+    }
     var c = marca.cores, cor = function (k, padrao) { return c[k] || k || padrao; };
     var ativas = {};
     (t.tendencias || []).forEach(function (x) { if (x.status === 'ativa') ativas[x.id] = true; });
@@ -104,8 +120,13 @@
       texto: pal.texto, destaque: pal.destaque, legenda: pal.legenda, textura: pal.textura,
       contraste: usa('titulo-contraste'), caixaAlta: usa('titulo-contraste'), ponto: usa('quadrado-laranja'), box: usa('moldura-box'),
       usaTextura: usa('textura-papel'), prova: usa('prova-de-processo'), misto: usa('neo-brutalismo'), elementos: usa('elementos-key-art'),
-      mote: l.mote || (marca.rodape && marca.rodape.mote) || ''
+      mote: l.mote || (marca.rodape && marca.rodape.mote) || '',
+      tematica: tem ? tem.id : '', itensPadrao: tem ? tem.itens : null
     };
+    // Cor de destaque da campanha, só se tiver contraste com o fundo do estilo.
+    var corTem = tem && tem.destaque ? pal.P[tem.destaque] || (marca.cores || {})[tem.destaque] : '';
+    if (corTem && Math.abs(luz(corTem) - luz(cp.fundo)) > 0.35) cp.destaque = corTem;
+    if (tem && porque) porque.push('Campanha ' + tem.nome + ' → estilo padrão ' + (tem.estiloPadrao || '—') + ', destaque ' + (tem.destaque || '—') + (tem.aguardandoMaterial ? ' (visual provisório até chegar o material oficial).' : '.'));
     if (porque) {
       var nomes = ['titulo-contraste', 'neo-brutalismo', 'quadrado-laranja', 'moldura-box', 'textura-papel', 'prova-de-processo', 'elementos-key-art'].filter(usa)
         .map(function (k) { return ((t.tendencias || []).filter(function (x) { return x.id === k; })[0] || {}).nome || k; });
@@ -134,7 +155,8 @@
     var campanha = null;
     if (pub.layout === 'campanha') campanha = linhaCampanha(marca, tendencias, dados, porque);
     if (campanha) { logo = marca.logos[campanha.marca] || logo; if (campanha.escuro) logo = Object.assign({}, logo, { claro: logo.escuro || logo.claro }); }
-    var g = geometria(formato, !!aprovada, campanha);
+    var g = geometria(formato, !!aprovada, campanha, dados.ladoFoto);
+    if (g.inv) porque.push('Lado da foto invertido → ' + (g.tipo === 'largo' ? 'foto à esquerda, texto à direita.' : 'texto em cima, foto embaixo.'));
     var imagens = aprovada ? { quantidade: 1, itens: [Object.assign({ arquivo: aprovada.arquivo, descricao: aprovada.descricao, w: g.foto.w, h: g.foto.h }, ap)] } : null;
     porque.push(formato.largura + ' × ' + formato.altura + ' px, margem de ' + formato.margem + ' px → desenho ' + { largo: 'horizontal', quadrado: 'quadrado', alto: 'vertical' }[g.tipo] + '.');
     porque.push(imagens ? 'Com imagem → foto no quadro de ' + g.foto.w + ' × ' + g.foto.h + ' px.' : 'Sem imagem → fundo de apoio com a grade leve.');
@@ -153,7 +175,12 @@
     }
     if (dataInfo) porque.push('Com data → selo cítrico com dia e mês.');
     if (limpar(dados.chamada)) porque.push('Com chamada → botão laranja (sem link: é uma imagem).');
+    // MS.024: serviço ou recurso próprio na peça externa → assinatura só em letras, nunca logo próprio.
+    var servicos = (marca.assinaturaTextual && marca.assinaturaTextual.servicos) || {};
+    var servico = !campanha && pub.ans && dados.filial && servicos[dados.filial] && servicos[dados.filial].nome ? servicos[dados.filial] : null;
+    if (servico) porque.push('Peça externa de ' + dados.filial + ' → assinatura em letras (MS.024): ' + servico.nome + (servico.apoio ? ' / ' + servico.apoio : '') + '.');
     return {
+      servico: servico,
       variante: 'fixa', varianteNome: g.tipo === 'largo' ? 'HORIZONTAL' : g.tipo === 'alto' ? 'VERTICAL' : 'QUADRADO',
       caracteres: puro(limpar(dados.subtitulo)).length + n,
       publico: { nome: dados.publico || 'Interno', logo: logo, ans: campanha ? campanha.ans : !!pub.ans, assinatura: campanha ? logo.nome : pub.assinatura },
@@ -190,7 +217,7 @@
 
     // Fundo: cor de apoio do tema + grade de 12 colunas quase invisível.
     var grade = r27.grade ? 'background-image:url(' + url(base, r27.grade) + ');background-size:100% auto;background-repeat:repeat-y;' : '';
-    var areaFundo = g.tipo === 'largo' ? { x: 0, y: 0, w: g.foto ? g.foto.x : W, h: H } : { x: 0, y: 0, w: W, h: H };
+    var areaFundo = g.tipo === 'largo' ? (g.inv && g.foto ? { x: g.foto.w, y: 0, w: W - g.foto.w, h: H } : { x: 0, y: 0, w: g.foto ? g.foto.x : W, h: H }) : { x: 0, y: 0, w: W, h: H };
     html.push('<div ' + CX + ' style="position:absolute;left:' + areaFundo.x + 'px;top:' + areaFundo.y + 'px;width:' + areaFundo.w + 'px;height:' + areaFundo.h + 'px;background-color:' + fundo + ';' + grade + '"></div>');
 
     // Logo (+ faixa do mosaico) no topo da área de texto.
@@ -200,7 +227,7 @@
     var maxLogo = g.tipo === 'largo' ? g.texto.w * 0.8 : g.texto.w * 0.62;
     if (logoW > maxLogo) { logoW = Math.round(maxLogo); logoH = Math.round(logoW / logo.proporcao); }
     logoW = Math.max(logoW, marca.logos.minimoPx || 70);
-    html.push('<img ' + IM + ' src="' + esc(url(base, logo.claro)) + '" alt="' + esc(logo.nome) + '" style="position:absolute;left:' + m + 'px;top:' + g.mt + 'px;width:' + logoW + 'px;height:' + Math.round(logoW / logo.proporcao) + 'px;">');
+    html.push('<img ' + IM + ' src="' + esc(url(base, logo.claro)) + '" alt="' + esc(logo.nome) + '" style="position:absolute;left:' + (g.tipo === 'largo' ? g.texto.x : m) + 'px;top:' + g.mt + 'px;width:' + logoW + 'px;height:' + Math.round(logoW / logo.proporcao) + 'px;">');
     if (r27.mosaico && g.tipo !== 'largo') {
       var mh = Math.round(logoH * 0.9), mw = Math.round(mh * (r27.mosaicoLargura / r27.mosaicoAltura));
       html.push('<img ' + IM + ' src="' + esc(url(base, r27.mosaico)) + '" alt="" style="position:absolute;left:' + (W - m - mw) + 'px;top:' + (g.mt + Math.round((Math.round(logoW / logo.proporcao) - mh) / 2)) + 'px;width:' + mw + 'px;height:' + mh + 'px;">');
@@ -210,7 +237,7 @@
     if (plano.imagens && g.foto) {
       var it = plano.imagens.itens[0];
       var src = it.src || url(base, it.arquivo);
-      var raio = g.tipo === 'largo' ? Math.round(H * 0.16) + 'px 0 0 0' : raioBox(Math.round(U * 0.03));
+      var raio = g.tipo === 'largo' ? (g.inv ? '0 ' + Math.round(H * 0.16) + 'px 0 0' : Math.round(H * 0.16) + 'px 0 0 0') : raioBox(Math.round(U * 0.03));
       html.push('<img ' + IM + ' src="' + esc(src) + '" alt="' + esc(it.descricao) + '" style="position:absolute;left:' + g.foto.x + 'px;top:' + g.foto.y + 'px;width:' + g.foto.w + 'px;height:' + g.foto.h + 'px;object-fit:cover;border-radius:' + raio + ';">');
     }
 
@@ -239,13 +266,20 @@
         '<p ' + TX + ' data-forma="botao" style="margin:0;padding:' + Math.round(botaoPx * 0.62) + 'px ' + Math.round(botaoPx * 1.2) + 'px;font-size:' + botaoPx + 'px;font-weight:700;line-height:1.1;color:#ffffff;white-space:nowrap;">' + esc(plano.chamada) + ' &rarr;</p></div>');
     }
     if (rodape.length) itens.push('<div style="margin-top:' + Math.round(gap * 1.3) + 'px;overflow:hidden;">' + rodape.join('') + '</div>');
+    // Assinatura do serviço próprio (MS.024): nome em Sans Bold caixa alta + apoio em Slab Bold.
+    if (plano.servico) {
+      var sn = g.tipo === 'largo' ? s(0.04) : s(0.026), sa = Math.round(sn * 0.9);
+      itens.push('<div ' + CX + ' data-forma="assinatura" style="margin-top:' + (g.tipo === 'largo' ? Math.round(gap * 1.2) + 'px' : 'auto') + ';padding-top:' + Math.round(gap * 1.2) + 'px;">' +
+        '<p ' + TX + ' style="margin:0;font-size:' + sn + 'px;font-weight:700;letter-spacing:0;line-height:1.1;text-transform:uppercase;color:' + c.verdeEscuro + ';">' + esc(plano.servico.nome) + '</p>' +
+        (plano.servico.apoio ? '<p ' + TX + ' style="margin:' + Math.round(sn * 0.25) + 'px 0 0;font-family:\'Unimed Slab\',Georgia,serif;font-size:' + sa + 'px;font-weight:700;line-height:1.15;color:' + c.institucional + ';">' + esc(plano.servico.apoio) + '</p>' : '') + '</div>');
+    }
 
     html.push('<div data-ajuste style="position:absolute;left:' + t.x + 'px;top:' + topoTexto + 'px;width:' + t.w + 'px;height:' + altTexto + 'px;display:flex;flex-direction:column;justify-content:' + (g.tipo === 'largo' ? 'center' : 'flex-start') + ';">' + itens.join('') + '</div>');
 
     // ANS nas peças externas (canto inferior direito, dentro da margem).
     if (plano.publico.ans && marca.ans) {
       var ah = Math.max(14, s(g.tipo === 'largo' ? 0.045 : 0.026)), aw = Math.round(ah * marca.ans.proporcao);
-      var ax = g.tipo === 'largo' && g.foto ? g.foto.x - Math.round(m * 0.8) - aw : W - m - aw;
+      var ax = g.tipo === 'largo' && g.foto && !g.inv ? g.foto.x - Math.round(m * 0.8) - aw : W - m - aw;
       html.push('<img ' + IM + ' src="' + esc(url(base, marca.ans.selo)) + '" alt="ANS - nº ' + esc(marca.ans.numero) + '" style="position:absolute;left:' + ax + 'px;top:' + (g.fb - ah - Math.round(m * 0.5)) + 'px;width:' + aw + 'px;height:' + ah + 'px;">');
     }
 
@@ -285,7 +319,7 @@
     var U = g.U;
     if (plano.campanha) return { raio: g.foto.raio.map(function (r) { return Math.round(r); }), fundo: g.foto.fundo || plano.campanha.fundo };
     var fundo = plano.tema.fundoInterno ? ((marca && marca.cores[plano.tema.fundoInterno]) || plano.tema.fundoInterno) : (marca ? marca.cores.apoioAreia : '#ece3d9');
-    if (g.tipo === 'largo') return { raio: [Math.round(g.H * 0.16), 0, 0, 0], fundo: fundo };
+    if (g.tipo === 'largo') return { raio: g.inv ? [0, Math.round(g.H * 0.16), 0, 0] : [Math.round(g.H * 0.16), 0, 0, 0], fundo: fundo };
     var r = Math.round(U * 0.03);
     return { raio: [r, r, 0, r], fundo: fundo };
   }

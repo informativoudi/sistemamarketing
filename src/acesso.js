@@ -155,7 +155,7 @@
     if (!nav) return;
     nav.textContent = '';
     nav.appendChild(el('a', { href: 'index.html', texto: 'Criar peça' }));
-    var itens = [['painel.html', 'Painel'], ['nucleo.html', 'Núcleo da Marca'], ['radar.html', 'Radar']];
+    var itens = [['painel.html', 'Painel'], ['mudancas.html', 'Pedidos de mudança'], ['atualizar.html', 'Atualizar peças'], ['nucleo.html', 'Núcleo da Marca'], ['radar.html', 'Radar']];
     if (memoria && memoria.admin) itens.push(['acessos.html', 'Acessos']);
     itens.forEach(function (i) {
       var a = el('a', { href: i[0], texto: i[1] });

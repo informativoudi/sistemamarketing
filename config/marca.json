@@ -1,6 +1,6 @@
 {
   "_sobre": "Núcleo da Marca. Regras fixas tiradas dos manuais oficiais: Manual de Aplicação da Marca Unimed (MS.139), Manual de Linguagem da Marca (MS.138) e Manual de Marca Grupo Unimed Uberlândia (v1.0). Só mude quando um manual mudar e suba a versão.",
-  "versao": "2027.3",
+  "versao": "2027.4",
   "fontes": [
     {
       "nome": "Manual de Aplicação da Marca Unimed",
@@ -208,32 +208,62 @@
     {
       "id": "medica-e-paciente",
       "arquivo": "assets/fotos/medica-e-paciente.jpg",
-      "descricao": "Médica e paciente idoso sorrindo"
+      "descricao": "Médica e paciente idoso sorrindo",
+      "temas": [
+        "Saúde",
+        "Institucional"
+      ],
+      "filiais": []
     },
     {
       "id": "meninas-abraco",
       "arquivo": "assets/fotos/meninas-abraco.jpg",
-      "descricao": "Duas meninas abraçadas"
+      "descricao": "Duas meninas abraçadas",
+      "temas": [
+        "Institucional",
+        "Evento"
+      ],
+      "filiais": []
     },
     {
       "id": "medica-consulta",
       "arquivo": "assets/fotos/medica-consulta.jpg",
-      "descricao": "Médica em consulta"
+      "descricao": "Médica em consulta",
+      "temas": [
+        "Saúde"
+      ],
+      "filiais": []
     },
     {
       "id": "medico-cooperado",
       "arquivo": "assets/fotos/medico-cooperado.jpg",
-      "descricao": "Médico cooperado sorrindo"
+      "descricao": "Médico cooperado sorrindo",
+      "temas": [
+        "Saúde",
+        "Institucional"
+      ],
+      "filiais": []
     },
     {
       "id": "abraco-familia",
       "arquivo": "assets/fotos/abraco-familia.jpg",
-      "descricao": "Abraço em família"
+      "descricao": "Abraço em família",
+      "temas": [
+        "Institucional",
+        "Evento"
+      ],
+      "filiais": []
     },
     {
       "id": "colaboradores",
       "arquivo": "assets/fotos/colaboradores.jpg",
-      "descricao": "Colaboradores no escritório"
+      "descricao": "Colaboradores no escritório",
+      "temas": [
+        "Institucional",
+        "Evento",
+        "Aviso"
+      ],
+      "filiais": []
     }
   ],
   "rodape": {
@@ -284,7 +314,7 @@
     }
   },
   "icones": {
-    "_regra": "Ícones de linha da linguagem 2027 (CERVELLO): traço branco de 2px, cantos retos e um detalhe em cítrico, dentro de um quadro verde escuro no formato box. Cada área tem o seu.",
+    "_regra": "Ícones de linha da linguagem 2027 (CERVELLO): traço branco de 2px, cantos retos e um detalhe em cítrico, dentro de um quadro verde escuro no formato box. Cada área tem o seu: primeiro pelo nome exato (porArea), depois por palavra do nome do setor (porPalavra).",
     "pasta": "assets/icones/",
     "padrao": "bem-vindo",
     "porArea": {
@@ -300,6 +330,229 @@
       "Jurídico": "juridico-ouvidoria",
       "Diretoria": "governanca-auditoria",
       "Outra": "bem-vindo"
+    },
+    "porPalavra": [
+      {
+        "palavras": [
+          "marketing",
+          "comunicação",
+          "comunicacao",
+          "eventos"
+        ],
+        "icone": "comercial-relacionamento"
+      },
+      {
+        "palavras": [
+          "comercial",
+          "vendas",
+          "mercado",
+          "produto",
+          "atuarial",
+          "sinistralidade",
+          "negócios",
+          "negocios"
+        ],
+        "icone": "relatorios"
+      },
+      {
+        "palavras": [
+          "relacionamento",
+          "atendimento",
+          "cliente",
+          "central"
+        ],
+        "icone": "gestao-de-chamados"
+      },
+      {
+        "palavras": [
+          "pessoas",
+          "recursos humanos",
+          "treinamento",
+          "desenvolvimento",
+          "colaborador",
+          "segurança do trabalho",
+          "sesmt",
+          "departamento pessoal"
+        ],
+        "icone": "apoio-ao-colaborador"
+      },
+      {
+        "palavras": [
+          "cooperado",
+          "cooperativismo",
+          "cooperativa"
+        ],
+        "icone": "relacionamento-cooperado"
+      },
+      {
+        "palavras": [
+          "rede",
+          "regulação",
+          "regulacao",
+          "auditoria médica",
+          "credenciamento",
+          "assistencial",
+          "enfermagem",
+          "médic",
+          "medic",
+          "clínic",
+          "clinic",
+          "saúde",
+          "saude",
+          "oncologia",
+          "reabilitação",
+          "reabilitacao",
+          "autorização",
+          "autorizacao",
+          "intercâmbio",
+          "intercambio",
+          "operações assistenciais",
+          "multiprofissional",
+          "multidisciplinar",
+          "procedimentos",
+          "farmácia",
+          "farmacia",
+          "fisioterapia",
+          "psicologia",
+          "psicopedagogia",
+          "serviço social",
+          "terapia",
+          "atenção",
+          "atencao",
+          "idoso",
+          "casos especiais",
+          "consulta",
+          "exames",
+          "massoterap",
+          "sad",
+          "ambulatório",
+          "serviços próprios"
+        ],
+        "icone": "rede-assistencial-regulacao"
+      },
+      {
+        "palavras": [
+          "tecnologia",
+          "sistemas",
+          "dados",
+          "inovação",
+          "inovacao",
+          "digital",
+          "de ti",
+          "ti operadora",
+          "digita"
+        ],
+        "icone": "tecnologia-sistemas"
+      },
+      {
+        "palavras": [
+          "financeiro",
+          "contab",
+          "faturamento",
+          "tesouraria",
+          "custos",
+          "controladoria",
+          "compras",
+          "suprimentos"
+        ],
+        "icone": "relatorios"
+      },
+      {
+        "palavras": [
+          "jurídico",
+          "juridico",
+          "ouvidoria",
+          "compliance",
+          "lgpd",
+          "privacidade",
+          "jurídica",
+          "juridica"
+        ],
+        "icone": "juridico-ouvidoria"
+      },
+      {
+        "palavras": [
+          "diretoria",
+          "presidência",
+          "presidencia",
+          "conselho",
+          "governança",
+          "governanca",
+          "auditoria",
+          "qualidade",
+          "riscos",
+          "superintendência",
+          "superintendencia",
+          "secretaria executiva"
+        ],
+        "icone": "governanca-auditoria"
+      },
+      {
+        "palavras": [
+          "processos",
+          "projetos",
+          "escritório",
+          "escritorio",
+          "planejamento",
+          "estratégia",
+          "estrategia"
+        ],
+        "icone": "assessoria-processos-projetos"
+      },
+      {
+        "palavras": [
+          "administrativ",
+          "manutenção",
+          "manutencao",
+          "patrimônio",
+          "patrimonio",
+          "facilities",
+          "logística",
+          "logistica",
+          "recepção",
+          "recepcao",
+          "infraestrutura",
+          "operações",
+          "operacoes",
+          "adm "
+        ],
+        "icone": "rotinas-administrativas"
+      }
+    ],
+    "padraoPorTema": {
+      "_regra": "Estilo Ícones da Key Art: quando quem pede não escreve os destaques, os cards usam estes, pelo tema da peça.",
+      "Institucional": [
+        "Família",
+        "Rede",
+        "Carteirinha",
+        "Cuidado",
+        "Telemedicina",
+        "Agenda"
+      ],
+      "Saúde": [
+        "Consulta",
+        "Exame",
+        "Cuidado",
+        "Caminhada",
+        "Alimentação",
+        "Telemedicina"
+      ],
+      "Evento": [
+        "Agenda",
+        "Família",
+        "Prêmio",
+        "Caminhada",
+        "Cuidado",
+        "Rede"
+      ],
+      "Aviso": [
+        "Alerta",
+        "Agenda",
+        "Carteirinha",
+        "Rede",
+        "Receita",
+        "Consulta"
+      ]
     }
   },
   "recursos2027": {
@@ -744,6 +997,55 @@
     },
     "areaProtecao": "x = altura da maiúscula da primeira palavra da parte superior, em volta de todo o bloco",
     "box": "Opcional; tamanho mínimo pela área de proteção; pode crescer na horizontal ou na vertical",
-    "cores": "Qualquer cor da paleta Unimed"
+    "cores": "Qualquer cor da paleta Unimed",
+    "quando": "Peças externas (consumidor final) pedidas por setores de serviços e recursos próprios. Internas usam a marca do Grupo e não levam a assinatura.",
+    "servicos": {
+      "_regra": "Filial do setor de quem pede → assinatura em letras (MS.024). nome: Unimed Sans Bold, caixa alta. apoio (opcional): Unimed Slab Bold, caixa alta e baixa. Deixe de fora as filiais que não são serviço ou recurso próprio.",
+      "Espaço de Saúde Oncologia": {
+        "nome": "ESPAÇO DE SAÚDE ONCOLOGIA",
+        "apoio": ""
+      },
+      "Espaço + Unimed Shopping": {
+        "nome": "ESPAÇO + UNIMED SHOPPING",
+        "apoio": ""
+      },
+      "Espaço + Unimed Marileusa": {
+        "nome": "ESPAÇO + UNIMED MARILEUSA",
+        "apoio": ""
+      },
+      "Espaço Viver Bem": {
+        "nome": "ESPAÇO VIVER BEM",
+        "apoio": ""
+      },
+      "Sempre Unimed": {
+        "nome": "SEMPRE UNIMED",
+        "apoio": ""
+      },
+      "AMAR · Amparo, Acolhimento e Reabilitação": {
+        "nome": "AMAR",
+        "apoio": "Amparo, Acolhimento e Reabilitação"
+      },
+      "NexaClínica": {
+        "nome": "NEXACLÍNICA",
+        "apoio": ""
+      },
+      "Saúde Ocupacional (SOU)": {
+        "nome": "SOU - SAÚDE OCUPACIONAL",
+        "apoio": ""
+      },
+      "Unimed Vasconcelos": {
+        "nome": "UNIMED VASCONCELOS",
+        "apoio": ""
+      }
+    }
+  },
+  "bancoImagens": {
+    "_regra": "Cada imagem leva os temas em que funciona melhor (temas) e, se for de uma unidade específica, as filiais (filiais). No gerador, as imagens do tema escolhido e da filial de quem pede aparecem primeiro. Filiais vazio = serve para todas. Para incluir uma imagem: arquivo em assets/fotos/ e uma linha em imagensAprovadas.",
+    "temas": [
+      "Institucional",
+      "Saúde",
+      "Evento",
+      "Aviso"
+    ]
   }
 }

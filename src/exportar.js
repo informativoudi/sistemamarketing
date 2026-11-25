@@ -104,34 +104,59 @@
   /* ---------- PDF ----------
      Uma página do tamanho da peça; com [data-x="pagina"] (cartilha), uma página por folha A4.
      info.dpi: resolução de impressão (ex.: Painel SMU 150 dpi → tamanho físico certo). */
+  /* html pode ser uma lista (ex.: frente e verso): cada peça vira página(s) do mesmo PDF. */
   async function pdf(html, nome, info) {
     info = info || {};
+    var lista = Array.isArray(html) ? html : [html];
+    await carregar('jspdf');
+    var J = raiz.jspdf.jsPDF;
+    var doc = null;
+    for (var q = 0; q < lista.length; q++) doc = await paginasPdf(lista[q], info, J, doc);
+    doc.setProperties({ title: nome, creator: 'Gerador de Peças · Unimed Uberlândia' });
+    doc.save(nome + '.pdf');
+  }
+  async function paginasPdf(html, info, J, doc) {
     var m = await montar(html, info.largura);
     try {
-      await carregar('jspdf');
-      var J = raiz.jspdf.jsPDF;
       var paginas = Array.prototype.slice.call(m.doc.querySelectorAll('[data-x="pagina"]')).filter(function (p) { return p.getBoundingClientRect().height > 0; });
       var alvos = paginas.length ? paginas : [m.cartao];
-      var doc = null;
       for (var i = 0; i < alvos.length; i++) {
         var alvo = alvos[i];
         var base = alvo.getBoundingClientRect();
         var w = base.width, h = base.height;
         var tela = await fotografar(m, info.escalaPdf || (info.dpi ? Math.max(2, Math.min(4, info.dpi / 96)) : 2), alvo);
         var unid = info.dpi ? 'in' : 'px', fw = info.dpi ? w / info.dpi : w, fh = info.dpi ? h / info.dpi : h;
-        var orient = fh > fw ? 'portrait' : 'landscape';
-        if (!doc) doc = new J({ orientation: orient, unit: unid, format: [fw, fh], hotfixes: ['px_scaling'], compress: true });
-        else doc.addPage([fw, fh], orient);
-        doc.addImage(tela.toDataURL('image/jpeg', 0.97), 'JPEG', 0, 0, fw, fh);
+        // Impressos: sangria (ex.: 3 mm) + área das marcas de corte (5 mm) em volta do formato final.
+        var sg = info.dpi && info.sangria ? info.sangria / 25.4 : 0, mc = sg ? 5 / 25.4 : 0, ox = sg + mc;
+        var pw = fw + 2 * ox, ph = fh + 2 * ox;
+        var orient = ph > pw ? 'portrait' : 'landscape';
+        if (!doc) doc = new J({ orientation: orient, unit: unid, format: [pw, ph], hotfixes: ['px_scaling'], compress: true });
+        else doc.addPage([pw, ph], orient);
+        if (sg) {
+          // A arte cobre o formato + sangria (escala uniforme, centralizada; o corte cai na margem de segurança).
+          var esc = Math.max((fw + 2 * sg) / fw, (fh + 2 * sg) / fh), dw = fw * esc, dh = fh * esc;
+          doc.addImage(tela.toDataURL('image/jpeg', 0.97), 'JPEG', pw / 2 - dw / 2, ph / 2 - dh / 2, dw, dh);
+          // Faixa branca fora da sangria e marcas de corte nos cantos.
+          doc.setFillColor(255, 255, 255);
+          doc.rect(0, 0, pw, mc, 'F'); doc.rect(0, ph - mc, pw, mc, 'F'); doc.rect(0, 0, mc, ph, 'F'); doc.rect(pw - mc, 0, mc, ph, 'F');
+          doc.setDrawColor(0, 0, 0); doc.setLineWidth(0.25 / 72);
+          var g = 1 / 25.4; // 1 mm de folga entre a marca e a sangria
+          [[ox, ox], [ox + fw, ox], [ox, ox + fh], [ox + fw, ox + fh]].forEach(function (pt, k) {
+            var esq = k % 2 === 0, cima = k < 2;
+            doc.line(pt[0], cima ? 0 : ph, pt[0], cima ? mc - g : ph - mc + g);
+            doc.line(esq ? 0 : pw, pt[1], esq ? mc - g : pw - mc + g, pt[1]);
+          });
+        } else {
+          doc.addImage(tela.toDataURL('image/jpeg', 0.97), 'JPEG', 0, 0, fw, fh);
+        }
         // Mantém os links clicáveis no PDF.
         var k = info.dpi ? 1 / info.dpi : 1;
         Array.prototype.forEach.call(alvo.querySelectorAll('a[href]'), function (a) {
           var r = a.getBoundingClientRect();
-          doc.link((r.left - base.left) * k, (r.top - base.top) * k, r.width * k, r.height * k, { url: a.href });
+          doc.link((r.left - base.left) * k + ox, (r.top - base.top) * k + ox, r.width * k, r.height * k, { url: a.href });
         });
       }
-      doc.setProperties({ title: nome, creator: 'Gerador de Peças · Unimed Uberlândia' });
-      doc.save(nome + '.pdf');
+      return doc;
     } finally { m.sair(); }
   }
 

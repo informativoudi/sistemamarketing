@@ -7,6 +7,14 @@
 (function (raiz) {
   'use strict';
 
+  /* Ícone da área pelo nome do setor: a primeira palavra-chave que aparecer no nome (marca.json → icones.porPalavra). */
+  function iconePorPalavra(ic, area) {
+    var a = String(area || '').toLowerCase();
+    if (!a || !ic.porPalavra) return '';
+    var achado = ic.porPalavra.filter(function (r) { return r.palavras.some(function (w) { return new RegExp('(^|[^a-zà-ú])' + w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).test(a); }); })[0];
+    return achado ? achado.icone : '';
+  }
+
   var MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
   var MESES_LONGOS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
   var NOMES_VARIANTE = { curto: 'CURTO', medio: 'MÉDIO', longo: 'LONGO' };
@@ -265,7 +273,8 @@
       ? { inicio: palavras.slice(0, -1).join(' '), fim: palavras[palavras.length - 1] }
       : { inicio: '', fim: cabecalho };
     var ic = marca.icones || {};
-    var nomeIcone = (ic.porArea && ic.porArea[limpar(dados.cabecalho) ? '' : limpar(dados.area)]) || ic.padrao || '';
+    var nomeArea = limpar(dados.cabecalho) ? '' : limpar(dados.area);
+    var nomeIcone = (ic.porArea && ic.porArea[nomeArea]) || iconePorPalavra(ic, nomeArea) || ic.padrao || '';
     var icone = nomeIcone ? (ic.pasta || 'assets/icones/') + nomeIcone + '.png' : null;
     var corBotao = (formato.botao && cores[formato.botao.cor]) || cores.laranja;
     var textoBotao = (formato.botao && cores[formato.botao.texto]) || '#ffffff';
