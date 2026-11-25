@@ -1,8 +1,8 @@
 /* ============================================================
    Área restrita · senha do Marketing
    Painel, Núcleo da Marca e Radar pedem a senha do Marketing.
-   A senha é conferida pela API do Cloudflare (worker/unimed-pecas.js,
-   variável secreta SENHA) e fica guardada só neste navegador.
+   Cada pessoa entra com usuário e senha, conferidos pela API do
+   Cloudflare (worker/unimed-pecas.js). O acesso fica guardado só neste navegador.
    No computador local (localhost) abre sem senha, para testes.
    ============================================================ */
 (function (raiz) {
@@ -24,7 +24,7 @@
   }
   function api() { var c = (sistema && sistema.registro) || {}; return c.modo === 'cloudflare' ? String(c.api || '').replace(/\/$/, '') : ''; }
 
-  /* token = "usuario:senha" (login próprio) ou só a senha geral. */
+  /* token = "usuario:senha". */
   async function conferir(token) {
     var r = await fetch(api() + '/entrar', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
     if (r.status === 401) throw new Error('Usuário ou senha incorretos.');
@@ -109,11 +109,12 @@
       [campo, usuario].forEach(function (c) { c.addEventListener('input', function () { form.classList.remove('com-erro'); status.textContent = ''; }); });
       form.addEventListener('submit', async function (e) {
         e.preventDefault();
+        var u = usuario.value.trim();
+        if (!u) { form.classList.add('com-erro'); status.textContent = 'Digite seu usuário.'; usuario.focus(); return; }
         if (!campo.value) { form.classList.add('com-erro'); status.textContent = 'Digite a senha.'; campo.focus(); return; }
         botao.disabled = true; botao.classList.add('carregando'); status.textContent = 'Conferindo…';
-        var u = usuario.value.trim();
         try {
-          gravar(await conferir(u ? u + ':' + campo.value : campo.value));
+          gravar(await conferir(u + ':' + campo.value));
           try { localStorage.setItem('unimed-usuario-painel', u); } catch (e2) { /* sem memória */ }
           status.textContent = ''; aoEntrar();
         }
@@ -166,6 +167,8 @@
       if (ehLocal()) return liberar(true);
       return telaPortao({ aviso: true, texto: 'O registro ainda não foi ligado (veja docs/registro-cloudflare.md).' }, false);
     }
+    // Sessões antigas, abertas só com a senha geral, deixam de valer.
+    if (memoria && memoria.senha && memoria.senha.indexOf(':') < 1) gravar(null);
     if (memoria && memoria.senha) {
       if (Date.now() - (memoria.conferido || 0) < 12 * 3600 * 1000) return liberar(false);
       try { gravar(await conferir(memoria.senha)); return liberar(false); } catch (e) { gravar(null); }

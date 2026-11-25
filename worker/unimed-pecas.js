@@ -2,7 +2,8 @@
 // Unimed Uberlândia · API do Gerador de Peças (Cloudflare Worker)
 // Guarda o registro de cada peça (banco D1) e as fotos dos e-mails (KV).
 // Ligações no Worker: DB = banco D1 "unimed-pecas" · IMAGENS = KV "unimed-pecas"
-// Segredo:  SENHA = senha geral do Marketing (administra os acessos)
+// Segredo:  USUARIOS = logins de administradores em JSON, ex.: {"joander":"senha"}
+//           (é a chave reserva: se alguém perder o acesso, edite aqui no Cloudflare)
 // Logins individuais: criados na página "Acessos" do site e guardados no banco D1
 // (tabela usuarios, com a senha protegida por hash PBKDF2 — nunca em texto).
 // ============================================================
@@ -30,16 +31,21 @@ async function gerarHash(senha, salHex) {
 function iguais(a, b) { if (a.length !== b.length) return false; let d = 0; for (let i = 0; i < a.length; i++) d |= a.charCodeAt(i) ^ b.charCodeAt(i); return d === 0; }
 
 // Quem está fazendo o pedido: { usuario, nome, admin } ou null.
-// O site manda "Bearer usuario:senha" (login próprio) ou "Bearer senha" (senha geral, que é administradora).
+// O site manda "Bearer usuario:senha". Sem usuário não entra (a senha geral sozinha foi desligada).
 async function autorizado(req, env) {
   const h = req.headers.get('Authorization') || '';
   if (!h.startsWith('Bearer ')) return null;
   const token = h.slice(7);
-  if (env.SENHA && iguais(token, env.SENHA)) return { usuario: 'marketing', nome: 'Marketing', admin: true };
   const i = token.indexOf(':');
   if (i <= 0) return null;
-  await garantirTabela(env);
   const u = token.slice(0, i).trim().toLowerCase();
+  // Logins cadastrados direto no Cloudflare (segredo USUARIOS, JSON {"usuario":"senha"}) valem como administradores.
+  if (env.USUARIOS) {
+    let lista = {}; try { lista = JSON.parse(env.USUARIOS); } catch (e) { lista = {}; }
+    const chave = Object.keys(lista).find((k) => k.toLowerCase() === u);
+    if (chave && iguais(token.slice(i + 1), String(lista[chave]))) return { usuario: chave.toLowerCase(), nome: chave, admin: true };
+  }
+  await garantirTabela(env);
   const r = await env.DB.prepare('SELECT usuario, nome, hash, sal, admin FROM usuarios WHERE usuario = ?1').bind(u).first();
   if (!r) return null;
   if (!iguais(await gerarHash(token.slice(i + 1), r.sal), r.hash)) return null;
