@@ -523,3 +523,24 @@ details.secao > .campos { padding: 4px 16px 18px; border-top: 1px solid var(--bo
 .kit-lista li b{display:block;font-size:14.5px;}
 .kit-lista li span{font-size:12.5px;color:var(--texto-suave,#6f6f6e);}
 .kit-botoes{display:flex;gap:6px;flex-wrap:wrap;}
+
+.alta-def { display: flex; gap: 10px; align-items: flex-start; margin: 4px 0 12px; font-size: 14px; color: var(--suave); cursor: pointer; }
+.alta-def input { width: 18px; height: 18px; margin-top: 2px; accent-color: var(--institucional); }
+.alta-def b { color: var(--forte); }
+
+/* Público em duas perguntas */
+.publico-duplo { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 20px; }
+.pergunta { display: flex; flex-direction: column; gap: 8px; }
+.segmento { display: inline-flex; border: 2px solid var(--borda-forte); border-radius: 999px; padding: 3px; gap: 3px; background: var(--superficie); width: fit-content; }
+.segmento button { border: 0; background: transparent; border-radius: 999px; padding: 8px 18px; font: inherit; font-weight: 700; color: var(--petroleo); cursor: pointer; min-height: 40px; }
+.segmento button.ativo { background: var(--petroleo); color: #fff; }
+.segmento button:focus-visible { outline: 3px solid var(--citrico); outline-offset: 1px; }
+.btn-mini.destacar { margin-top: 8px; align-self: flex-start; }
+/* Prévia de exemplo */
+.moldura.exemplo { position: relative; }
+.moldura.exemplo::after { content: "Exemplo · preencha o formulário"; position: absolute; top: 10px; left: 10px; background: var(--petroleo); color: #fff; font-size: 12px; font-weight: 700; padding: 4px 10px; border-radius: 999px; pointer-events: none; }
+
+/* Ajustes finos */
+.ajustes .segmento button { padding: 7px 14px; min-height: 38px; font-size: 14px; }
+.setas { display: flex; gap: 8px; }
+.setas .btn-mini { width: 44px; height: 40px; font-size: 18px; padding: 0; justify-content: center; }

@@ -93,7 +93,7 @@
     try {
       var tela = await fotografar(m, info.escala || 2);
       var mime = tipo === 'jpg' ? 'image/jpeg' : 'image/png';
-      var blob = await new Promise(function (ok) { tela.toBlob(ok, mime, 0.92); });
+      var blob = await new Promise(function (ok) { tela.toBlob(ok, mime, 1.0); }); // JPG com qualidade máxima; PNG é sem perda
       if (info.blob) return blob;
       baixarBlob(blob, nome + '.' + tipo);
     } finally { m.sair(); }
@@ -117,12 +117,12 @@
         var alvo = alvos[i];
         var base = alvo.getBoundingClientRect();
         var w = base.width, h = base.height;
-        var tela = await fotografar(m, info.escalaPdf || 2, alvo);
+        var tela = await fotografar(m, info.escalaPdf || (info.dpi ? Math.max(2, Math.min(4, info.dpi / 96)) : 2), alvo);
         var unid = info.dpi ? 'in' : 'px', fw = info.dpi ? w / info.dpi : w, fh = info.dpi ? h / info.dpi : h;
         var orient = fh > fw ? 'portrait' : 'landscape';
         if (!doc) doc = new J({ orientation: orient, unit: unid, format: [fw, fh], hotfixes: ['px_scaling'], compress: true });
         else doc.addPage([fw, fh], orient);
-        doc.addImage(tela.toDataURL('image/jpeg', 0.92), 'JPEG', 0, 0, fw, fh);
+        doc.addImage(tela.toDataURL('image/jpeg', 0.97), 'JPEG', 0, 0, fw, fh);
         // Mantém os links clicáveis no PDF.
         var k = info.dpi ? 1 / info.dpi : 1;
         Array.prototype.forEach.call(alvo.querySelectorAll('a[href]'), function (a) {

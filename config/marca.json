@@ -309,5 +309,441 @@
     "mosaicoAltura": 30,
     "grade": "assets/grade-12.png",
     "textura": "assets/textura-papel.png"
+  },
+  "setores": {
+    "_regra": "Setores reais do Grupo Unimed Uberlândia, agrupados por filial (planilha do Marketing, nov/2026). O setor escolhido vira o nome no topo da peça e a assinatura do e-mail.",
+    "lista": [
+      {
+        "nome": "Auditoria Concorrente · Prestadores Assistenciais",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Central de Relacionamento",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Compliance",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Conselho Administrativo",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Consulta Médica · Técnico Ocupacional",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Contabilidade",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Controladoria",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação Atuarial e Sinistralidade",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Autorização",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Infraestrutura",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Tecnologia da Informação",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Estratégia, Projetos e Processos",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Intercâmbio",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Operações Assistenciais",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Rede Assistencial",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Relacionamento",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Coordenação de Serviços Digitais",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Departamento Pessoal",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Desenvolvimento Pessoal",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Diretoria Administrativa Financeira",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Diretoria de Serviços Próprios",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Financeiro e Cadastro",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Gerência Administrativa Financeira",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Gerência Jurídica",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Gerência de Atenção à Saúde",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Gerência de Auditoria Interna",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Gerência de Marketing e Comunicação",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Gerência de Relacionamento com o Cooperado",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Gerência de TI",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Gestão de Riscos",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Inteligência de Dados e Parâmetros",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Ouvidoria",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Patrimônio e Instalações",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Qualidade",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Secretaria Executiva Unimed",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Secretaria de Governança",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Superintendência",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Suprimentos",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "TI Operadora",
+        "filial": "Unimed Uberlândia"
+      },
+      {
+        "nome": "Administrativo (Oncologia)",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Copa (Oncologia)",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Enfermagem (Oncologia)",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Equipe Multidisciplinar",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Equipe Médica",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Farmácia Oncologia",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Gerência de Serviços Próprios · Novos Negócios",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Medicamentos Orais (Oncologia)",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Recepção Atendimento (Oncologia)",
+        "filial": "Espaço de Saúde Oncologia"
+      },
+      {
+        "nome": "Coordenação de Operações",
+        "filial": "Espaço + Unimed Shopping"
+      },
+      {
+        "nome": "DIU · Operadora",
+        "filial": "Espaço + Unimed Shopping"
+      },
+      {
+        "nome": "E+U Shopping Administrativo",
+        "filial": "Espaço + Unimed Shopping"
+      },
+      {
+        "nome": "E+U Shopping Ambulatório de Procedimentos",
+        "filial": "Espaço + Unimed Shopping"
+      },
+      {
+        "nome": "E+U Shopping Atenção Multiprofissional",
+        "filial": "Espaço + Unimed Shopping"
+      },
+      {
+        "nome": "E+U Shopping Atenção Primária à Saúde",
+        "filial": "Espaço + Unimed Shopping"
+      },
+      {
+        "nome": "E+U Shopping Farmácia",
+        "filial": "Espaço + Unimed Shopping"
+      },
+      {
+        "nome": "E+U Shopping Recepção",
+        "filial": "Espaço + Unimed Shopping"
+      },
+      {
+        "nome": "E+U Vasconcelos Procedimentos",
+        "filial": "Unimed Vasconcelos"
+      },
+      {
+        "nome": "E+U Vasconcelos Administrativo",
+        "filial": "Unimed Vasconcelos"
+      },
+      {
+        "nome": "E+U Vasconcelos Atenção Multiprofissional",
+        "filial": "Unimed Vasconcelos"
+      },
+      {
+        "nome": "E+U Vasconcelos Atenção Primária à Saúde",
+        "filial": "Unimed Vasconcelos"
+      },
+      {
+        "nome": "E+U Vasconcelos Farmácia",
+        "filial": "Unimed Vasconcelos"
+      },
+      {
+        "nome": "E+U Vasconcelos Recepção",
+        "filial": "Unimed Vasconcelos"
+      },
+      {
+        "nome": "Espaço do Idoso · Vasconcelos",
+        "filial": "Unimed Vasconcelos"
+      },
+      {
+        "nome": "Administrativo · AMAR",
+        "filial": "AMAR · Amparo, Acolhimento e Reabilitação"
+      },
+      {
+        "nome": "Fisioterapia",
+        "filial": "AMAR · Amparo, Acolhimento e Reabilitação"
+      },
+      {
+        "nome": "Psicologia",
+        "filial": "AMAR · Amparo, Acolhimento e Reabilitação"
+      },
+      {
+        "nome": "Psicopedagogia",
+        "filial": "AMAR · Amparo, Acolhimento e Reabilitação"
+      },
+      {
+        "nome": "Recepção",
+        "filial": "AMAR · Amparo, Acolhimento e Reabilitação"
+      },
+      {
+        "nome": "Serviço Social",
+        "filial": "AMAR · Amparo, Acolhimento e Reabilitação"
+      },
+      {
+        "nome": "Terapia Ocupacional",
+        "filial": "AMAR · Amparo, Acolhimento e Reabilitação"
+      },
+      {
+        "nome": "E+U Marileusa Administrativo",
+        "filial": "Espaço + Unimed Marileusa"
+      },
+      {
+        "nome": "E+U Marileusa Atenção Multiprofissional",
+        "filial": "Espaço + Unimed Marileusa"
+      },
+      {
+        "nome": "E+U Marileusa Atenção Primária à Saúde",
+        "filial": "Espaço + Unimed Marileusa"
+      },
+      {
+        "nome": "E+U Marileusa Farmácia",
+        "filial": "Espaço + Unimed Marileusa"
+      },
+      {
+        "nome": "E+U Marileusa Procedimentos",
+        "filial": "Espaço + Unimed Marileusa"
+      },
+      {
+        "nome": "E+U Marileusa Recepção",
+        "filial": "Espaço + Unimed Marileusa"
+      },
+      {
+        "nome": "Administrativo Serviços Próprios",
+        "filial": "Espaço Viver Bem"
+      },
+      {
+        "nome": "Administrativo · ADM (EVB)",
+        "filial": "Espaço Viver Bem"
+      },
+      {
+        "nome": "Farmácia · SAD",
+        "filial": "Espaço Viver Bem"
+      },
+      {
+        "nome": "Gerenciamento de Casos Especiais · SAD",
+        "filial": "Espaço Viver Bem"
+      },
+      {
+        "nome": "Navegação do Cuidado · Medicina Preventiva",
+        "filial": "Espaço Viver Bem"
+      },
+      {
+        "nome": "Serviço de Atenção Domiciliar · SAD",
+        "filial": "Espaço Viver Bem"
+      },
+      {
+        "nome": "Clínica de Especialidades · Sempre",
+        "filial": "Sempre Unimed"
+      },
+      {
+        "nome": "Consultas Multi · Sempre",
+        "filial": "Sempre Unimed"
+      },
+      {
+        "nome": "Exames · Sempre",
+        "filial": "Sempre Unimed"
+      },
+      {
+        "nome": "Farmácia · Sempre",
+        "filial": "Sempre Unimed"
+      },
+      {
+        "nome": "Massoterapeutas",
+        "filial": "Sempre Unimed"
+      },
+      {
+        "nome": "Procedimentos · Sempre",
+        "filial": "Sempre Unimed"
+      },
+      {
+        "nome": "Coordenação de Vendas",
+        "filial": "Central de Vendas"
+      },
+      {
+        "nome": "Gerência de Mercado e Vendas",
+        "filial": "Central de Vendas"
+      },
+      {
+        "nome": "Gerência de Vendas (Servi)",
+        "filial": "Central de Vendas"
+      },
+      {
+        "nome": "Administrativo · Nexa",
+        "filial": "NexaClínica"
+      },
+      {
+        "nome": "Consulta Multi",
+        "filial": "NexaClínica"
+      },
+      {
+        "nome": "Enfermagem · Nexa",
+        "filial": "NexaClínica"
+      },
+      {
+        "nome": "ADM PopVita",
+        "filial": "PopVita"
+      },
+      {
+        "nome": "Assessoria de Negócios",
+        "filial": "PopVita"
+      },
+      {
+        "nome": "Administrativo · SOU",
+        "filial": "Saúde Ocupacional (SOU)"
+      }
+    ]
+  },
+  "assinaturaTextual": {
+    "_regra": "Manual MS.024 v2 (Unimed do Brasil): programas, planos, serviços e recursos próprios são comunicados só com letras, nunca com logotipo ou submarca própria. Vale para tudo que vai ao consumidor final.",
+    "fonte": "MS.024 - Diretrizes para comunicar Programas, Planos, Serviços e Recursos Próprios, versão 2",
+    "programaPlano": {
+      "estrutura": "Linha superior com a palavra PROGRAMA ou PLANO + nome do programa ou plano",
+      "superior": {
+        "fonte": "Unimed Sans",
+        "peso": 700,
+        "caixa": "alta",
+        "entreletra": 0,
+        "altura": "a"
+      },
+      "nome": {
+        "fonte": "Unimed Slab",
+        "peso": 700,
+        "caixa": "alta e baixa",
+        "entreletra": 0,
+        "altura": "b = 2a"
+      },
+      "vertical": {
+        "maxLinhas": 3,
+        "maxCaracteresSuperior": 20,
+        "maxCaracteresNome": 15
+      },
+      "horizontal": {
+        "maxLinhas": 2,
+        "maxCaracteresSuperior": 30,
+        "maxCaracteresNome": 21
+      },
+      "espacos": "c = largura da haste do U; entre linhas da parte superior 3c, entre superior e nome 5c, recuo c/2, entre linhas do nome 4c"
+    },
+    "servicoRecurso": {
+      "estrutura": "Nome do serviço ou da categoria do recurso próprio (Unimed Sans Bold, caixa alta), opcionalmente com frase de apoio (Unimed Slab Bold, caixa alta e baixa) e texto complementar; 1 a 3 linhas, na vertical ou horizontal",
+      "exemplos": [
+        "SOU - SAÚDE OCUPACIONAL",
+        "UNIMED FONE / Orientação médica a qualquer hora",
+        "HOSPITAL UNIMED / Referência em cardiologia"
+      ]
+    },
+    "areaProtecao": "x = altura da maiúscula da primeira palavra da parte superior, em volta de todo o bloco",
+    "box": "Opcional; tamanho mínimo pela área de proteção; pode crescer na horizontal ou na vertical",
+    "cores": "Qualquer cor da paleta Unimed"
   }
 }

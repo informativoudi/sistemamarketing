@@ -43,11 +43,11 @@
       "obrigatorio": true,
       "max": 60,
       "ideal": 40,
-      "ajuda": "O mesmo título em todas as peças. Curto: no KV e no story ele precisa ser lido de longe. Nas campanhas, a última palavra forte vira destaque em Slab; para escolher outra, escreva-a entre *asteriscos*."
+      "ajuda": "O mesmo título em todas as peças. Curto: no KV e no story ele precisa ser lido de longe. Nas campanhas, a última palavra forte ganha destaque. Para escolher outra, selecione a palavra e clique em Destacar palavra."
     },
     {
       "id": "subtitulo",
-      "rotulo": "Apoio",
+      "rotulo": "Frase de apoio",
       "tipo": "texto",
       "obrigatorio": false,
       "max": 110,
@@ -140,15 +140,6 @@
       ]
     },
     {
-      "id": "keyart",
-      "nome": "Key art (campanhas)",
-      "campos": [
-        "estilo",
-        "itens"
-      ],
-      "vazio": "Automático, pela linha da campanha"
-    },
-    {
       "id": "imagens",
       "nome": "Foto",
       "campos": [
@@ -174,6 +165,16 @@
         "linkEmail"
       ],
       "vazio": "Só título e apoio"
+    },
+    {
+      "id": "keyart",
+      "nome": "Visual da campanha",
+      "campos": [
+        "estilo",
+        "itens"
+      ],
+      "vazio": "Automático, pela linha da campanha",
+      "seCampanha": true
     }
   ],
   "publicos": {

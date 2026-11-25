@@ -171,7 +171,12 @@
       var o = Object.assign({}, opcoes, { codigo: (opcoes.codigo || '') + (opcoes.codigo ? '-' + p.id.toUpperCase() : '') });
       var html;
       if (p.tipo === 'email') html = renderEmail(plano, p, d, marca, o);
-      else html = PF().render(p.plano, d, marca, o);
+      else {
+        // Ajustes finos: os de "todas as peças" + os desta peça (o específico vence).
+        var aj = dados.ajustes || {};
+        var dp = Object.assign({}, d, { _aj: Object.assign({}, aj.todas || {}, (aj.porPeca || {})[p.id] || {}) });
+        html = PF().render(p.plano, dp, marca, o);
+      }
       if (opcoes.leve) html = html.replace(/src="data:[^"]+"/g, 'src=""');
       return { id: p.id, nome: p.nome, uso: p.uso, tipo: p.tipo, largura: p.largura, altura: p.altura, exportar: p.exportar, destaque: p.destaque, html: html };
     });

@@ -252,14 +252,28 @@
     return embrulhar(html, fundo);
 
     function embrulhar(partes, fundoPeca) {
+      // Ajustes finos (posição, alinhamento, tamanho do título, deslocamento) — sempre dentro da área segura do texto.
+      var aj = dados._aj || (dados.ajustes && dados.ajustes.todas) || {};
+      var A = JSON.stringify({ v: aj.v || '', h: aj.h || '', e: Number(aj.e) || 1, dx: Number(aj.dx) || 0, dy: Number(aj.dy) || 0 });
+      var scriptAntes = '<script>(function(){var A=' + A + ';var t=document.querySelector("[data-ajuste]");if(!t)return;' +
+        'if(A.v){Array.prototype.slice.call(t.children).forEach(function(c){if(c.style.flexGrow==="1")c.remove();});t.style.justifyContent="flex-start";' +
+        'var mola=function(){var d=document.createElement("div");d.style.cssText="flex:1 1 0px;min-height:0;";return d;};' +
+        'if(A.v==="base"||A.v==="meio"){t.insertBefore(mola(),t.firstChild);t.style.paddingBottom=Math.round(t.clientHeight*0.02)+"px";}if(A.v==="meio")t.appendChild(mola());}' +
+        'if(A.h==="centro"){t.style.textAlign="center";t.style.alignItems="center";Array.prototype.forEach.call(t.querySelectorAll("div"),function(d){if(d.style.float==="left"){d.style.float="none";d.style.display="inline-block";d.style.verticalAlign="top";}if(d.style.overflow==="hidden"){d.style.textAlign="center";d.style.alignSelf="stretch";}});}' +
+        'if(A.e!==1){var h=t.querySelector("h1");if(h)h.style.fontSize=(parseFloat(h.style.fontSize)*A.e)+"px";}' +
+        '})();<\/script>';
+      var scriptDepois = '<script>(function(){var A=' + A + ';if(!A.dx&&!A.dy)return;var t=document.querySelector("[data-ajuste]"),pc=document.querySelector("[data-x=peca]");if(!t||!pc)return;' +
+        'function mover(){t.style.transform="";var r=t.getBoundingClientRect(),u=null;Array.prototype.forEach.call(t.children,function(c){var b=c.getBoundingClientRect();if(!b.width&&!b.height)return;u=u?{l:Math.min(u.l,b.left),t:Math.min(u.t,b.top),r:Math.max(u.r,b.right),b:Math.max(u.b,b.bottom)}:{l:b.left,t:b.top,r:b.right,b:b.bottom};});if(!u)return;' +
+        'var passo=Math.min(pc.offsetWidth,pc.offsetHeight)*0.025;var x=Math.max(r.left-u.l,Math.min(r.right-u.r,A.dx*passo)),y=Math.max(r.top-u.t,Math.min(r.bottom-u.b,A.dy*passo));t.style.transform="translate("+Math.round(x)+"px,"+Math.round(y)+"px)";}' +
+        'mover();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(function(){setTimeout(mover,0);});})();<\/script>';
       return '<!doctype html>\n<!-- Peça ' + esc(opcoes.codigo || '') + ' · Gerador de Peças Unimed Uberlândia -->\n<html lang="pt-BR"><head><meta charset="utf-8"><title>' + esc(puro(dados.titulo)) + '</title>' + fontes(marca, base) +
       '<style>html,body{margin:0;padding:0;background:#ffffff;}*{box-sizing:border-box;}[data-ajuste]>*{flex-shrink:0;}</style></head><body>' +
-      '<div data-x="peca" style="position:relative;overflow:hidden;width:' + W + 'px;height:' + H + 'px;background:' + fundoPeca + ';font-family:' + F + ';">' + partes.join('') + '</div>' +
+      '<div data-x="peca" style="position:relative;overflow:hidden;width:' + W + 'px;height:' + H + 'px;background:' + fundoPeca + ';font-family:' + F + ';">' + partes.join('') + '</div>' + scriptAntes +
       /* Encaixe: se o texto passar da área segura, o título (e depois o apoio) diminuem um pouco por vez. */
       '<script>(function(){var t=document.querySelector("[data-ajuste]");if(!t)return;var h=t.querySelector("h1"),p=t.querySelectorAll("p");' +
-      'function cabe(){return t.scrollHeight<=t.clientHeight+1;}' +
+      'function cabe(){var ms=Array.prototype.filter.call(t.children,function(c){return c.style.flexGrow==="1";});if(ms.length&&ms.some(function(m){return m.getBoundingClientRect().height>1;}))return true;return t.scrollHeight<=t.clientHeight+Math.max(2,Math.round(t.clientHeight*0.015));}' +
       'function ajusta(){var n=0;while(!cabe()&&n<16){h.style.fontSize=(parseFloat(h.style.fontSize)*0.94)+"px";if(n>6)for(var i=0;i<p.length;i++){p[i].style.fontSize=(parseFloat(getComputedStyle(p[i]).fontSize)*0.95)+"px";}n++;}}' +
-      'ajusta();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ajusta);})();<\/script>' +
+      'ajusta();if(document.fonts&&document.fonts.ready)document.fonts.ready.then(ajusta);})();<\/script>' + scriptDepois +
       '</body></html>';
     }
   }

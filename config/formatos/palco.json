@@ -55,11 +55,11 @@
       "obrigatorio": true,
       "max": 70,
       "ideal": 45,
-      "ajuda": "Curto e direto: numa imagem, quanto menos texto, melhor. Nas campanhas, a última palavra forte vira destaque em Slab; para escolher outra, escreva-a entre *asteriscos*."
+      "ajuda": "Curto e direto: numa imagem, quanto menos texto, melhor. Nas campanhas, a última palavra forte ganha destaque. Para escolher outra, selecione a palavra e clique em Destacar palavra."
     },
     {
       "id": "subtitulo",
-      "rotulo": "Apoio",
+      "rotulo": "Frase de apoio",
       "tipo": "texto",
       "obrigatorio": false,
       "max": 110,
@@ -124,7 +124,7 @@
     },
     {
       "id": "cabecalho",
-      "rotulo": "Nome no chapéu",
+      "rotulo": "Nome no topo da peça",
       "tipo": "texto",
       "obrigatorio": false,
       "max": 40,
@@ -142,15 +142,6 @@
         "titulo",
         "subtitulo"
       ]
-    },
-    {
-      "id": "keyart",
-      "nome": "Key art (campanhas)",
-      "campos": [
-        "estilo",
-        "itens"
-      ],
-      "vazio": "Automático, pela linha da campanha"
     },
     {
       "id": "imagens",
@@ -172,11 +163,21 @@
     },
     {
       "id": "visual",
-      "nome": "Chapéu",
+      "nome": "Nome no topo",
       "campos": [
         "cabecalho"
       ],
       "vazio": "Nome da sua área"
+    },
+    {
+      "id": "keyart",
+      "nome": "Visual da campanha",
+      "campos": [
+        "estilo",
+        "itens"
+      ],
+      "vazio": "Automático, pela linha da campanha",
+      "seCampanha": true
     }
   ],
   "publicos": {

@@ -150,6 +150,7 @@
     var rotulo = el('label', { 'for': id }, [el('span', {}, [c.rotulo + ' ', c.obrigatorio ? null : el('span', { 'class': 'opc', texto: '(opcional)' })])]);
     var entrada;
 
+    if (c.tipo === 'escolha' && c.id === 'publico' && ['Interno', 'Externo', 'Campanha interna', 'Campanha externa'].every(function (o) { return c.opcoes.indexOf(o) >= 0; }) && c.opcoes.length === 4) return campoPublico(c, caixa, id);
     if (c.tipo === 'escolha') {
       var grupo = el('div', { 'class': 'temas', role: 'radiogroup', 'aria-labelledby': id + '-r' });
       rotulo = el('span', { id: id + '-r', 'class': 'rot' }, [c.rotulo]);
@@ -181,8 +182,83 @@
       caixa.appendChild(window.UnimedFormatacao.barra(entrada, realcesResolvidos(), c.formatacao === true ? 'completo' : c.formatacao));
     }
     caixa.appendChild(entrada);
+    if (c.id === 'titulo' && (estado.formato.secoes || []).some(function (s) { return s.id === 'keyart'; })) caixa.appendChild(botaoDestacar(entrada));
     if (c.ajuda) caixa.appendChild(el('span', { 'class': 'ajuda', texto: c.ajuda }));
     return caixa;
+  }
+
+  /* "Para quem vai" em duas perguntas curtas: público (interno/externo) e se é campanha.
+     Os 4 rádios originais continuam no formulário (escondidos) e guardam o valor. */
+  function campoPublico(c, caixa, id) {
+    var ocultos = el('div', { hidden: true });
+    c.opcoes.forEach(function (op, i) { ocultos.appendChild(el('input', { type: 'radio', name: c.id, value: op, checked: i === 0, tabindex: '-1' })); });
+    var estadoP = { quem: 'Interno', campanha: false };
+    var botoes = {};
+    function valor() { return estadoP.campanha ? (estadoP.quem === 'Externo' ? 'Campanha externa' : 'Campanha interna') : estadoP.quem; }
+    function aplicar(disparar) {
+      var v = valor();
+      var r = ocultos.querySelector('input[value="' + v + '"]'); if (r) r.checked = true;
+      Object.keys(botoes).forEach(function (k) { var b = botoes[k]; var ativo = (b.grupo === 'quem' ? estadoP.quem === b.valor : estadoP.campanha === b.valor); b.n.setAttribute('aria-checked', ativo ? 'true' : 'false'); b.n.classList.toggle('ativo', ativo); });
+      dica.textContent = c.descricoes && c.descricoes[v] ? c.descricoes[v] : '';
+      if (disparar) r.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    function seg(rot, grupoNome, opcoes) {
+      var g = el('div', { 'class': 'segmento', role: 'radiogroup', 'aria-label': rot });
+      opcoes.forEach(function (o) {
+        var n = el('button', { type: 'button', role: 'radio', 'aria-checked': 'false' }, [o[0]]);
+        n.addEventListener('click', function () { estadoP[grupoNome] = o[1]; aplicar(true); });
+        botoes[grupoNome + o[0]] = { n: n, grupo: grupoNome, valor: o[1] };
+        g.appendChild(n);
+      });
+      return el('div', { 'class': 'pergunta' }, [el('span', { 'class': 'rot', texto: rot }), g]);
+    }
+    var dica = el('span', { 'class': 'ajuda' });
+    caixa.appendChild(el('div', { 'class': 'publico-duplo' }, [
+      seg('Para quem vai', 'quem', [['Interno', 'Interno'], ['Externo', 'Externo']]),
+      seg('É de uma campanha?', 'campanha', [['Não', false], ['Sim', true]])
+    ]));
+    caixa.appendChild(dica); caixa.appendChild(ocultos);
+    // Quando o rascunho/edição marcar um rádio, sincroniza os botões.
+    caixa.sincronizar = function () {
+      var m = ocultos.querySelector('input:checked'); if (!m) return;
+      estadoP.campanha = /^Campanha/.test(m.value); estadoP.quem = /xterno/.test(m.value) ? 'Externo' : 'Interno'; aplicar(false);
+    };
+    estado.sincronizarPublico = caixa.sincronizar;
+    aplicar(false);
+    return caixa;
+  }
+
+  /* Seções que só valem em campanha (ex.: Visual da campanha). */
+  function aplicarCondicoes() {
+    var m = $('formulario').querySelector('input[name="publico"]:checked');
+    var campanha = estado.formato.id === 'campanha-kit' || (m && /^Campanha/.test(m.value));
+    (estado.formato.secoes || []).forEach(function (s) {
+      if (!s.seCampanha) return;
+      var n = document.querySelector('[data-secao="' + s.id + '"]'); if (n) n.hidden = !campanha;
+    });
+  }
+
+  /* Destacar palavra: envolve a seleção do título em *asteriscos* (a palavra vira Slab nas campanhas). */
+  function botaoDestacar(entrada) {
+    var b = el('button', { type: 'button', 'class': 'btn-mini destacar', title: 'Selecione uma palavra do título e clique' }, ['Destacar palavra']);
+    b.addEventListener('mousedown', function (e) { e.preventDefault(); });
+    b.addEventListener('click', function () {
+      var v = entrada.value.replace(/\*/g, ''), i = entrada.selectionStart, f = entrada.selectionEnd;
+      var bruto = entrada.value;
+      // posições na versão sem asteriscos
+      var antes = bruto.slice(0, i).replace(/\*/g, '').length, depois = bruto.slice(0, f).replace(/\*/g, '').length;
+      // Sempre palavras inteiras: estende a seleção até os espaços mais próximos.
+      if (depois < antes) depois = antes;
+      while (antes > 0 && v.charAt(antes - 1) !== ' ') antes--;
+      while (depois < v.length && v.charAt(depois) !== ' ' && (depois === antes || v.charAt(depois - 1) !== ' ')) depois++;
+      while (depois > antes && v.charAt(depois - 1) === ' ') depois--;
+      var palavra = v.slice(antes, depois).trim();
+      if (!palavra) return;
+      entrada.value = v.slice(0, antes) + '*' + v.slice(antes, depois) + '*' + v.slice(depois);
+      entrada.dispatchEvent(new Event('input', { bubbles: true }));
+      entrada.focus();
+    });
+    return b;
   }
 
   function realcesResolvidos() {
@@ -194,9 +270,9 @@
 
   /* ---------- Imagem do computador ----------
      A biblioteca é só de exemplo: a pessoa pode usar a própria foto. A imagem é lida no navegador,
-     reduzida para no máximo 2400 px no lado maior (JPEG) e entra na lista desta sessão, junto da
+     reduzida para no máximo 4000 px no lado maior (JPEG 95%) e entra na lista desta sessão, junto da
      biblioteca. Daí em diante vale igual a qualquer imagem: enquadramento, recorte e downloads. */
-  var MAX_LADO = 2400, MAX_MB = 20, contaEnvio = 0;
+  var MAX_LADO = 4000, MAX_MB = 25, contaEnvio = 0;
   function lerImagemDoComputador(arquivo) {
     return new Promise(function (ok, falha) {
       if (!arquivo) return falha(new Error('Nenhum arquivo.'));
@@ -217,13 +293,25 @@
           ctx.drawImage(im, 0, 0, w, h);
           contaEnvio += 1;
           var nome = String(arquivo.name || 'imagem').replace(/\.[a-z0-9]+$/i, '');
-          ok({ id: 'enviada-' + Date.now().toString(36) + '-' + contaEnvio, arquivo: tela.toDataURL('image/jpeg', 0.9), descricao: nome, nome: nome, w: w, h: h, enviada: true });
+          avisarNitidez(w, h, nome);
+          ok({ id: 'enviada-' + Date.now().toString(36) + '-' + contaEnvio, arquivo: tela.toDataURL('image/jpeg', 0.95), descricao: nome, nome: nome, w: w, h: h, enviada: true });
         };
         im.src = leitor.result;
       };
       leitor.readAsDataURL(arquivo);
     });
   }
+  /* Foto pequena para o formato: avisa antes de gerar (fica borrada no tamanho final). */
+  function avisarNitidez(w, h, nome) {
+    var f = estado.formato || {};
+    var precisa = Math.max(f.largura || 0, f.altura || 0);
+    var caixa = $('mensagens');
+    if (!caixa || !precisa) return;
+    var velho = caixa.querySelector('[data-aviso="nitidez"]'); if (velho) velho.remove();
+    if (Math.max(w, h) >= precisa * 0.75) return;
+    caixa.appendChild(el('p', { 'class': 'alerta aviso', role: 'status', 'data-aviso': 'nitidez', texto: 'A foto "' + nome + '" tem ' + w + ' × ' + h + ' px e pode ficar sem nitidez nesta peça (' + f.largura + ' × ' + f.altura + ' px). Se tiver uma versão maior, prefira ela.' }));
+  }
+
   /* Guarda a imagem enviada junto da biblioteca (só nesta sessão). */
   function registrarEnviada(img) { estado.marca.imagensAprovadas.push(img); return img; }
   function botaoEnviar(rotulo, aoEnviar, multiplo) {
@@ -567,7 +655,8 @@
     estado.noticias = [];
     estado.docImagens = estado.docImagens || [];
     estado.ordem = null;
-    estado.redesenharImagens = estado.desenharOrdem = estado.marcarVazios = estado.redesenharNoticias = null;
+    estado.redesenharImagens = estado.desenharOrdem = estado.marcarVazios = estado.redesenharNoticias = estado.redesenharAjustes = null;
+    estado.ajustes = { todas: {}, porPeca: {} };
     var porId = {};
     estado.formato.campos.forEach(function (c) { porId[c.id] = c; });
     secoesDoFormato().forEach(function (s) {
@@ -586,6 +675,72 @@
         ]));
       }
     });
+    if (temAjustes()) {
+      caixa.appendChild(el('details', { 'class': 'secao', 'data-secao': 'ajustes', 'data-vazio': 'Automático' }, [
+        el('summary', {}, [el('span', { 'class': 'secao-nome', texto: 'Ajustes finos' }), el('span', { 'class': 'secao-resumo' })]),
+        campoAjustes()
+      ]));
+      // Ajustes finos ficam antes do "Visual da campanha".
+      var kv = caixa.querySelector('[data-secao="keyart"]'), ajs = caixa.querySelector('[data-secao="ajustes"]');
+      if (kv && ajs) caixa.insertBefore(ajs, kv);
+    }
+    setTimeout(aplicarCondicoes, 0);
+  }
+
+  /* ---------- Ajustes finos: posição, alinhamento e tamanho do título, dentro das regras ---------- */
+  function temAjustes() { var m = estado.formato.modelo; return m === 'peca-fixa' || m === 'campanha-kit'; }
+  function pecasAjustaveis() {
+    var k = estado.formato.kit; if (!k) return [];
+    var vistos = {}, lista = [];
+    ['externa', 'interna'].forEach(function (l) { (k[l] || []).forEach(function (p) { if (p.tipo === 'email' || vistos[p.id]) return; vistos[p.id] = 1; lista.push(p); }); });
+    return lista;
+  }
+  function campoAjustes() {
+    estado.ajustes = estado.ajustes || { todas: {}, porPeca: {} };
+    var alvo = 'todas';
+    var box = el('div', { 'class': 'campos ajustes' });
+    var atual = function () { return alvo === 'todas' ? estado.ajustes.todas : (estado.ajustes.porPeca[alvo] = estado.ajustes.porPeca[alvo] || {}); };
+    var refs = [];
+    function mudou() { refs.forEach(function (f) { f(); }); resumir(); agendarPrevia(); }
+    function seg(rot, chave, opcoes) {
+      var g = el('div', { 'class': 'segmento', role: 'radiogroup', 'aria-label': rot });
+      opcoes.forEach(function (o) {
+        var b = el('button', { type: 'button', role: 'radio' }, [o[0]]);
+        b.addEventListener('click', function () { var a = atual(); if (o[1] === '' || o[1] === 1) delete a[chave]; else a[chave] = o[1]; mudou(); });
+        g.appendChild(b);
+        refs.push(function () { var v = atual()[chave]; var on = (v == null ? (o[1] === '' || o[1] === 1) : v === o[1]); b.classList.toggle('ativo', on); b.setAttribute('aria-checked', on ? 'true' : 'false'); });
+      });
+      return el('div', { 'class': 'campo largo' }, [el('span', { 'class': 'rot', texto: rot }), g]);
+    }
+    var pecas = pecasAjustaveis();
+    if (pecas.length) {
+      var sel = el('select', { id: 'aj-alvo' }, [el('option', { value: 'todas', texto: 'Todas as peças do kit' })].concat(pecas.map(function (p) { return el('option', { value: p.id, texto: 'Só ' + p.nome + (p.altura ? ' (' + p.largura + ' × ' + p.altura + ')' : '') }); })));
+      sel.addEventListener('change', function () { alvo = sel.value; refs.forEach(function (f) { f(); }); });
+      box.appendChild(el('div', { 'class': 'campo largo' }, [el('label', { 'for': 'aj-alvo', texto: 'Aplicar em' }), sel, el('span', { 'class': 'ajuda', texto: 'Escolha uma peça para ajustar só ela. O que for ajustado numa peça vale por cima do ajuste de todas.' })]));
+    }
+    box.appendChild(seg('Posição do texto', 'v', [['Automática', ''], ['Topo', 'topo'], ['Meio', 'meio'], ['Base', 'base']]));
+    box.appendChild(seg('Alinhamento', 'h', [['Esquerda', ''], ['Centro', 'centro']]));
+    box.appendChild(seg('Tamanho do título', 'e', [['Menor', 0.88], ['Automático', 1], ['Maior', 1.12]]));
+    var setas = el('div', { 'class': 'setas' });
+    [['↑', 0, -1, 'Subir'], ['↓', 0, 1, 'Descer'], ['←', -1, 0, 'Para a esquerda'], ['→', 1, 0, 'Para a direita']].forEach(function (s) {
+      var b = el('button', { type: 'button', 'class': 'btn-mini', 'aria-label': s[3], title: s[3] }, [s[0]]);
+      b.addEventListener('click', function () { var a = atual(); a.dx = Math.max(-12, Math.min(12, (a.dx || 0) + s[1])); a.dy = Math.max(-12, Math.min(12, (a.dy || 0) + s[2])); if (!a.dx) delete a.dx; if (!a.dy) delete a.dy; mudou(); });
+      setas.appendChild(b);
+    });
+    var pos = el('span', { 'class': 'ajuda' });
+    refs.push(function () { var a = atual(); pos.textContent = (a.dx || a.dy) ? 'Deslocado ' + Math.abs(a.dy || 0) + (a.dy < 0 ? ' para cima' : a.dy > 0 ? ' para baixo' : '') + (a.dx ? ', ' + Math.abs(a.dx) + (a.dx < 0 ? ' à esquerda' : ' à direita') : '') + '. O texto nunca sai da área segura.' : 'O texto anda dentro da área segura da peça, sem encostar na logo.'; });
+    box.appendChild(el('div', { 'class': 'campo largo' }, [el('span', { 'class': 'rot', texto: 'Mover o texto' }), setas, pos]));
+    var zerar = el('button', { type: 'button', 'class': 'btn-mini' }, ['Voltar ao automático']);
+    zerar.addEventListener('click', function () { if (alvo === 'todas') estado.ajustes.todas = {}; else delete estado.ajustes.porPeca[alvo]; mudou(); });
+    box.appendChild(el('div', { 'class': 'campo largo' }, [zerar]));
+    function resumir() {
+      var r = document.querySelector('[data-secao="ajustes"] .secao-resumo'); if (!r) return;
+      var n = Object.keys(estado.ajustes.todas).length + Object.keys(estado.ajustes.porPeca).filter(function (k) { return Object.keys(estado.ajustes.porPeca[k]).length; }).length;
+      r.textContent = n ? 'Ajustado' : 'Automático'; r.classList.toggle('cheio', !!n);
+    }
+    estado.redesenharAjustes = function () { refs.forEach(function (f) { f(); }); resumir(); };
+    setTimeout(estado.redesenharAjustes, 0);
+    return box;
   }
 
   function lerDados() {
@@ -606,6 +761,7 @@
     });
     dados.area = $('f-area') ? $('f-area').value : '';
     if (estado.ordem) dados.ordem = estado.ordem.slice();
+    if (temAjustes() && estado.ajustes) dados.ajustes = JSON.parse(JSON.stringify(estado.ajustes));
     dados._imagensAprovadas = estado.marca.imagensAprovadas;
     dados._linguagem = estado.marca.linguagem;
     return dados;
@@ -614,6 +770,7 @@
   /* Coloca dados salvos de volta no formulário (rascunho ou edição). */
   function preencher(dados) {
     var f = $('formulario');
+    if (dados.ajustes && temAjustes()) { estado.ajustes = { todas: Object.assign({}, dados.ajustes.todas || {}), porPeca: JSON.parse(JSON.stringify(dados.ajustes.porPeca || {})) }; if (estado.redesenharAjustes) estado.redesenharAjustes(); }
     estado.formato.campos.forEach(function (c) {
       var v = dados[c.id];
       if (v == null) return;
@@ -622,7 +779,7 @@
       if (c.tipo === 'imagens-documento') return; // imagens do computador não ficam no rascunho
       if (c.tipo === 'noticias') { estado.noticias = (v || []).map(function (n) { var x = Object.assign({}, n); if (x.imagem && !existe(x.imagem)) x.imagem = ''; return x; }); if (!estado.noticias.length) estado.noticias.push({ titulo: '', texto: '', linkTexto: '', link: '', imagem: '' }); if (estado.redesenharNoticias) estado.redesenharNoticias(); return; }
       if (c.tipo === 'arquivo') return;
-      if (c.tipo === 'escolha') { var r = f.querySelector('input[name="' + c.id + '"][value="' + v + '"]'); if (r) r.checked = true; return; }
+      if (c.tipo === 'escolha') { var r = f.querySelector('input[name="' + c.id + '"][value="' + v + '"]'); if (r) r.checked = true; if (c.id === 'publico' && estado.sincronizarPublico) { estado.sincronizarPublico(); aplicarCondicoes(); } return; }
       var e = f.elements[c.id];
       if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: false })); }
     });
@@ -659,6 +816,7 @@
   /* Atualiza resumos, pendências e blocos vazios (roda a cada digitação). */
   function atualizarPainel(dados) {
     Array.prototype.forEach.call(document.querySelectorAll('details.secao'), function (sec) {
+      if (sec.getAttribute('data-secao') === 'ajustes') return; // resumo próprio (campoAjustes)
       var p = resumoSecao(sec, dados);
       var r = sec.querySelector('.secao-resumo');
       r.textContent = p.length ? p.join(' · ') : sec.getAttribute('data-vazio');
@@ -667,7 +825,7 @@
     if (estado.marcarVazios) estado.marcarVazios(dados);
     var faltam = [];
     if (!M.limpar($('f-solicitante').value)) faltam.push('seu nome');
-    if (!$('f-area').value) faltam.push('sua área');
+    if (!$('f-area').value) faltam.push('seu setor');
     estado.formato.campos.forEach(function (c) {
       if (!c.obrigatorio || c.tipo === 'escolha') return;
       var v = dados[c.id];
@@ -746,11 +904,17 @@
     var dados = lerDados();
     if (!codigo) { atualizarPainel(dados); salvarRascunho(dados); }
     var pede = estado.formato.previaPede || ['titulo', 'texto'];
-    if (pede.some(function (k) { return !M.limpar(dados[k]); })) {
+    var exemplo = !codigo && pede.some(function (k) { return !M.limpar(dados[k]); });
+    if (exemplo) {
+      // Prévia de exemplo: mostra o formato na hora, com textos de amostra no que ainda está vazio.
+      var amostra = { titulo: 'Seu título aparece aqui', texto: 'O texto da peça aparece aqui. Escreva no formulário e a prévia muda na hora.', subtitulo: '', cabecalho: '' };
+      pede.forEach(function (k) { if (!M.limpar(dados[k])) dados[k] = amostra[k] || 'Exemplo'; });
+    } else if (pede.some(function (k) { return !M.limpar(dados[k]); })) {
       $('palco').hidden = true; $('vazio').hidden = false; $('decisao').textContent = ''; $('porque').textContent = ''; $('porque-caixa').hidden = true;
       $('imagens-aviso') && ($('imagens-aviso').hidden = true);
       return null;
     }
+    $('moldura').classList.toggle('exemplo', !!exemplo);
     var plano = decidir(dados);
     try { await recortar(plano); } catch (e) { /* segue com a imagem original */ }
     if (minha !== rodada && !codigo) return null;
@@ -848,7 +1012,7 @@
     var nome = M.limpar($('f-solicitante').value);
     var area = $('f-area').value;
     if (!nome) extras.push({ campo: 'solicitante', msg: 'Informe seu nome.' });
-    if (!area) extras.push({ campo: 'area', msg: 'Selecione sua área.' });
+    if (!area) extras.push({ campo: 'area', msg: 'Selecione seu setor.' });
     mostrarMensagens(res, extras);
     if (!res.ok || extras.length) return;
 
@@ -928,6 +1092,18 @@
     grupo.appendChild(lista);
     $('exportar-titulo').textContent = 'Baixar as peças da campanha';
     $('exportar-ajuda').textContent = 'O .zip traz todas as peças em PNG e o e-mail em HTML. As imagens saem no tamanho exato de cada canal. No HTML do e-mail baixado, a foto fica dentro do arquivo: para disparo, suba a foto na ferramenta de envio.';
+    montarAltaDef(true);
+  }
+
+  /* Alta definição: dobra os pixels das peças de tamanho fixo (telas retina, telão, reaproveitamento). */
+  function fatorAltaDef() { var c = $('alta-def'); return c && c.checked && !c.closest('[hidden]') ? 2 : 1; }
+  function montarAltaDef(mostrar) {
+    var box = $('alta-def-caixa');
+    if (!box) {
+      box = el('label', { 'class': 'alta-def', id: 'alta-def-caixa' }, [el('input', { type: 'checkbox', id: 'alta-def' }), el('span', {}, [el('b', { texto: 'Alta definição (2x)' }), ' · o dobro dos pixels, para telas retina, telão e reaproveitamento'])]);
+      $('exportar-grupo').parentNode.insertBefore(box, $('exportar-grupo'));
+    }
+    box.hidden = !mostrar;
   }
 
   function montarDownloads() {
@@ -942,10 +1118,11 @@
       grupo.appendChild(b);
     });
     $('exportar-titulo').textContent = html ? 'Baixar para ajustes' : 'Baixar a peça';
+    montarAltaDef(!!estado.formato.largura && (tipos.indexOf('png') >= 0 || tipos.indexOf('jpg') >= 0));
     var ajuda = [];
     if (tipos.indexOf('pptx') >= 0) ajuda.push('O PowerPoint vem com os textos editáveis.');
     if (tipos.indexOf('docx') >= 0) ajuda.push('O Word vem no padrão, com a tabela de cabeçalho em todas as páginas.');
-    if (tipos.indexOf('png') >= 0 || tipos.indexOf('jpg') >= 0) ajuda.push(estado.formato.largura ? 'A imagem sai em ' + estado.formato.largura + ' × ' + estado.formato.altura + ' px.' : 'A imagem e o PDF saem iguais à prévia.');
+    if (tipos.indexOf('png') >= 0 || tipos.indexOf('jpg') >= 0) ajuda.push(estado.formato.largura ? 'A imagem sai em ' + estado.formato.largura + ' × ' + estado.formato.altura + ' px (ou o dobro, em alta definição). PNG sem perda; JPG com qualidade máxima.' : 'A imagem e o PDF saem iguais à prévia.');
     if (estado.formato.dpi) ajuda.push('Resolução de ' + estado.formato.dpi + ' dpi.');
     $('exportar-ajuda').textContent = ajuda.join(' ');
   }
@@ -1022,7 +1199,7 @@
       var info = {
         codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao,
         largura: estado.formato.quadro || 680,
-        escala: estado.formato.escalaImagem || 2,
+        escala: (estado.formato.escalaImagem || 2) * fatorAltaDef(),
         dpi: estado.formato.dpi || null
       };
       if (tipo === 'docx') {
@@ -1030,7 +1207,7 @@
         var blob = await modelo().docx(estado.ultimoPlano, estado.ultimoDados, estado.marca, { baseUrl: baseLocal(), codigo: estado.ultimoCodigo });
         await window.UnimedExportar.arquivo(blob, estado.ultimoCodigo + '.docx');
       } else {
-        await window.UnimedExportar[tipo](estado.ultimoHtmlLocal || estado.ultimoHtml, estado.ultimoCodigo, info);
+        await window.UnimedExportar[tipo](estado.ultimoHtmlLocal || estado.ultimoHtml, estado.ultimoCodigo + (fatorAltaDef() > 1 && tipo !== 'pdf' ? '@2x' : ''), info);
       }
       aviso.textContent = tipo === 'pptx' ? 'PowerPoint baixado. Os textos podem ser editados; o código da peça continua no rodapé.' : feito[tipo];
     } catch (e) {
@@ -1045,8 +1222,8 @@
     var aviso = $('copiado');
     var E = window.UnimedExportar;
     var pecas = modelo().pecasHtml(estado.ultimoPlano, estado.ultimoDados, estado.marca, { codigo: estado.ultimoCodigo, baseUrl: baseLocal() });
-    var nomeArq = function (p, ext) { return estado.ultimoCodigo + '-' + p.id + (p.altura ? '-' + p.largura + 'x' + p.altura : '') + '.' + ext; };
-    var info = function (p, extra) { return Object.assign({ codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao, largura: p.tipo === 'email' ? 680 : p.largura, escala: p.tipo === 'email' ? 2 : 1 }, extra || {}); };
+    var nomeArq = function (p, ext) { return estado.ultimoCodigo + '-' + p.id + (p.altura ? '-' + p.largura + 'x' + p.altura : '') + (p.altura && fatorAltaDef() > 1 ? '@2x' : '') + '.' + ext; };
+    var info = function (p, extra) { return Object.assign({ codigo: estado.ultimoCodigo, fonte: estado.marca.tipografia.familiaExportacao, largura: p.tipo === 'email' ? 680 : p.largura, escala: p.tipo === 'email' ? 2 : fatorAltaDef() }, extra || {}); };
     botoes.forEach(function (b) { b.disabled = true; });
     try {
       if (tipo === 'kit') {
@@ -1120,9 +1297,21 @@
       ]), $('busca').firstChild);
     }
     var area = $('f-area');
-    estado.marca.areas.forEach(function (a) { area.appendChild(el('option', { value: a, texto: a })); });
+    // Setores reais, agrupados por filial (marca.json → setores). Sem a lista, usa as áreas antigas.
+    var lista = (estado.marca.setores && estado.marca.setores.lista) || [];
+    var validos = [];
+    if (lista.length) {
+      var grupos = {};
+      lista.forEach(function (st) {
+        if (!grupos[st.filial]) { grupos[st.filial] = el('optgroup', { label: st.filial }); area.appendChild(grupos[st.filial]); }
+        grupos[st.filial].appendChild(el('option', { value: st.nome, texto: st.nome }));
+        validos.push(st.nome);
+      });
+    } else {
+      estado.marca.areas.forEach(function (a) { area.appendChild(el('option', { value: a, texto: a })); validos.push(a); });
+    }
     var quem = ler(CHAVE_QUEM);
-    if (quem) { $('f-solicitante').value = quem.nome || ''; if (estado.marca.areas.indexOf(quem.area) >= 0) area.value = quem.area; }
+    if (quem) { $('f-solicitante').value = quem.nome || ''; if (validos.indexOf(quem.area) >= 0) area.value = quem.area; }
     mostrarQuem(true);
     $('quem-trocar').addEventListener('click', function () { mostrarQuem(false); $('f-solicitante').focus(); });
     $('f-solicitante').addEventListener('change', guardarQuem);
@@ -1159,7 +1348,7 @@
     $('formulario').addEventListener('input', agendarPrevia);
     $('formulario').addEventListener('change', agendarPrevia);
     // Trocar o público pode mudar o quadro da foto (campanha): redesenha o enquadramento.
-    $('formulario').addEventListener('change', function (e) { if (e.target && e.target.name === 'publico' && estado.redesenharImagens) estado.redesenharImagens(); });
+    $('formulario').addEventListener('change', function (e) { if (e.target && e.target.name === 'publico') { aplicarCondicoes(); if (estado.redesenharImagens) estado.redesenharImagens(); } });
     $('formulario').addEventListener('submit', gerar);
     $('trocar').addEventListener('click', function () { $('trabalho').hidden = true; $('busca').classList.remove('compacta'); busca.value = ''; busca.focus(); });
     $('baixar').addEventListener('click', baixar);
