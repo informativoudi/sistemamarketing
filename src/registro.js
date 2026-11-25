@@ -38,16 +38,17 @@
     }
     if (central(cfg)) {
       var r = await fetch(api(cfg) + '/pedidos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(pedido) });
-      if (!r.ok) throw new Error('O registro recusou o pedido (' + r.status + ').');
+      // 409 = já estava registrado (ex.: nova tentativa de envio): está tudo certo.
+      if (!r.ok && r.status !== 409) throw new Error('O registro recusou o pedido (' + r.status + ').');
     }
     return pedido;
   }
 
-  /* Ler todos os pedidos exige a senha do Marketing. */
-  async function listar(cfg, senha) {
+  /* Ler todos os pedidos exige o login do Marketing (passe da sessão). */
+  async function listar(cfg, token) {
     if (central(cfg)) {
-      var r = await fetch(api(cfg) + '/pedidos', { headers: { Authorization: 'Bearer ' + senha } });
-      if (r.status === 401) throw new Error('Senha do painel incorreta.');
+      var r = await fetch(api(cfg) + '/pedidos', { headers: { Authorization: 'Bearer ' + token } });
+      if (r.status === 401) throw new Error('Sua sessão expirou. Clique em Sair e entre de novo.');
       if (!r.ok) throw new Error('Não foi possível ler os pedidos (' + r.status + ').');
       return r.json();
     }
@@ -57,14 +58,11 @@
   /* Envia uma foto recortada e devolve o endereço público dela (para o e-mail). */
   async function enviarImagem(cfg, caminho, blob) {
     var r = await fetch(api(cfg) + '/img/' + caminho, { method: 'PUT', headers: { 'Content-Type': blob.type || 'image/jpeg' }, body: blob });
-    if (!r.ok) throw new Error('O envio da imagem foi recusado (' + r.status + ').');
-    return (await r.json()).url;
+    var d = {}; try { d = await r.json(); } catch (e) { d = {}; }
+    if (r.status === 409 && d.url) return d.url; // já estava enviada
+    if (!r.ok) throw new Error(d.erro || ('O envio da imagem foi recusado (' + r.status + ').'));
+    return d.url;
   }
 
-  async function conferirSenha(cfg, senha) {
-    var r = await fetch(api(cfg) + '/entrar', { method: 'POST', headers: { Authorization: 'Bearer ' + senha } });
-    return r.ok;
-  }
-
-  raiz.UnimedRegistro = { salvar: salvar, listar: listar, hash: hash, enviarImagem: enviarImagem, central: central, conferirSenha: conferirSenha };
+  raiz.UnimedRegistro = { salvar: salvar, listar: listar, hash: hash, enviarImagem: enviarImagem, central: central };
 })(window);

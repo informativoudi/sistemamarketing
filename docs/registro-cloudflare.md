@@ -38,3 +38,12 @@ Repita os passos numa conta Cloudflare da Unimed. Antes, crie o banco D1 `unimed
 CREATE TABLE IF NOT EXISTS pedidos (codigo TEXT PRIMARY KEY, criado_em TEXT NOT NULL, nome TEXT, area TEXT, formato TEXT, titulo TEXT, dados TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS pedidos_data ON pedidos (criado_em DESC);
 ```
+
+## Segurança (como a API se protege)
+
+- **Login:** usuário + senha → a API devolve um passe que vale 12 horas. A senha nunca fica salva no navegador; no banco fica só o hash (PBKDF2, 100 mil rodadas, sal único por pessoa). **Sair** derruba o passe na hora; trocar a senha de alguém derruba os passes dessa pessoa.
+- **Força bruta:** 5 senhas erradas seguidas bloqueiam o usuário (e o IP) por 15 minutos.
+- **Registro imutável:** pedidos e fotos são gravados uma vez só. Ninguém consegue sobrescrever uma peça ou trocar a foto de um e-mail já disparado.
+- **Spam e cota:** até 60 pedidos e 150 fotos por hora por IP. As fotos são conferidas pela assinatura do arquivo (JPEG, PNG ou WebP de verdade).
+- **Peça aberta no painel:** roda numa área isolada (`iframe sandbox`), sem executar nenhum código que venha dentro do HTML.
+- **Privacidade:** o IP não é guardado; os limites usam um código (hash) que expira em até 2 horas.

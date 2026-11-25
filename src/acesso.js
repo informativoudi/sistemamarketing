@@ -24,16 +24,30 @@
   }
   function api() { var c = (sistema && sistema.registro) || {}; return c.modo === 'cloudflare' ? String(c.api || '').replace(/\/$/, '') : ''; }
 
-  /* token = "usuario:senha". */
-  async function conferir(token) {
-    var r = await fetch(api() + '/entrar', { method: 'POST', headers: { Authorization: 'Bearer ' + token } });
-    if (r.status === 401) throw new Error('Usuário ou senha incorretos.');
-    if (!r.ok) throw new Error('Não consegui conferir o acesso (' + r.status + ').');
+  /* Entra com usuário e senha e recebe um passe (sessão) de 12 h.
+     A senha não fica guardada: só o passe, que expira e pode ser derrubado. */
+  async function entrar(usuario, senha) {
+    var r = await fetch(api() + '/entrar', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ usuario: usuario, senha: senha }) });
     var d = {}; try { d = await r.json(); } catch (e) { d = {}; }
-    return { senha: token, usuario: d.usuario || '', nome: d.nome || d.usuario || '', admin: !!d.admin, conferido: Date.now() };
+    if (!r.ok) throw new Error(d.erro || ('Não consegui conferir o acesso (' + r.status + ').'));
+    return { token: d.token, expira: d.expira, usuario: d.usuario || '', nome: d.nome || d.usuario || '', admin: !!d.admin };
+  }
+  async function sessaoValida() {
+    var r = await fetch(api() + '/sessao', { headers: { Authorization: 'Bearer ' + memoria.token } });
+    if (r.status === 401) return false;
+    if (!r.ok) throw new Error('Sem conexão com o registro (' + r.status + ').');
+    var d = await r.json();
+    gravar(Object.assign({}, memoria, { nome: d.nome, admin: !!d.admin }));
+    return true;
   }
 
-  function sair() { gravar(null); location.href = 'index.html'; }
+  function sair() {
+    var t = memoria && memoria.token;
+    gravar(null);
+    var ir = function () { location.href = 'index.html'; };
+    if (t && api()) fetch(api() + '/sessao', { method: 'DELETE', headers: { Authorization: 'Bearer ' + t } }).then(ir, ir);
+    else ir();
+  }
 
   function el(tag, attrs, filhos) {
     var n = document.createElement(tag);
@@ -91,7 +105,7 @@
         ver.setAttribute('aria-pressed', String(mostrar));
         campo.focus();
       });
-      var dica = el('p', { id: 'senha-dica', 'class': 'portao-dica', texto: 'A senha fica salva só neste navegador.' });
+      var dica = el('p', { id: 'senha-dica', 'class': 'portao-dica', texto: 'O acesso vale por 12 horas neste navegador.' });
       var status = el('p', { 'class': 'portao-status', role: 'status', 'aria-live': 'polite' });
       var botao = el('button', { 'class': 'btn primario portao-entrar', type: 'submit' }, ['Entrar', el('span', { 'aria-hidden': 'true', texto: '→' })]);
       var form = el('form', { 'class': 'portao-form', novalidate: true }, [
@@ -103,7 +117,7 @@
       ]);
       campo.addEventListener('keyup', function (e) {
         var caps = e.getModifierState && e.getModifierState('CapsLock');
-        dica.textContent = caps ? 'Atenção: o Caps Lock está ligado.' : 'A senha fica salva só neste navegador.';
+        dica.textContent = caps ? 'Atenção: o Caps Lock está ligado.' : 'O acesso vale por 12 horas neste navegador.';
         dica.classList.toggle('caps', !!caps);
       });
       [campo, usuario].forEach(function (c) { c.addEventListener('input', function () { form.classList.remove('com-erro'); status.textContent = ''; }); });
@@ -114,7 +128,7 @@
         if (!campo.value) { form.classList.add('com-erro'); status.textContent = 'Digite a senha.'; campo.focus(); return; }
         botao.disabled = true; botao.classList.add('carregando'); status.textContent = 'Conferindo…';
         try {
-          gravar(await conferir(u + ':' + campo.value));
+          gravar(await entrar(u, campo.value));
           try { localStorage.setItem('unimed-usuario-painel', u); } catch (e2) { /* sem memória */ }
           status.textContent = ''; aoEntrar();
         }
@@ -161,17 +175,21 @@
       document.getElementById('portao').hidden = true;
       montarMenu(opcoes.pagina);
       conteudo.hidden = false;
-      return opcoes.aoLiberar({ token: memoria && memoria.senha, admin: !!(local || (memoria && memoria.admin)), usuario: memoria && memoria.usuario, local: !!local, sistema: sistema });
+      return opcoes.aoLiberar({ token: memoria && memoria.token, admin: !!(local || (memoria && memoria.admin)), usuario: memoria && memoria.usuario, local: !!local, sistema: sistema });
     };
     if (!api()) {
       if (ehLocal()) return liberar(true);
       return telaPortao({ aviso: true, texto: 'O registro ainda não foi ligado (veja docs/registro-cloudflare.md).' }, false);
     }
-    // Sessões antigas, abertas só com a senha geral, deixam de valer.
-    if (memoria && memoria.senha && memoria.senha.indexOf(':') < 1) gravar(null);
-    if (memoria && memoria.senha) {
-      if (Date.now() - (memoria.conferido || 0) < 12 * 3600 * 1000) return liberar(false);
-      try { gravar(await conferir(memoria.senha)); return liberar(false); } catch (e) { gravar(null); }
+    // Sessões do formato antigo (que guardavam a senha) deixam de valer.
+    if (memoria && (memoria.senha || !memoria.token)) gravar(null);
+    if (memoria && memoria.token) {
+      if ((memoria.expira || 0) > Date.now()) {
+        try { if (await sessaoValida()) return liberar(false); }
+        catch (e) { return telaPortao({ texto: e.message }, true, function () { liberar(false); }); }
+      }
+      gravar(null);
+      return telaPortao({ aviso: true, texto: 'Sua sessão expirou. Entre de novo.' }, true, function () { liberar(false); });
     }
     return telaPortao(null, true, function () { liberar(false); });
   }
