@@ -17,7 +17,7 @@ O banco D1 `unimed-pecas` (com a tabela `pedidos`) e o KV `unimed-imagens` já e
 3. Em **Configurações → Vinculações**, adicione:
    - **Banco de dados D1:** nome da variável `DB`, banco `unimed-pecas`.
    - **Namespace KV:** nome da variável `IMAGENS`, namespace `unimed-imagens`.
-4. Em **Configurações → Variáveis e segredos**, adicione um **Segredo** chamado `USUARIOS` com os logins do Marketing em JSON, por exemplo `{"joander":"senha1","maria":"senha2"}`. (Opcional: um segredo `SENHA` com uma senha geral, que vale sem usuário.)
+4. Em **Configurações → Variáveis e segredos**, adicione um **Segredo** chamado `SENHA`, com a senha geral do Marketing (administradora). Os logins de cada pessoa são criados depois, na página **Acessos** do site.
 5. Copie o endereço do Worker (`https://unimed-pecas.SUA-CONTA.workers.dev`) e coloque em `config/sistema.json`:
 
 ```json
@@ -28,7 +28,7 @@ O banco D1 `unimed-pecas` (com a tabela `pedidos`) e o KV `unimed-imagens` já e
 
 - **Registrar e enviar fotos** é aberto: qualquer pessoa que gera uma peça precisa conseguir. O Worker aceita só pedidos com código válido e imagens de até 5 MB.
 - **Ler os pedidos** exige a senha do Marketing.
-- **Trocar uma senha ou incluir alguém:** edite o segredo `USUARIOS` no Worker. Quem estiver logado com a senha antiga precisa entrar de novo.
+- **Incluir alguém ou trocar uma senha:** página **Acessos** do site. **Trocar a senha geral:** mude o segredo `SENHA` no Worker.
 
 ## Levar para uma conta só da Unimed
 

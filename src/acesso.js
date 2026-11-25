@@ -30,7 +30,7 @@
     if (r.status === 401) throw new Error('Usuário ou senha incorretos.');
     if (!r.ok) throw new Error('Não consegui conferir o acesso (' + r.status + ').');
     var d = {}; try { d = await r.json(); } catch (e) { d = {}; }
-    return { senha: token, usuario: d.usuario || '', conferido: Date.now() };
+    return { senha: token, usuario: d.usuario || '', nome: d.nome || d.usuario || '', admin: !!d.admin, conferido: Date.now() };
   }
 
   function sair() { gravar(null); location.href = 'index.html'; }
@@ -140,12 +140,14 @@
     if (!nav) return;
     nav.textContent = '';
     nav.appendChild(el('a', { href: 'index.html', texto: 'Criar peça' }));
-    [['painel.html', 'Painel'], ['nucleo.html', 'Núcleo da Marca'], ['radar.html', 'Radar']].forEach(function (i) {
+    var itens = [['painel.html', 'Painel'], ['nucleo.html', 'Núcleo da Marca'], ['radar.html', 'Radar']];
+    if (memoria && memoria.admin) itens.push(['acessos.html', 'Acessos']);
+    itens.forEach(function (i) {
       var a = el('a', { href: i[0], texto: i[1] });
       if (i[0] === atual) a.setAttribute('aria-current', 'page');
       nav.appendChild(a);
     });
-    if (memoria && memoria.usuario && memoria.usuario !== 'marketing') nav.appendChild(el('span', { 'class': 'quem', texto: memoria.usuario }));
+    if (memoria && memoria.nome) nav.appendChild(el('span', { 'class': 'quem', texto: memoria.nome }));
     nav.appendChild(el('button', { type: 'button', 'class': 'link sair', onclick: sair, texto: 'Sair' }));
   }
 
@@ -158,7 +160,7 @@
       document.getElementById('portao').hidden = true;
       montarMenu(opcoes.pagina);
       conteudo.hidden = false;
-      return opcoes.aoLiberar({ token: memoria && memoria.senha, local: !!local, sistema: sistema });
+      return opcoes.aoLiberar({ token: memoria && memoria.senha, admin: !!(local || (memoria && memoria.admin)), usuario: memoria && memoria.usuario, local: !!local, sistema: sistema });
     };
     if (!api()) {
       if (ehLocal()) return liberar(true);
@@ -173,5 +175,5 @@
 
   function sistemaAtual() { return sistema; }
 
-  raiz.UnimedAcesso = { proteger: proteger, carregarSistema: carregarSistema, sair: sair, el: el, sistema: sistemaAtual, ehLocal: ehLocal };
+  raiz.UnimedAcesso = { api: api, proteger: proteger, carregarSistema: carregarSistema, sair: sair, el: el, sistema: sistemaAtual, ehLocal: ehLocal };
 })(window);

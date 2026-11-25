@@ -1,7 +1,58 @@
 <!doctype html>
-<html lang="pt-BR"><head><meta charset="utf-8"><meta name="robots" content="noindex, nofollow"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Acessos · Unimed Uberlândia</title><link rel="stylesheet" href="src/ui.css"></head>
-<body><main class="casca"><section class="cartao portao-cartao" style="margin:64px auto;max-width:640px">
-<h1 class="portao-titulo">ACESSOS <span>da área restrita</span></h1>
-<p class="sub">A área restrita usa uma senha única do Marketing. Para trocar a senha, mude a variável SENHA do Worker "unimed-pecas" no Cloudflare.</p>
-<p class="acoes"><a class="btn primario" href="painel.html">Ir para o painel</a></p>
-</section></main></body></html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="robots" content="noindex, nofollow">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Acessos · Unimed Uberlândia</title>
+<link rel="stylesheet" href="src/ui.css">
+</head>
+<body>
+<header class="topo">
+  <img src="assets/logos/unimed-box-verde.svg" alt="Unimed Uberlândia">
+  <nav aria-label="Área restrita" id="menu-restrito"></nav>
+</header>
+
+<main class="casca">
+  <section id="portao" class="portao" hidden></section>
+  <div id="conteudo-restrito" hidden>
+    <section class="busca compacta" style="padding-top:8px">
+      <h1>Acessos <span>do Marketing</span></h1>
+    </section>
+    <p id="sem-permissao" class="alerta aviso" hidden>Só administradores mexem nos acessos. Fale com quem cuida do sistema.</p>
+
+    <div class="acessos-grade" id="acessos-area">
+      <div class="cartao">
+        <h2 id="form-titulo">Novo acesso</h2>
+        <p class="sub">A senha fica protegida no banco do Cloudflare. Nada disso vai para o GitHub.</p>
+        <form id="form-acesso" class="campos" novalidate style="grid-template-columns:minmax(0,1fr);margin-top:12px">
+          <div class="campo"><label for="a-nome">Nome</label><input id="a-nome" type="text" placeholder="Ex.: Maria Souza" autocomplete="off"></div>
+          <div class="campo"><label for="a-usuario">Usuário</label><input id="a-usuario" type="text" placeholder="Ex.: maria" autocomplete="off" autocapitalize="none" spellcheck="false"><span class="ajuda">Sem espaço e sem acento. É o que a pessoa digita para entrar.</span></div>
+          <div class="campo"><label for="a-senha">Senha</label><input id="a-senha" type="text" placeholder="Pelo menos 8 caracteres" autocomplete="new-password" spellcheck="false"><span class="ajuda" id="a-senha-ajuda">Passe a senha para a pessoa por um canal seguro.</span></div>
+          <label class="campo-check"><input id="a-admin" type="checkbox"> <span><b>Administrador</b><br><span class="ajuda">Pode incluir e remover acessos.</span></span></label>
+          <div class="acoes" style="margin-top:4px">
+            <button class="btn primario" type="submit" id="a-salvar">Criar acesso</button>
+            <button class="btn secundario" type="button" id="a-cancelar" hidden>Cancelar</button>
+          </div>
+          <p id="a-status" role="status" class="ajuda" style="font-weight:700"></p>
+        </form>
+      </div>
+
+      <div class="cartao">
+        <h2>Quem tem acesso</h2>
+        <p class="sub">A senha geral do Marketing continua valendo e é administradora. Para trocá-la, mude o segredo SENHA no Cloudflare.</p>
+        <div class="tabela-caixa">
+          <table class="lista">
+            <thead><tr><th>Nome</th><th>Usuário</th><th>Desde</th><th></th></tr></thead>
+            <tbody id="lista-acessos"><tr><td colspan="4">Carregando…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script src="src/acesso.js"></script>
+<script src="src/acessos.js"></script>
+</body>
+</html>

@@ -1,11 +1,9 @@
 # Área restrita
 
-A área restrita reúne o Painel, o Núcleo da Marca e o Radar de Tendências. Cada pessoa do Marketing entra com **usuário e senha** próprios.
+A área restrita reúne o Painel, o Núcleo da Marca, o Radar de Tendências e a página **Acessos**. Cada pessoa do Marketing entra com **usuário e senha** próprios.
 
-- **Onde ficam os logins:** no segredo `USUARIOS` do Worker `unimed-pecas`, no Cloudflare, em formato JSON:
-  `{"joander":"senha-do-joander","maria":"senha-da-maria"}`
-- **Incluir ou tirar alguém:** edite o segredo `USUARIOS` (Configurações → Variáveis e segredos) e salve. Não precisa mexer no site.
-- **Senha geral (opcional):** o segredo `SENHA` continua valendo para entrar deixando o usuário em branco. Para desligar, apague esse segredo.
+- **Incluir, editar ou remover alguém:** página **Acessos** (aparece no menu só para administradores). Os logins ficam no banco D1 do Cloudflare, com a senha protegida por hash. Nada disso vai para o GitHub.
+- **Senha geral:** o segredo `SENHA` do Worker `unimed-pecas` continua valendo (usuário em branco) e é administradora. Serve para criar os primeiros acessos e como chave reserva.
 - **Depois de entrar:** a senha fica guardada só naquele navegador. **Sair** apaga.
 - **Em testes:** no computador local (`localhost`), a área abre sem senha.
 
