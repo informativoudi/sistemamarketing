@@ -225,14 +225,31 @@
       c.descricoes = {}; c.descricoes[gc.nome] = 'Guarda-chuva do ano, sem campanha específica';
       cs.lista.forEach(function (x) { c.descricoes[x.nome] = (x.periodo ? x.periodo + ' · ' : '') + (x.aguardandoMaterial ? 'visual provisório' : 'visual oficial'); });
     }
+    if (c.opcoesDe === 'paletas') {
+      // Cores: as paletas da campanha escolhida (sugeridas) + as da marca, só as que passam no contraste.
+      var KA = window.UnimedKeyArt, rc = $('formulario').querySelector('input[name="campanha"]:checked');
+      var lista = KA.paletasPara(estado.tendencias, rc ? rc.value : '');
+      var nomeAuto = 'Automática';
+      c.opcoes = lista.filter(function (x) { return x.sugerida; }).map(function (x) { return x.nome; }).concat([nomeAuto], lista.filter(function (x) { return !x.sugerida; }).map(function (x) { return x.nome; }));
+      c.descricoes = {}; c.amostras = {};
+      c.descricoes[nomeAuto] = 'As cores do estilo da Key Art';
+      lista.forEach(function (x) {
+        c.descricoes[x.nome] = x.sugerida ? 'Sugerida para a campanha' : 'Combina com a marca';
+        c.amostras[x.nome] = [x.fundo, x.texto, x.destaque].map(function (k) { return KA.corDe(estado.tendencias, k); });
+      });
+    }
     if (c.tipo === 'escolha') {
       var grupo = el('div', { 'class': 'temas', role: 'radiogroup', 'aria-labelledby': id + '-r' });
+      if (c.amostras) grupo.classList.add('paletas');
       rotulo = el('span', { id: id + '-r', 'class': 'rot' }, [c.rotulo]);
       if (c.descricoes) grupo.classList.add('com-descricao');
       c.opcoes.forEach(function (op, i) {
         var tema = c.id === 'tema' ? estado.formato.temas[op] : null;
+        var am = c.amostras && c.amostras[op];
         var miolo = tema
           ? [el('i', { style: 'background:' + estado.marca.cores[tema.faixa] }), op]
+          : am
+          ? [el('span', { 'class': 'amostra-paleta', style: 'background:' + am[0], 'aria-hidden': 'true' }, [el('span', { style: 'color:' + am[1], texto: 'Aa' }), el('span', { style: 'color:' + am[2], texto: 'Aa' })]), el('b', { texto: op }), el('small', { texto: c.descricoes[op] })]
           : [el('b', { texto: op }), c.descricoes && c.descricoes[op] ? el('small', { texto: c.descricoes[op] }) : null];
         grupo.appendChild(el('label', {}, [
           el('input', { type: 'radio', name: c.id, value: op, checked: i === 0 }),
@@ -330,6 +347,16 @@
     });
     barra.appendChild(el('span', { 'class': 'ajuda', texto: 'Cards com ícone seguidos ficam lado a lado (até 3). Ícones: consulta, exame, agenda, família, telemedicina, carteirinha, receita, rede, reembolso, alerta, caminhada, alimentação, prêmio…' }));
     return barra;
+  }
+
+  /* Cores dependem da campanha: refaz as opções (a sugerida da campanha vem marcada). */
+  function reconstruirCores(manter) {
+    var c = (estado.formato.campos || []).filter(function (x) { return x.opcoesDe === 'paletas'; })[0];
+    var velho = c && document.querySelector('#campos .campo[data-campo="' + c.id + '"]');
+    if (!velho) return;
+    var novo = montarCampo(c);
+    velho.parentNode.replaceChild(novo, velho);
+    if (manter) { var r = novo.querySelector('input[value="' + manter + '"]'); if (r) r.checked = true; }
   }
 
   /* Seções que só valem em campanha (ex.: Visual da campanha). */
@@ -918,7 +945,8 @@
       if (c.tipo === 'imagens-documento') return; // imagens do computador não ficam no rascunho
       if (c.tipo === 'noticias') { estado.noticias = (v || []).map(function (n) { var x = Object.assign({}, n); if (x.imagem && !existe(x.imagem)) x.imagem = ''; return x; }); if (!estado.noticias.length) estado.noticias.push({ titulo: '', texto: '', linkTexto: '', link: '', imagem: '' }); if (estado.redesenharNoticias) estado.redesenharNoticias(); return; }
       if (c.tipo === 'arquivo') return;
-      if (c.tipo === 'escolha') { var r = f.querySelector('input[name="' + c.id + '"][value="' + v + '"]'); if (r) r.checked = true; if (c.id === 'publico' && estado.sincronizarPublico) { estado.sincronizarPublico(); aplicarCondicoes(); } return; }
+      if (c.opcoesDe === 'paletas') { reconstruirCores(v); return; }
+      if (c.tipo === 'escolha') { var r = f.querySelector('input[name="' + c.id + '"][value="' + v + '"]'); if (r) r.checked = true; if (c.id === 'campanha') reconstruirCores(); if (c.id === 'publico' && estado.sincronizarPublico) { estado.sincronizarPublico(); aplicarCondicoes(); } return; }
       var e = f.elements[c.id];
       if (e) { e.value = v; e.dispatchEvent(new Event('input', { bubbles: false })); }
     });
@@ -1711,6 +1739,7 @@
       if (!e.target || e.target.type !== 'radio') return;
       aplicarCondicoes();
       if (e.target.name === 'tema' && estado.reordenarBanco) estado.reordenarBanco();
+      if (e.target.name === 'campanha') reconstruirCores();
       if ((e.target.name === 'publico' || e.target.name === 'tamanho' || e.target.name === 'ladoFoto') && estado.redesenharImagens) estado.redesenharImagens();
     });
     $('formulario').addEventListener('submit', gerar);

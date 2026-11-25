@@ -123,9 +123,18 @@
       mote: l.mote || (marca.rodape && marca.rodape.mote) || '',
       tematica: tem ? tem.id : '', itensPadrao: tem ? tem.itens : null
     };
-    // Cor de destaque da campanha, só se tiver contraste com o fundo do estilo.
-    var corTem = tem && tem.destaque ? pal.P[tem.destaque] || (marca.cores || {})[tem.destaque] : '';
-    if (corTem && Math.abs(luz(corTem) - luz(cp.fundo)) > 0.35) cp.destaque = corTem;
+    // Cores escolhidas (paleta da campanha ou da marca) mandam; senão, o destaque da campanha se tiver contraste.
+    var pl = KA.paletaEscolhida ? KA.paletaEscolhida(t, dados) : null;
+    if (pl) {
+      var cd = function (k) { return KA.corDe(t, k); };
+      cp.fundo = cd(pl.fundo); cp.texto = cd(pl.texto); cp.destaque = cd(pl.destaque); cp.legenda = cd(pl.legenda || pl.texto);
+      cp.escuro = luz(cp.fundo) < 0.5; cp.paleta = pl.nome;
+      if (pl.cartoes) cp.cartoes = pl.cartoes.map(function (c3) { return c3.map(cd); });
+      if (porque) porque.push('Cores "' + pl.nome + '" → fundo ' + pl.fundo + ', texto ' + pl.texto + ', destaque ' + pl.destaque + ' (contraste conferido).');
+    } else {
+      var corTem = tem && tem.destaque ? pal.P[tem.destaque] || (marca.cores || {})[tem.destaque] : '';
+      if (corTem && Math.abs(luz(corTem) - luz(cp.fundo)) > 0.35) cp.destaque = corTem;
+    }
     if (tem && porque) porque.push('Campanha ' + tem.nome + ' → estilo padrão ' + (tem.estiloPadrao || '—') + ', destaque ' + (tem.destaque || '—') + (tem.aguardandoMaterial ? ' (visual provisório até chegar o material oficial).' : '.'));
     if (porque) {
       var nomes = ['titulo-contraste', 'neo-brutalismo', 'quadrado-laranja', 'moldura-box', 'textura-papel', 'prova-de-processo', 'elementos-key-art'].filter(usa)

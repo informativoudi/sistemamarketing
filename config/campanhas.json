@@ -11,53 +11,285 @@
       "id": "outubro-rosa",
       "nome": "Outubro Rosa",
       "periodo": "Outubro",
-      "linhas": ["externa", "interna"],
+      "linhas": [
+        "externa",
+        "interna"
+      ],
       "essencia": "Prevenção e diagnóstico precoce do câncer de mama. Cuidado próximo, sem alarmismo. (Provisório: substituir pelo material da campanha.)",
       "estiloPadrao": "icones",
       "destaque": "rosa",
-      "itens": ["Mamografia", "Autoexame", "Consulta", "Cuidado", "Família", "Agenda"],
+      "itens": [
+        "Mamografia",
+        "Autoexame",
+        "Consulta",
+        "Cuidado",
+        "Família",
+        "Agenda"
+      ],
       "selo": "Outubro Rosa",
       "mote": "Humano por natureza",
-      "aguardandoMaterial": true
+      "aguardandoMaterial": true,
+      "paletas": [
+        {
+          "nome": "Rosa",
+          "fundo": "rosa",
+          "texto": "petroleo",
+          "destaque": "verdeEscuro",
+          "legenda": "petroleo",
+          "cartoes": [
+            [
+              "petroleo",
+              "branco",
+              "rosa"
+            ],
+            [
+              "branco",
+              "petroleo",
+              "laranja"
+            ],
+            [
+              "verdeEscuro",
+              "branco",
+              "rosa"
+            ],
+            [
+              "papel",
+              "petroleo",
+              "institucional"
+            ],
+            [
+              "petroleo",
+              "branco",
+              "citrico"
+            ],
+            [
+              "branco",
+              "petroleo",
+              "rosa"
+            ]
+          ]
+        },
+        {
+          "nome": "Petróleo e rosa",
+          "fundo": "petroleo",
+          "texto": "branco",
+          "destaque": "rosa",
+          "legenda": "rosa",
+          "cartoes": [
+            [
+              "rosa",
+              "petroleo",
+              "institucional"
+            ],
+            [
+              "branco",
+              "petroleo",
+              "rosa"
+            ],
+            [
+              "institucional",
+              "branco",
+              "rosa"
+            ],
+            [
+              "rosa",
+              "petroleo",
+              "laranja"
+            ],
+            [
+              "papel",
+              "petroleo",
+              "rosa"
+            ],
+            [
+              "branco",
+              "petroleo",
+              "institucional"
+            ]
+          ]
+        }
+      ]
     },
     {
       "id": "servicos-proprios",
       "nome": "Serviços Próprios",
       "periodo": "Ano todo",
-      "linhas": ["externa"],
+      "linhas": [
+        "externa"
+      ],
       "essencia": "Divulgação dos serviços e recursos próprios (Espaço + Unimed, Sempre Unimed, SOU, AMAR…). Assinatura só em letras, conforme o MS.024. (Provisório: substituir pelo material da campanha.)",
       "estiloPadrao": "foto",
       "destaque": "citrico",
-      "itens": ["Consulta", "Exame", "Rede", "Agenda", "Telemedicina", "Cuidado"],
+      "itens": [
+        "Consulta",
+        "Exame",
+        "Rede",
+        "Agenda",
+        "Telemedicina",
+        "Cuidado"
+      ],
       "selo": "",
       "mote": "Humano por natureza",
-      "aguardandoMaterial": true
+      "aguardandoMaterial": true,
+      "paletas": [
+        {
+          "nome": "Verde-claro e petróleo",
+          "fundo": "verdeClaro",
+          "texto": "petroleo",
+          "destaque": "verdeEscuro",
+          "legenda": "petroleo",
+          "cartoes": [
+            [
+              "petroleo",
+              "branco",
+              "citrico"
+            ],
+            [
+              "branco",
+              "petroleo",
+              "laranja"
+            ],
+            [
+              "institucional",
+              "branco",
+              "citrico"
+            ],
+            [
+              "papel",
+              "petroleo",
+              "institucional"
+            ],
+            [
+              "petroleo",
+              "branco",
+              "azul"
+            ],
+            [
+              "branco",
+              "petroleo",
+              "institucional"
+            ]
+          ]
+        }
+      ]
     },
     {
       "id": "institucional",
       "nome": "Institucional",
       "periodo": "Ano todo",
-      "linhas": ["externa", "interna"],
+      "linhas": [
+        "externa",
+        "interna"
+      ],
       "essencia": "A marca Unimed Uberlândia e o cooperativismo: presença na cidade, rede e pessoas. (Provisório: substituir pelo material da campanha.)",
       "estiloPadrao": "mosaico",
       "destaque": "citrico",
-      "itens": ["Família", "Rede", "Carteirinha", "Cuidado", "Telemedicina", "Agenda"],
+      "itens": [
+        "Família",
+        "Rede",
+        "Carteirinha",
+        "Cuidado",
+        "Telemedicina",
+        "Agenda"
+      ],
       "selo": "",
       "mote": "Humano por natureza",
-      "aguardandoMaterial": true
+      "aguardandoMaterial": true,
+      "paletas": []
     },
     {
       "id": "troca-tabela",
       "nome": "Troca de tabela comercial",
       "periodo": "Data da troca",
-      "linhas": ["externa", "interna"],
+      "linhas": [
+        "externa",
+        "interna"
+      ],
       "essencia": "Comunicação da nova tabela comercial para empresas, corretores e equipe de vendas: clara, objetiva e com datas em destaque. (Provisório: substituir pelo material da campanha.)",
       "estiloPadrao": "pilulas",
       "destaque": "amarelo",
-      "itens": ["Agenda", "Carteirinha", "Reembolso", "Rede", "Receita", "Alerta"],
+      "itens": [
+        "Agenda",
+        "Carteirinha",
+        "Reembolso",
+        "Rede",
+        "Receita",
+        "Alerta"
+      ],
       "selo": "Nova tabela",
       "mote": "Humano por natureza",
-      "aguardandoMaterial": true
+      "aguardandoMaterial": true,
+      "paletas": []
+    }
+  ],
+  "_cores": "Cores da Key Art: cada paleta diz o fundo, o texto, o destaque (palavra em Slab), a legenda e, se quiser, as cores dos cards do estilo Ícones (cartoes: [fundo, texto, detalhe]). Os nomes das cores vêm de tendencias.json → keyArt.paleta. O sistema só oferece paletas com contraste suficiente (texto 4,5:1 e destaque 3:1 sobre o fundo); as que não passam somem sozinhas. A primeira paleta da campanha é a sugerida.",
+  "paletasBase": [
+    {
+      "nome": "Petróleo e cítrico",
+      "fundo": "petroleo",
+      "texto": "branco",
+      "destaque": "citrico",
+      "legenda": "citrico"
+    },
+    {
+      "nome": "Petróleo e azul",
+      "fundo": "petroleo",
+      "texto": "branco",
+      "destaque": "azul",
+      "legenda": "azul"
+    },
+    {
+      "nome": "Amarelo e petróleo",
+      "fundo": "amarelo",
+      "texto": "petroleo",
+      "destaque": "verdeEscuro",
+      "legenda": "petroleo"
+    },
+    {
+      "nome": "Cítrico e petróleo",
+      "fundo": "citrico",
+      "texto": "petroleo",
+      "destaque": "verdeEscuro",
+      "legenda": "petroleo",
+      "cartoes": [
+        [
+          "petroleo",
+          "branco",
+          "citrico"
+        ],
+        [
+          "branco",
+          "petroleo",
+          "laranja"
+        ],
+        [
+          "verdeEscuro",
+          "branco",
+          "citrico"
+        ],
+        [
+          "papel",
+          "petroleo",
+          "institucional"
+        ],
+        [
+          "petroleo",
+          "branco",
+          "amarelo"
+        ],
+        [
+          "branco",
+          "petroleo",
+          "institucional"
+        ]
+      ]
+    },
+    {
+      "nome": "Papel e laranja",
+      "fundo": "papel",
+      "texto": "petroleo",
+      "destaque": "laranjaEscuro",
+      "legenda": "petroleo"
     }
   ]
 }

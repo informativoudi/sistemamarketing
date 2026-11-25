@@ -341,7 +341,7 @@
       var itens = String(dados.itens || '').split(/[,;\n]+/).map(limpar).filter(Boolean);
       var padrao = cp.itensPadrao || (((marca.icones || {}).padraoPorTema || {})[dados.tema]) || ['Consulta', 'Telemedicina', 'Carteirinha', 'Cuidado', 'Família', 'Agenda'];
       var total = A2.cols * A2.rows - (g.foto ? 2 : 0);
-      var CARTOES = [[P.petroleo, '#ffffff', P.citrico], ['#ffffff', P.petroleo, P.laranja], [P.institucional, '#ffffff', P.citrico], [P.citrico, P.petroleo, P.institucional], [P.rosa, P.petroleo, P.institucional], [P.petroleo, '#ffffff', P.amarelo]];
+      var CARTOES = cp.cartoes || [[P.petroleo, '#ffffff', P.citrico], ['#ffffff', P.petroleo, P.laranja], [P.institucional, '#ffffff', P.citrico], [P.citrico, P.petroleo, P.institucional], [P.rosa, P.petroleo, P.institucional], [P.petroleo, '#ffffff', P.amarelo]];
       var usados = {}, k = 0;
       for (var rr2 = 0; rr2 < A2.rows; rr2++) for (var cc2 = 0; cc2 < A2.cols; cc2++) {
         if (g.foto && rr2 === 0 && (cc2 < 2 || A2.cols === 2)) continue;
@@ -459,5 +459,33 @@
     return h;
   }
 
-  raiz.UnimedKeyArt = { estiloDe: estiloDe, cores: cores, geometria: geometria, render: render, tituloMisto: tituloMisto, ICONES: ICONES, ESTILOS_ROTULO: ESTILOS_ROTULO, mosaicoSvg: mosaicoSvg, sorteio: sorteio, semente: semente };
+  /* ---------- Paletas de cores (config/campanhas.json) ----------
+     Só valem as que têm contraste: texto 4,5:1 e destaque 3:1 sobre o fundo (WCAG). */
+  function lum(hex) {
+    var m = /^#?([0-9a-f]{6})$/i.exec(String(hex || '')); if (!m) return 1;
+    var n = parseInt(m[1], 16);
+    return [n >> 16, n >> 8 & 255, n & 255].map(function (v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); })
+      .reduce(function (t, v, i) { return t + v * [0.2126, 0.7152, 0.0722][i]; }, 0);
+  }
+  function contraste(a, b) { var x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); }
+  function corDe(tendencias, k) { var P = Object.assign({ branco: '#ffffff' }, ((tendencias && tendencias.keyArt) || {}).paleta || {}); return P[k] || (/^#/.test(k || '') ? k : ''); }
+  function paletaOk(tendencias, pl) {
+    var f = corDe(tendencias, pl.fundo), t = corDe(tendencias, pl.texto), d = corDe(tendencias, pl.destaque);
+    return !!(f && t && d) && contraste(f, t) >= 4.5 && contraste(f, d) >= 3;
+  }
+  /* Paletas oferecidas para a campanha: as dela primeiro (sugeridas), depois as da marca. */
+  function paletasPara(tendencias, campanha) {
+    var ct = (tendencias && tendencias.campanhasTematicas) || {};
+    var tem = (ct.lista || []).filter(function (x) { return x.nome === campanha || x.id === campanha; })[0];
+    var vistas = {};
+    return ((tem && tem.paletas) || []).map(function (p) { return Object.assign({ sugerida: true }, p); }).concat(ct.paletasBase || [])
+      .filter(function (p) { if (vistas[p.nome] || !paletaOk(tendencias, p)) return false; vistas[p.nome] = 1; return true; });
+  }
+  function paletaEscolhida(tendencias, dados) {
+    var nome = dados && dados.cores;
+    if (!nome || /^Autom/i.test(nome)) return null;
+    return paletasPara(tendencias, dados.campanha).filter(function (p) { return p.nome === nome; })[0] || null;
+  }
+
+  raiz.UnimedKeyArt = { estiloDe: estiloDe, cores: cores, contraste: contraste, corDe: corDe, paletasPara: paletasPara, paletaEscolhida: paletaEscolhida, geometria: geometria, render: render, tituloMisto: tituloMisto, ICONES: ICONES, ESTILOS_ROTULO: ESTILOS_ROTULO, mosaicoSvg: mosaicoSvg, sorteio: sorteio, semente: semente };
 })(window);
