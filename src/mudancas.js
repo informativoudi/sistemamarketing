@@ -18,12 +18,6 @@
       (m.referencia ? '\n\nReferência: ' + m.referencia : '') +
       '\n\nAvalie contra as regras da marca (config/marca.json e manuais). Se fizer sentido, altere config/ e os modelos, mostre o que mudou e gere o zip da atualização.';
   }
-  function emailPara(m) {
-    var st = NOMES[m.status] || NOMES.nova;
-    return Ap.mailto({ para: m.email || '', assunto: 'Seu pedido de mudança ' + m.id + ': ' + st[0].toLowerCase(),
-      corpo: 'Olá' + (m.nome ? ', ' + m.nome.split(/\s+/)[0] : '') + '!\n\nSobre o seu pedido de mudança (' + (m.tipo || 'pedido') + '):\n"' + m.descricao.slice(0, 400) + (m.descricao.length > 400 ? '…' : '') + '"\n\nSituação: ' + st[0] + (m.resposta ? '\n\n' + m.resposta : '') +
-        '\n\nVocê acompanha em: ' + location.href.replace(/[^/]*$/, '') + 'mudanca.html\n\n' + (ctx.nome || '') + '\nMarketing e Comunicação · Unimed Uberlândia' });
-  }
 
   function kpis() {
     var c = { nova: 0, analise: 0, feita: 0, recusada: 0 };
@@ -51,8 +45,8 @@
           var d = await r.json().catch(function () { return {}; });
           if (!r.ok) throw new Error(d.erro || 'Não consegui salvar (' + r.status + ').');
           Object.assign(m, d); kpis();
-          aviso.textContent = 'Salvo.' + (m.email ? ' Abrindo o e-mail para ' + m.email + '…' : '');
-          if (m.email) location.href = emailPara(m);
+          aviso.textContent = 'Salvo.';
+          desenhar();
         } catch (e) { aviso.textContent = e.message; } finally { salvar.disabled = false; }
       });
       var copiar = el('button', { type: 'button', 'class': 'btn-mini', texto: 'Copiar para o Claude' });
@@ -69,8 +63,42 @@
     });
   }
 
+  /* Novo pedido (só o Marketing, com login). */
+  var TIPOS = ['Regra da marca', 'Layout de um formato', 'Formato novo', 'Campanha', 'Outro'], tipo = '';
+  async function montarForm() {
+    var indice = await fetch('config/formatos/indice.json').then(function (r) { return r.json(); }).catch(function () { return { formatos: [] }; });
+    indice.formatos.filter(function (f) { return f.ativo; }).forEach(function (f) { $('m-formato').appendChild(el('option', { value: f.nome, texto: f.nome })); });
+    var caixa = $('m-tipos');
+    TIPOS.forEach(function (t) {
+      var b = el('button', { type: 'button', role: 'radio', 'aria-checked': 'false', 'class': 'chip-tipo', texto: t, onclick: function () {
+        tipo = t; caixa.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-checked', String(x === b)); });
+      } });
+      caixa.appendChild(b);
+    });
+    $('form-mudanca').addEventListener('submit', async function (ev) {
+      ev.preventDefault();
+      var d = { tipo: tipo, formato: $('m-formato').value, descricao: $('m-descricao').value.trim(), referencia: $('m-referencia').value.trim() };
+      var msg = $('m-mensagens'); msg.textContent = '';
+      var erro = !d.tipo ? 'Escolha o tipo de mudança.' : d.descricao.length < 10 ? 'Conte um pouco mais do que precisa mudar.' : d.referencia && !/^https?:\/\//.test(d.referencia) ? 'O link precisa começar com https://' : '';
+      if (erro) { msg.appendChild(el('p', { 'class': 'alerta erro', texto: erro })); return; }
+      var b = $('m-enviar'); b.disabled = true;
+      try {
+        var r = await fetch(base() + '/mudancas', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + ctx.token }, body: JSON.stringify(d) });
+        var res = await r.json().catch(function () { return {}; });
+        if (r.status === 401) throw new Error('Sua sessão expirou. Clique em Sair e entre de novo.');
+        if (!r.ok) throw new Error(res.erro || 'Não consegui registrar (' + r.status + ').');
+        lista.unshift(res.pedido);
+        $('m-descricao').value = ''; $('m-referencia').value = '';
+        $('novo-pedido').open = false;
+        $('m-filtro').value = 'abertos'; kpis(); desenhar();
+      } catch (e) { msg.appendChild(el('p', { 'class': 'alerta erro', texto: e.message })); }
+      finally { b.disabled = false; }
+    });
+  }
+
   async function iniciar(c) {
     ctx = c;
+    montarForm();
     if (!base()) { $('origem').hidden = false; $('origem').textContent = 'O registro central ainda não foi ligado.'; return; }
     try {
       var r = await fetch(base() + '/mudancas', { headers: { Authorization: 'Bearer ' + c.token } });

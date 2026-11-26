@@ -19,8 +19,34 @@
     <section class="busca compacta" style="padding-top:8px">
       <h1>Pedidos <span>de mudança</span></h1>
     </section>
-    <p class="intro">O que as áreas pediram para mudar nas regras, nos layouts e nos formatos. Para fazer uma mudança, copie o pedido e cole no Claude: ele altera os arquivos e prepara a atualização.</p>
+    <p class="intro">Mudanças nas regras, nos layouts e nos formatos que o Marketing quer fazer. Registre o pedido, acompanhe a situação e, para fazer, copie o pedido e cole no Claude: ele altera os arquivos e prepara a atualização.</p>
     <p id="origem" class="alerta aviso" hidden></p>
+    <details class="cartao novo-pedido" id="novo-pedido">
+      <summary><b>+ Novo pedido de mudança</b></summary>
+      <form id="form-mudanca" novalidate>
+        <div class="campos" style="grid-template-columns:minmax(0,1fr)">
+          <div class="campo" data-campo="tipo">
+            <span class="rot">Tipo de mudança</span>
+            <div class="opcoes-tipo" id="m-tipos" role="radiogroup" aria-label="Tipo de mudança"></div>
+          </div>
+          <div class="campo" data-campo="formato">
+            <label for="m-formato">Formato <span class="opc">(se for sobre um formato)</span></label>
+            <select id="m-formato"><option value="">Nenhum em especial</option></select>
+          </div>
+          <div class="campo" data-campo="descricao">
+            <label for="m-descricao">Descreva a mudança</label>
+            <textarea id="m-descricao" rows="5" maxlength="4000" placeholder="Ex.: No convite, precisamos de um campo para o local do evento com o endereço completo."></textarea>
+            <span class="ajuda">O que é hoje, o que precisa ser e para quê. Se veio de outra área, diga qual.</span>
+          </div>
+          <div class="campo" data-campo="referencia">
+            <label for="m-referencia">Link de referência <span class="opc">(opcional)</span></label>
+            <input id="m-referencia" type="url" placeholder="https://…">
+          </div>
+        </div>
+        <div id="m-mensagens"></div>
+        <div class="acoes" style="justify-content:flex-end"><button class="btn primario" type="submit" id="m-enviar">Registrar pedido</button></div>
+      </form>
+    </details>
     <div class="kpis" id="m-kpis"></div>
     <div class="filtros">
       <label for="m-filtro" style="position:absolute;left:-9999px">Situação</label>

@@ -184,7 +184,7 @@
     // Mudanças nas regras: feitas com o Claude (licença do Marketing), que altera os arquivos e publica no GitHub.
     alvo.appendChild(el('section', { 'class': 'cartao bloco como-mudar' }, [
       el('h2', { texto: 'Como mudar uma regra' }),
-      el('p', { 'class': 'sub' }, ['As áreas pedem mudanças em ', el('a', { href: 'mudanca.html', texto: 'Pedir mudança' }), ' e o Marketing acompanha em ', el('a', { href: 'mudancas.html', texto: 'Pedidos de mudança' }), '.']),
+      el('p', { 'class': 'sub' }, ['O Marketing registra e acompanha as mudanças em ', el('a', { href: 'mudancas.html', texto: 'Pedidos de mudança' }), '.']),
       el('p', { 'class': 'sub', texto: 'Para fazer a mudança, peça ao Claude em palavras (ex.: "inclua a área Ouvidoria", "na peça quadrada, limite o título a 60 caracteres"). Ele altera os arquivos de regras, mostra o que mudou e publica no GitHub. O site atualiza em 1 a 2 minutos.' }),
       el('p', { 'class': 'ajuda', texto: 'As regras ficam em config/marca.json (marca) e config/formatos/ (cada formato). Também dá para editar direto no GitHub.' })
     ]));
